@@ -1,0 +1,34 @@
+# =============================================================================
+# robots.txt: aeogeosearch.com
+# Put this file at the site root (https://aeogeosearch.com/robots.txt).
+# prerender.mjs copies it into the publish directory automatically.
+# =============================================================================
+#
+# WHY THIS FILE LOOKS SO SHORT
+# Your old robots.txt had a dedicated `User-agent: Googlebot` group containing
+# only `Allow: /`, plus a separate `User-agent: *` group containing all the
+# Disallow lines. Per the robots.txt spec, a crawler obeys ONLY the single most
+# specific group that matches it. Googlebot matched its own group and therefore
+# IGNORED every Disallow rule. That is why /admin/, /cart/, /checkout/ etc.
+# were crawled and indexed despite being "blocked".
+#
+# One group for everyone is correct here: you WANT Googlebot, Bingbot, GPTBot,
+# ClaudeBot, PerplexityBot, OAI-SearchBot and every other AI/search crawler to
+# be able to reach every real page. There is no private or duplicate content
+# behind these paths; they simply don't exist, and they now return a real 404.
+#
+# Do NOT add Disallow lines for /admin/, /auth/, /cart/, /checkout/, /account/,
+# /private/, /$ , /* , /& , /month ... Google must be allowed to re-crawl them
+# so it can see the new 404 and drop them. Blocking them in robots.txt would
+# leave them stuck in the index as "Indexed, though blocked by robots.txt".
+
+User-agent: *
+Allow: /
+
+# --- OPTIONAL: enable only AFTER the 404s have been recrawled (~4 weeks) -----
+# User-agent: *
+# Disallow: /*?q=
+# Disallow: /*?s=
+# -----------------------------------------------------------------------------
+
+Sitemap: https://aeogeosearch.com/sitemap.xml

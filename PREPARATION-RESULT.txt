@@ -1,0 +1,7 @@
+AEOGEO production installation prepared locally.
+Original backup: C:\Users\micsi\Downloads\deploy-6adf9a4aa03ac66c8041091a
+New project: C:\Users\micsi\Downloads\aeogeo-production-install
+All original pages/images/assets were copied from your own production backup.
+The original backup was not modified.
+No dependency install, SQL change, environment change or deployment occurred.
+Checkout stays disabled. Final application and server checks are still required.

@@ -1,0 +1,51 @@
+# AEOGEO Search
+
+> AEOGEO Search is an AIO, GEO, AEO, and SEO agency in McKinney, Texas. Founder Michelle S. has 15 years’ experience in digital marketing.
+
+Contact: aeogeosearch@atomicmail.io · (469) 905-2836 · McKinney, Texas
+
+## Services
+Our pricing page is the source of truth: 12 service options in six categories. Combination packages combine existing services and are not additional underlying options.
+- [Monthly AI Search Optimization Plans](https://aeogeosearch.com/pricing#monthly-ai-search): Starter $349/month, Growth $649/month, Authority $999/month. Starter includes up to 2 existing website pages/month; Growth and Authority each include up to 4.
+- [Workflow Automation Setup and Support](https://aeogeosearch.com/pricing#workflow-automation): Automation Quick Start, Connected Workflow Setup, and Automation Monitoring and Support.
+- [Content Support Services](https://aeogeosearch.com/pricing#content-support): Website Content Optimization, New SEO and AI Ready Article, and Content and Social Media Plan.
+- [Content Repurposing Service](https://aeogeosearch.com/pricing#content-repurposing): $400 and up, with agreed scope.
+- [Custom Websites](https://aeogeosearch.com/pricing#custom-websites): Custom quote based on scope.
+- [Knowledge Base Package](https://aeogeosearch.com/pricing#knowledge-base): $1,500 one time; 50 articles, basic search, one revision round and one hour of training.
+
+## Core pages
+- [Home](https://aeogeosearch.com/)
+- [About](https://aeogeosearch.com/about)
+- [Services](https://aeogeosearch.com/services)
+- [Pricing](https://aeogeosearch.com/pricing)
+- [What is AEOM?](https://aeogeosearch.com/what-is-aeom): AIO, GEO, AEO, and SEO working together.
+- [Contact](https://aeogeosearch.com/contact): Discuss your business and an agreed scope.
+
+## Free offer
+- [Free AI Visibility Snapshot](https://aeogeosearch.com/visibility-tool): A self-reported website-readiness checklist, not an automated scan, competitor comparison or measured AI visibility score.
+
+## Resources
+- [Resources](https://aeogeosearch.com/resources): AIO, GEO, AEO, and SEO guides.
+- [Knowledge Library](https://aeogeosearch.com/learn)
+- [Free DIY Tools](https://aeogeosearch.com/tools): Website audit, robots.txt generator, readiness checklist and content checker.
+
+## Legal
+- [Privacy Policy](https://aeogeosearch.com/privacy-policy)
+- [Terms of Service](https://aeogeosearch.com/terms-of-service): Monthly subscriptions cancel through the billing portal before renewal and end at the paid-period end; generally non-refundable except law or written agreement. Project cancellation is by email, with a full refund before work starts and generally no refund after work starts, subject to law.
+- [Accessibility](https://aeogeosearch.com/accessibility)
+
+## Free GEO website audit
+- [Free 25-page GEO Website Audit](https://aeogeosearch.com/geo-audit/): One free audit per verified account, up to 25 accessible pages across 22 readiness checks. Findings distinguish measured checks, heuristics and unavailable data. The customer or their developer implements the changes. No credit card required. The audit page lists the current paid DIY audit plans and billing options.
+- [GEO Content Checker](https://aeogeosearch.com/tools/geo-content-checker/): Needs-only editorial checklist, not an outline or implementation guide. Optional content services remain separate.
+
+## Individual guides
+- [What is AI search optimization?](https://aeogeosearch.com/resources/what-is-ai-search-optimization/)
+- [What is Generative Engine Optimization (GEO)?](https://aeogeosearch.com/resources/what-is-geo/)
+- [What is Answer Engine Optimization (AEO)?](https://aeogeosearch.com/resources/what-is-aeo/)
+- [What is the difference between SEO, AEO, GEO, and AIO?](https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/)
+- [How are Google AI Overviews changing search in 2026?](https://aeogeosearch.com/resources/ai-overviews-changing-search/)
+- [Why are zero-click searches rising  -  and what can businesses do about it?](https://aeogeosearch.com/resources/zero-click-search/)
+- [How do you get cited in AI answers from Google Gemini, Claude, Perplexity, and ChatGPT?](https://aeogeosearch.com/resources/get-cited-ai-answers/)
+- [Which AI search platforms should your business optimize for in 2026?](https://aeogeosearch.com/resources/which-ai-platforms/)
+- [What is AEOM  -  the AI Engine Optimization Method?](https://aeogeosearch.com/resources/what-is-aeom/)
+- [How do you measure AI search visibility and GEO performance?](https://aeogeosearch.com/resources/measure-ai-visibility/)

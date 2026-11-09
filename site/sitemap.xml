@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  aeogeosearch.com sitemap - CANONICAL URLS ONLY.
+
+  Rules for this file:
+    * One <loc> per real page. Never list an alias (/terms, /privacy,
+      /aeo-geo-tools, /knowledge-library) - those now 301 to the canonical.
+    * Never list robots.txt, sitemap.xml, 404.html, /resources?q=..., or any
+      URL that returns a redirect, 404, or has a canonical pointing elsewhere.
+    * Only change <lastmod> when that page's content actually changes. Google
+      ignores <changefreq> and <priority>, so they were removed.
+    * Scheme + host must match the canonical exactly: https + non-www apex.
+    * Re-submit in GSC (Sitemaps > add /sitemap.xml) after deploying.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://aeogeosearch.com/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://aeogeosearch.com/about</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/services</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/pricing</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/what-is-aeom</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/learn</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/tools</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/visibility-tool</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/contact</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/terms-of-service</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/privacy-policy</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/accessibility</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-ai-search-optimization/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-geo/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-aeo/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/ai-overviews-changing-search/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/zero-click-search/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/get-cited-ai-answers/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/which-ai-platforms/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-aeom/</loc></url>
+  <url><loc>https://aeogeosearch.com/resources/measure-ai-visibility/</loc></url>
+  <url><loc>https://aeogeosearch.com/tools/geo-content-checker/</loc></url>
+  <url><loc>https://aeogeosearch.com/geo-audit/</loc><lastmod>2026-11-01</lastmod></url>
+<url><loc>https://aeogeosearch.com/ai-content-humanizer</loc></url>
+  <url>
+    <loc>https://aeogeosearch.com/competitor-intelligence</loc>
+  </url>
+</urlset>

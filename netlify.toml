@@ -1,0 +1,49 @@
+[build]
+  publish = "site"
+  functions = "netlify/functions"
+[build.environment]
+  NODE_VERSION = "22"
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["cheerio", "ipaddr.js"]
+[[headers]]
+  for = "/account/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+[[headers]]
+  for = "/auth/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+[[headers]]
+  for = "/geo-audit/run/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+
+# Routing is defined in site/_redirects, preserving production's real 404 rule.
+# Do not add a catch-all rewrite to /index.html.
+
+# Private one-time service checkout
+[[headers]]
+  for = "/service-checkout/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+
+# Isolated content-service private pages and owner-notice retries.
+[functions."content-notifications"]
+  schedule = "@hourly"
+[[headers]]
+  for = "/content-order/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/content-review/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"

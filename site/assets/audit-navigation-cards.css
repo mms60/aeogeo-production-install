@@ -1,0 +1,6 @@
+/* GEO Audit landing-page cards only. Existing audit/pricing CSS remains unchanged. */
+.geo-audit-linked-card{position:relative;height:100%}
+.geo-audit-linked-card[data-audit-step]>p{font-size:inherit}
+.geo-audit-linked-card:hover{border-color:rgba(79,125,249,.6)}
+.geo-audit-linked-card>a[data-audit-card-link]{position:absolute;inset:-1px;z-index:2;border-radius:inherit}
+.geo-audit-linked-card>a[data-audit-card-link]:focus-visible{outline:3px solid #a8c5ff;outline-offset:4px}

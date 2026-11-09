@@ -1,0 +1,78 @@
+/* site-header-v1: shared website navigation, scoped to the static product pages. */
+body[data-page="landing"],body[data-page="account"],body[data-page="login"],body[data-page="callback"],body[data-page="original-tool"]{padding-top:72px}
+.site-nav.website-header{position:fixed;inset:0 0 auto;z-index:60;background:transparent;border-bottom:1px solid transparent;backdrop-filter:none;box-shadow:none;transition:background .3s,border-color .3s,box-shadow .3s;color:#fff;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;line-height:1.5}
+.website-header.is-scrolled,.website-header.is-open{background:rgba(3,8,30,.85);border-color:rgba(79,125,249,.15);backdrop-filter:blur(24px);box-shadow:0 8px 40px rgba(3,8,30,.6)}
+.website-header *{box-sizing:border-box}.website-header a,.website-header a:hover{text-decoration:none}.website-header button{font-family:inherit;cursor:pointer}.website-header a:focus-visible,.website-header button:focus-visible{outline:2px solid #93bfff;outline-offset:4px}
+.website-header-inner{height:72px;max-width:1280px;width:100%;padding:0 16px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.website-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;color:#fff}.website-brand-symbol{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#4f7df9,#2b4fc0);color:#fff;box-shadow:0 10px 15px -3px #2b4fc04d;transition:transform .3s}.website-brand:hover .website-brand-symbol{transform:scale(1.05)}
+.website-brand-name{font-family:'Sora',ui-sans-serif,system-ui,sans-serif;font-size:16px;line-height:24px;font-weight:700;letter-spacing:.025em;color:#fff}.website-brand-name>span{color:#6ea8ff}
+.website-main-navigation{display:none;align-items:center;gap:2px}.website-main-navigation>a,.website-resources-toggle{position:relative;display:flex;align-items:center;gap:4px;border:0;border-radius:999px;background:transparent;padding:8px 10px;font-size:13px;line-height:20px;font-weight:500;color:rgba(185,204,255,.8);white-space:nowrap;transition:color .2s,background .2s}
+.website-main-navigation>a:hover,.website-resources-toggle:hover,.website-resources-toggle[aria-expanded="true"]{color:#fff}.website-main-navigation>a[aria-current="page"]{background:rgba(79,125,249,.15);box-shadow:0 0 0 1px rgba(110,168,255,.3);color:#fff}
+.website-resources{position:relative}.website-resources-toggle svg{transition:transform .2s}.website-resources-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.website-resource-links{position:absolute;left:50%;top:100%;width:224px;padding-top:12px;transform:translateX(-50%);z-index:70}.website-resource-links>div{padding:6px;overflow:hidden;border:1px solid rgba(79,125,249,.2);border-radius:16px;background:rgba(10,21,51,.95);backdrop-filter:blur(24px);box-shadow:0 25px 50px -12px rgba(3,8,30,.6)}
+.website-resource-links a{display:block;padding:10px 14px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:rgba(185,204,255,.8);white-space:normal}.website-resource-links a:hover,.website-resource-links a:focus-visible{background:rgba(255,255,255,.05);color:#fff}
+.website-header-actions{display:flex;flex-shrink:0;align-items:center;gap:8px}.website-contact-icon{width:40px;height:40px;display:grid;place-items:center;flex-shrink:0;border-radius:50%;background:rgba(79,125,249,.15);box-shadow:0 0 0 1px rgba(110,168,255,.3);color:#93bfff;transition:background .3s,color .3s}.website-contact-icon:hover{background:#4f7df9;color:#fff}.website-contact-icon.website-phone{display:none}
+.website-consultation{display:none;margin-left:4px;padding:10px 20px;border-radius:999px;background:#4f7df9;color:#fff;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;box-shadow:0 10px 15px -3px rgba(43,79,192,.3)}.website-consultation:hover{background:#6ea8ff}
+.website-navigation-toggle{display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;border:0;border-radius:8px;background:transparent;box-shadow:0 0 0 1px rgba(185,204,255,.2);color:#fff;padding:0}.website-navigation-toggle:hover{background:rgba(255,255,255,.05)}.website-close-icon{display:none}.website-navigation-toggle[aria-expanded="true"] .website-menu-icon{display:none}.website-navigation-toggle[aria-expanded="true"] .website-close-icon{display:block}
+.website-main-navigation>a.website-mobile-consultation{display:none}.website-header [hidden]{display:none!important}
+@media(min-width:640px){.website-header-inner{padding-left:32px;padding-right:32px}.website-brand-name{font-size:18px;line-height:28px}}
+@media(min-width:768px){.website-contact-icon.website-phone{display:grid}}
+@media(min-width:1024px){.website-main-navigation{display:flex;gap:4px}.website-navigation-toggle{display:none}.website-main-navigation>a,.website-resources-toggle{padding-left:8px;padding-right:8px;font-size:13px}}
+@media(min-width:1280px){.website-consultation{display:inline-flex}.website-main-navigation>a,.website-resources-toggle{padding-left:6px;padding-right:6px;font-size:13.5px}}@media(min-width:1400px){.website-main-navigation>a,.website-resources-toggle{padding-left:9px;padding-right:9px;font-size:14px}}
+@media(max-width:1023px){.website-header.is-open .website-main-navigation{display:block;position:absolute;top:72px;left:0;right:0;max-height:calc(100dvh - 72px);overflow-y:auto;padding:16px 20px;border-top:1px solid rgba(79,125,249,.1);background:rgba(3,8,30,.97);backdrop-filter:blur(24px)}.website-main-navigation>a,.website-resources-toggle{display:flex;width:100%;margin:4px 0;padding:12px 16px;border-radius:12px;font-size:14px;line-height:20px}.website-resources-toggle{justify-content:space-between}.website-main-navigation>a:hover,.website-resources-toggle:hover{background:rgba(255,255,255,.05)}.website-resource-links{position:static;transform:none;width:auto;margin-left:12px;padding:4px 0 0 12px;border-left:1px solid rgba(79,125,249,.2)}.website-resource-links>div{border:0;background:transparent;box-shadow:none;padding:0;backdrop-filter:none}.website-resource-links a{padding:10px 16px;border-radius:8px}.website-main-navigation>a.website-mobile-consultation{display:block;margin-top:12px;background:#4f7df9;text-align:center;color:#fff}}
+@media(prefers-reduced-motion:reduce){.website-header,.website-header *{transition:none!important}}
+@media print{.website-header{display:none!important}body[data-page]{padding-top:0}}
+
+/* Targeted accessibility improvements, local correction batch 5. */
+:where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid #a8c5ff!important;outline-offset:4px!important}
+:where(button,input[type=checkbox],input[type=radio],summary){min-height:24px;min-width:24px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation:none!important;transition:none!important} [style*="transform"]{transform:none!important}[style*="opacity"]{opacity:1!important}}
+html[data-motion-paused=true]{scroll-behavior:auto!important}html[data-motion-paused=true] *,html[data-motion-paused=true] *::before,html[data-motion-paused=true] *::after{animation-play-state:paused!important;transition:none!important}html[data-motion-paused=true] [style*="transform"]{transform:none!important}html[data-motion-paused=true] [style*="opacity"]{opacity:1!important}
+
+/* Owner-requested white text and prominent footer links, correction batch 6.
+   Keep the existing fonts, layout, imagery, and navy/blue identity. */
+@media screen{
+html body,html body *{color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#fff!important}
+html body *::before,html body *::after,html body *::marker{color:#fff!important;-webkit-text-fill-color:#fff!important}
+html body ::placeholder{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+html body :is(.text-gradient,.gradient,[class*="bg-clip-text"]){background-image:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+html body svg text,html body svg tspan{fill:#fff!important}
+html body :is(button,input,textarea,select):disabled,html body :is(a,button)[aria-disabled="true"]{opacity:1!important;cursor:not-allowed}
+html body :is(.opacity-80,p[style*="opacity:."],#crawler-terminal>div[style*="opacity:."]){opacity:1!important}
+html body option,html body optgroup{background-color:#0a1533!important;color:#fff!important}
+html body input:-webkit-autofill{-webkit-text-fill-color:#fff!important;box-shadow:0 0 0 1000px #0a1533 inset!important;caret-color:#fff!important}
+/* White labels need a darker blue than the old pale flat/gradient buttons. */
+html body :is(a,button):is(.btn,.btn-primary,.website-consultation,[class~="bg-royal-500"]):not(.btn-secondary):not(.secondary):not(.ghost){background-color:#2b4fc0!important;background-image:none!important}
+html body .session-sign-in,html body [style*="background:var(--color-royal-500)"],html body [style*="background: var(--color-royal-500)"]{background-color:#2b4fc0!important;background-image:none!important}
+html body :is([class~="text-navy-950"],[class~="text-navy-900"],[class~="bg-white"],[class~="bg-ice-100"],[class~="bg-ice-200"]):not(svg){background-color:#0a1533!important;background-image:none!important}
+}
+html body .geo-legal-links{position:relative;display:block;margin-top:32px;padding:24px 0;border-top:1px solid rgba(255,255,255,.28);border-bottom:1px solid rgba(255,255,255,.28);text-align:left}
+html body .geo-legal-links h2{font-family:inherit;font-size:16px;line-height:1.5;font-weight:700;margin:0 0 12px}
+html body .geo-legal-links>div{display:flex;flex-wrap:wrap;gap:12px 28px}
+html body .geo-legal-links a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;line-height:1.5;text-decoration:underline!important;text-underline-offset:4px;padding:4px 0}
+html body .geo-legal-links a:hover{text-decoration-thickness:2px!important}
+@media(max-width:479px){html body .geo-legal-links>div{flex-direction:column;align-items:flex-start;gap:4px}}
+
+/* Larger GEO Audit workflow numbers only; keep existing colors and content. */
+body[data-page="landing"] .step-num{font-size:1.75rem;font-weight:700;line-height:1;width:3.75rem;height:3.75rem;flex-shrink:0}
+
+/* Supplied footer badges: legal links left, artwork right, responsive without cropping. */
+html body .geo-legal-links:has(>.geo-footer-credentials-row){padding:12px 0}
+html body .geo-legal-links>.geo-footer-credentials-row{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:32px}
+html body .geo-footer-legal-copy{min-width:0;flex:0 1 auto;text-align:left}
+html body .geo-footer-legal-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px}
+html body .geo-legal-links .geo-footer-badges{display:flex;align-items:center;justify-content:flex-end;gap:24px;flex:0 0 auto;max-width:100%}
+html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block;height:128px;width:auto;max-width:none;object-fit:contain;flex:none}
+@media(min-width:1280px){html body .geo-legal-links .geo-footer-badges{gap:40px}}
+@media(max-width:1023px){
+ html body .geo-legal-links>.geo-footer-credentials-row{flex-direction:column;align-items:stretch;gap:24px}
+ html body .geo-legal-links .geo-footer-badges{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.94fr) minmax(0,1fr);align-items:center;justify-content:start;gap:20px;width:100%;max-width:420px;flex:0 1 auto}
+ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{min-width:0;max-width:100%;width:100%;height:auto;max-height:none}
+}
+@media(max-width:639px){
+ html body .geo-legal-links .geo-footer-badges{gap:16px;max-width:340px}
+}
+@media(max-width:479px){
+ html body .geo-footer-legal-actions{flex-direction:column;align-items:flex-start;gap:4px}
+ html body .geo-legal-links .geo-footer-badges{gap:12px;max-width:320px}
+}

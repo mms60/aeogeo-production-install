@@ -1,0 +1,21 @@
+/* Bottom cookie choices. All visual rules are limited to the consent UI. */
+body[data-aeogeo-cookie-ui]{padding-bottom:calc(var(--aeogeo-cookie-base-padding,0px) + var(--aeogeo-cookie-clearance,0px))!important}
+#aeogeo-cookie-banner,#aeogeo-cookie-preferences{box-sizing:border-box;font-family:Inter,system-ui,sans-serif;color:#fff!important}
+#aeogeo-cookie-banner[hidden],#aeogeo-cookie-preferences[hidden]{display:none!important}
+#aeogeo-cookie-banner{position:fixed;inset:auto 0 0;z-index:2147483000;max-height:60vh;max-height:60dvh;overflow:auto;overscroll-behavior:contain;background:var(--color-navy-900,#0a1533);border-top:1px solid #6485bd;box-shadow:0 -8px 30px #050b1f55;padding:20px max(24px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));text-align:left;line-height:1.6;color-scheme:dark}
+#aeogeo-cookie-banner *{box-sizing:border-box}
+#aeogeo-cookie-banner .aeogeo-cookie-inner{display:flex;align-items:center;gap:28px;max-width:1216px;margin:0 auto;padding-right:32px}
+#aeogeo-cookie-banner .aeogeo-cookie-copy{flex:1;min-width:0}
+#aeogeo-cookie-banner #aeogeo-cookie-title{margin:0 0 8px;font-family:inherit;font-size:18px;font-weight:700;line-height:1.4;color:#fff!important;letter-spacing:normal;text-transform:none}
+#aeogeo-cookie-banner p{margin:0;font-size:14px;line-height:1.7;font-weight:400;color:#fff!important}
+#aeogeo-cookie-banner a{color:#dce6ff!important;text-decoration:underline;text-underline-offset:3px;white-space:nowrap;font-size:inherit;font-weight:600}
+#aeogeo-cookie-banner .aeogeo-cookie-actions{display:flex;flex-wrap:wrap;gap:10px;flex-shrink:0}
+#aeogeo-cookie-banner .aeogeo-cookie-actions button{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #9bb7f5;border-radius:9px;padding:11px 16px;background:#244994;color:#fff!important;font-family:inherit;font-size:14px;font-weight:700;line-height:1.5;cursor:pointer;text-align:center;letter-spacing:normal;text-transform:none;box-shadow:none}
+#aeogeo-cookie-banner .aeogeo-cookie-actions button:hover{background:#315eaf}
+#aeogeo-cookie-banner .aeogeo-cookie-close{appearance:none;position:absolute;top:8px;right:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:8px;padding:0;background:transparent;color:#fff!important;font-family:inherit;font-size:30px;font-weight:400;line-height:1;cursor:pointer;box-shadow:none}
+#aeogeo-cookie-banner .aeogeo-cookie-close:hover{background:#ffffff12}
+#aeogeo-cookie-banner button:focus-visible,#aeogeo-cookie-banner a:focus-visible,#aeogeo-cookie-preferences:focus-visible{outline:3px solid #bcd4ff;outline-offset:3px}
+#aeogeo-cookie-preferences{appearance:none;position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:2147482999;max-width:calc(100% - 24px);min-height:44px;border:1px solid #6485bd;border-radius:9px;padding:10px 14px;background:var(--color-navy-900,#0a1533);font-size:12px;font-weight:600;line-height:1.5;cursor:pointer;box-shadow:0 3px 12px #050b1f55;text-transform:none;letter-spacing:normal}
+@media(max-width:850px){#aeogeo-cookie-banner .aeogeo-cookie-inner{flex-direction:column;align-items:stretch;gap:16px;padding-right:0}#aeogeo-cookie-banner #aeogeo-cookie-title{padding-right:32px}#aeogeo-cookie-banner .aeogeo-cookie-actions button{flex:1;min-width:0}}
+@media(max-width:380px){#aeogeo-cookie-banner{padding-left:16px;padding-right:16px}#aeogeo-cookie-banner .aeogeo-cookie-actions{gap:8px}#aeogeo-cookie-banner .aeogeo-cookie-actions button{padding:10px 8px;font-size:13px}}
+@media print{#aeogeo-cookie-banner,#aeogeo-cookie-preferences{display:none!important}body[data-aeogeo-cookie-ui]{padding-bottom:var(--aeogeo-cookie-base-padding,0px)!important}}

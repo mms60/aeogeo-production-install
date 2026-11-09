@@ -1,0 +1,122 @@
+# AEOGEO Competitor Intelligence routes
+/competitor-intelligence/index.html /competitor-intelligence 301!
+/competitor-intelligence /competitor-intelligence/index.html 200
+/competitor-intelligence/ /competitor-intelligence/index.html 200
+/competitor-intelligence/sample-preview.html /competitor-intelligence/sample-preview.html 200
+/ai-content-humanizer /ai-content-humanizer.html 200
+# AEOGEO visibility-tool URL migration
+/competitor-tool https://aeogeosearch.com/visibility-tool 301!
+/competitor-tool/ https://aeogeosearch.com/visibility-tool 301!
+/competitor-tool.html https://aeogeosearch.com/visibility-tool 301!
+/competitor-tool/index.html https://aeogeosearch.com/visibility-tool 301!
+# =============================================================================
+# aeogeosearch.com — Netlify _redirects
+# Put this file in your PUBLISH directory (usually dist/ or public/).
+# prerender.mjs copies it there automatically.
+#
+# IMPORTANT: delete any existing catch-all SPA rewrite such as
+#     /*    /index.html    200
+# from netlify.toml, _redirects, or the Netlify UI. That rule makes EVERY junk
+# URL (/$ , /* , /admin/ , /month , /nonsense-page-xyz) return HTTP 200 with
+# your homepage — Google calls these "soft 404s".
+#
+# Netlify notes that shaped this file:
+#   * Rules are first-match-wins, top to bottom.
+#   * A rule does NOT shadow an existing file unless it ends with "!" (force).
+#   * Trailing slashes are normalised BEFORE rules run, so you must NOT write
+#     "/about/ -> /about" rules — they cause redirect loops. Pretty URLs
+#     (on by default) already standardises slashless URLs.
+#   * Query parameters are passed through on 301s, so a rule like
+#     "/resources q=:q /resources 301" would loop. We deliberately do NOT
+#     add it; the SearchAction markup is removed instead and /resources?q=...
+#     resolves to a page whose canonical is /resources.
+# =============================================================================
+
+# --- 1. Alias routes: one page, one URL (301, not canonical) -----------------
+# These four pairs currently render identical React components. Google found
+# the short versions as path-like strings inside your inline JS bundle.
+# (Trailing-slash variants are listed too; Netlify normalises them first.)
+/terms                 /terms-of-service      301
+/terms/                /terms-of-service      301
+/privacy               /privacy-policy        301
+/privacy/              /privacy-policy        301
+/aeo-geo-tools         /tools                 301
+/aeo-geo-tools/        /tools                 301
+/knowledge-library     /learn                 301
+/knowledge-library/    /learn                 301
+
+# --- 2. Normalise the homepage ------------------------------------------------
+# "!" is required because /index.html is a real deployed file; without force,
+# Netlify would serve the file instead of redirecting.
+/index.html            /                      301!
+
+# --- 3. Serve the pre-rendered HTML for each REAL route (200 = rewrite) ------
+# These are internal rewrites: the browser URL stays /about. No catch-all.
+/about                 /about.html            200
+/services              /services.html         200
+/pricing               /pricing.html          200
+/what-is-aeom          /what-is-aeom.html     200
+/resources             /resources.html        200
+/learn                 /learn.html            200
+/tools                 /tools.html            200
+/visibility-tool       /visibility-tool.html  200
+/terms-of-service      /terms-of-service.html 200
+/privacy-policy        /privacy-policy.html   200
+/accessibility         /accessibility.html    200
+/contact               /contact.html          200
+
+# The /assets/ folder (shared app.js + site.css) and /images/ are REAL files.
+# Netlify shadowing means a non-forced splat rule like the one below never
+# overrides an existing file, so those assets are served normally.
+# --- 4. Safety net: a REAL 404 for anything not listed above ------------------
+# A 404.html file alone is normally enough, but this explicit LAST rule also
+# overrides any leftover "/*  /index.html  200" catch-all that might still be
+# configured in netlify.toml (file-based _redirects rules run first).
+# Shadowing means existing static files (robots.txt, sitemap.xml, images) still
+# win, so this only fires for paths that don't exist — exactly /$ , /* , /& ,
+# /month , /admin/ , /auth/ , /cart/ , /checkout/ , /account/ , /private/ ...
+# which is what gets them permanently removed from Google's index.
+
+# GEO Audit product and authenticated pages
+/geo-audit /geo-audit/index.html 200
+/geo-audit/run /geo-audit/run/index.html 200
+/account /account/index.html 200
+/login /login/index.html 200
+/auth/callback /auth/callback/index.html 200
+
+/service-checkout /service-checkout/index.html 200
+/service-checkout/ /service-checkout/index.html 200
+
+# BEGIN individual-resource-articles-v1
+/resources/what-is-ai-search-optimization /resources/what-is-ai-search-optimization/ 301
+/resources/what-is-ai-search-optimization/ /resources/what-is-ai-search-optimization/index.html 200
+/resources/what-is-geo /resources/what-is-geo/ 301
+/resources/what-is-geo/ /resources/what-is-geo/index.html 200
+/resources/what-is-aeo /resources/what-is-aeo/ 301
+/resources/what-is-aeo/ /resources/what-is-aeo/index.html 200
+/resources/seo-aeo-geo-aio-difference /resources/seo-aeo-geo-aio-difference/ 301
+/resources/seo-aeo-geo-aio-difference/ /resources/seo-aeo-geo-aio-difference/index.html 200
+/resources/ai-overviews-changing-search /resources/ai-overviews-changing-search/ 301
+/resources/ai-overviews-changing-search/ /resources/ai-overviews-changing-search/index.html 200
+/resources/zero-click-search /resources/zero-click-search/ 301
+/resources/zero-click-search/ /resources/zero-click-search/index.html 200
+/resources/get-cited-ai-answers /resources/get-cited-ai-answers/ 301
+/resources/get-cited-ai-answers/ /resources/get-cited-ai-answers/index.html 200
+/resources/which-ai-platforms /resources/which-ai-platforms/ 301
+/resources/which-ai-platforms/ /resources/which-ai-platforms/index.html 200
+/resources/what-is-aeom /resources/what-is-aeom/ 301
+/resources/what-is-aeom/ /resources/what-is-aeom/index.html 200
+/resources/measure-ai-visibility /resources/measure-ai-visibility/ 301
+/resources/measure-ai-visibility/ /resources/measure-ai-visibility/index.html 200
+# END individual-resource-articles-v1
+# AEOGEOSearch free content checker. One canonical page; no SPA catch-all.
+/tools/content-checker       /tools/geo-content-checker/             301!
+/tools/content-checker/      /tools/geo-content-checker/             301!
+/tools/geo-content-checker/  /tools/geo-content-checker/index.html   200
+# Private content receipt/review pages. Native directory rewrites, no forced slash redirects.
+/content-order/  /content-order/index.html  200
+/content-review/ /content-review/index.html 200
+
+
+
+/* /404.html 404
