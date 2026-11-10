@@ -194,7 +194,7 @@ test('a billing reconciliation failure cannot reserve or consume an audit',async
    throw Error('Unexpected request '+s);
   };
   const out=await require('../netlify/functions/start-audit').handler({httpMethod:'POST',headers:{authorization:'Bearer fixture'},body:JSON.stringify({url:'https://example.com/',pages:75,requestId:crypto.randomUUID()})});
-  assert.equal(out.statusCode,500);assert.equal(reserved,false);
+  assert.equal(out.statusCode,503);assert.equal(reserved,false);
  }finally{global.fetch=oldFetch;for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}}
 });
 
