@@ -1,0 +1,3 @@
+'use strict';
+const {configuredContentService,catalog}=require('./lib/content-service');
+exports.handler=async event=>{const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};if(event.httpMethod!=='GET')return{statusCode:405,headers:{...headers,Allow:'GET'},body:JSON.stringify({message:'Read-only status endpoint.'})};let state;try{state=await configuredContentService().readiness();}catch{state={checkoutReady:false,message:'Secure content ordering is not configured yet.'};}return{statusCode:200,headers,body:JSON.stringify({...state,catalog})};};
