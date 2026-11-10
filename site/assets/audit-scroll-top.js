@@ -1,7 +1,6 @@
-/* GEO Audit landing page: independent, accessible scroll-to-top control. */
+/* All pages: independent, accessible scroll-to-top control. */
 (function () {
   'use strict';
-  if (window.location.pathname.replace(/\/+$/, '') !== '/geo-audit') return;
   var id = 'geo-scroll-to-top';
   if (document.getElementById(id)) return;
   var styles = document.createElement('style');
