@@ -47,3 +47,6 @@
     Cache-Control = "no-store"
     Referrer-Policy = "no-referrer"
     X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[functions."kit-download"]
+  included_files = ["netlify/functions/assets/AEOGEO-Search-Directory-Listing-Kit.docx"]
