@@ -33,6 +33,10 @@
     Referrer-Policy = "no-referrer"
 
 # Isolated content-service private pages and owner-notice retries.
+# AI Visibility & Schema Studio: crawler scans run as a background function.
+[functions."avss-scan-background"]
+  timeout = 900
+
 [functions."content-notifications"]
   schedule = "@hourly"
 [[headers]]

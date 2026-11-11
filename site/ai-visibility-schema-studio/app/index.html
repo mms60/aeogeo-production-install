@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>AI Visibility &amp; Schema Studio | AEOGEO Search</title>
+  <meta name="description" content="Paid AI crawler accessibility audits, structured data testing and schema generation.">
+  <link rel="stylesheet" href="/ai-visibility-schema-studio/app/styles.css">
+  <script src="/assets/supabase.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">AEOGEO <span>SEARCH</span></a>
+  <a class="back-link" href="/ai-visibility-schema-studio">About this tool</a>
+  <div class="top-actions">
+    <span id="account-label">Not signed in</span>
+    <button id="signout" class="quiet hidden">Sign out</button>
+  </div>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">PAID SUBSCRIBER TOOLKIT</div>
+    <h1>AI Visibility &amp; Schema Studio</h1>
+    <p>Find out whether AI search crawlers can access your website, test the structured data already in place, and generate page-specific JSON-LD schema you can review and implement.</p>
+    <div class="notice"><strong>Included in paid subscriptions.</strong> Your free robots.txt checker remains a separate free tool.</div>
+  </section>
+
+  <section id="auth-panel" class="panel auth-panel">
+    <div>
+      <h2>Sign in to your account</h2>
+      <p>Use your subscriber email. We’ll send a secure sign-in link.</p>
+    </div>
+    <form id="login-form" class="inline-form">
+      <input id="email" type="email" placeholder="you@company.com" required>
+      <button type="submit">Send sign-in link</button>
+    </form>
+    <p id="auth-message" class="muted"></p>
+  </section>
+
+  <section id="paywall" class="panel hidden">
+    <h2>Paid subscription required</h2>
+    <p>This workspace is available to active AEOGEO Search subscribers. Choose the subscription already configured in your Stripe account, or contact your account administrator.</p>
+    <div class="plan-actions">
+      <button data-plan="studio_monthly">Subscribe · $49/month per website</button>
+    </div>
+    <p class="muted">Billing is handled by Stripe. Cancel according to your subscription terms.</p>
+  </section>
+
+  <section id="app-panel" class="hidden">
+    <div class="tabs">
+      <button class="tab active" data-tab="crawler">AI crawler audit</button>
+      <button class="tab" data-tab="schema">Schema audit & creation</button>
+      <button class="tab" data-tab="history">Scan history</button>
+    </div>
+
+    <section id="tab-crawler" class="panel tab-content">
+      <div class="section-head">
+        <div><div class="eyebrow">ACCESSIBILITY TESTING</div><h2>AI crawler audit</h2><p>Test public pages using representative crawler user agents. A simulated request is not proof of a real crawler visit.</p></div>
+      </div>
+      <form id="crawler-form" class="stack">
+        <label>Website URL<input id="crawl-url" type="url" placeholder="https://example.com" required></label>
+        <label>Maximum pages<select id="page-limit"><option value="5">5 pages</option><option value="10" selected>10 pages</option><option value="20">20 pages</option></select></label>
+        <button type="submit">Run paid crawler audit</button>
+      </form>
+      <div id="crawler-status" class="muted"></div>
+      <div id="crawler-results"></div>
+    </section>
+
+    <section id="tab-schema" class="panel tab-content hidden">
+      <div class="eyebrow">STRUCTURED DATA INTELLIGENCE</div>
+      <h2>Schema audit & creation</h2>
+      <p>Inspect existing JSON-LD and generate relevant schema from verified business details. Review all generated data before adding it to your website.</p>
+      <form id="schema-form" class="stack">
+        <label>Page URL<input id="schema-url" type="url" placeholder="https://example.com/about" required></label>
+        <label>Page type<select id="schema-type">
+          <option value="Organization">Organization</option>
+          <option value="LocalBusiness">LocalBusiness</option>
+          <option value="Service">Service</option>
+          <option value="Article">Article</option>
+          <option value="Product">Product</option>
+          <option value="WebPage">WebPage</option>
+          <option value="FAQPage">FAQPage</option>
+        </select></label>
+        <label>Verified business/page details<textarea id="schema-details" rows="7" placeholder="Business name, official URL, description, address, phone, service details, author, product details, or FAQ questions and answers. Only provide facts you can verify." required></textarea></label>
+        <label class="check"><input id="schema-audit" type="checkbox" checked> Audit existing schema on this page first</label>
+        <button type="submit">Audit & generate schema</button>
+      </form>
+      <div id="schema-status" class="muted"></div>
+      <div id="schema-results"></div>
+    </section>
+
+    <section id="tab-history" class="panel tab-content">
+      <div class="eyebrow">YOUR ACCOUNT</div><h2>Recent scans</h2>
+      <button id="refresh-history" class="secondary">Refresh history</button>
+      <div id="history-results"></div>
+    </section>
+  </section>
+  <footer>AEOGEO Search · AI crawler tests are simulations unless verified against server/CDN logs. Schema output is a draft and should be reviewed before publishing.</footer>
+</main>
+<script src="/ai-visibility-schema-studio/app/config.js"></script>
+<script src="/ai-visibility-schema-studio/app/app.js"></script>
+</body>
+</html>
