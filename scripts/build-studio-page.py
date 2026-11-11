@@ -20,7 +20,7 @@ scripts = '\n'.join(m.group(0) for m in re.finditer(
     r'<script[^>]*src="/assets/[^"]+"[^>]*>\s*</script>', shell, re.S))
 assert scripts.count('<script') >= 4, f'site shell scripts not found (got {scripts.count("<script")})'
 
-URL = 'https://aegeosearch.com/ai-visibility-schema-studio'
+URL = 'https://aeogeosearch.com/ai-visibility-schema-studio'
 TITLE = 'AI Visibility & Schema Studio | AEOGEO Search'
 DESC = ('Find out why AI search engines cannot read your site, fix the gaps, and generate schema '
         'that explains your business. $49 per month, per website.')
@@ -34,7 +34,7 @@ app_schema = {
     "url": URL,
     "description": ("A paid workspace that tests AI crawler accessibility, audits existing JSON-LD "
                     "structured data, and generates customized JSON-LD drafts for review."),
-    "provider": {"@type": "Organization", "name": "AEOGEO Search", "url": "https://aegeosearch.com/"},
+    "provider": {"@type": "Organization", "name": "AEOGEO Search", "url": "https://aeogeosearch.com/"},
     "offers": {
         "@type": "Offer",
         "price": "49",
@@ -52,7 +52,7 @@ crumb_schema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://aegeosearch.com/"},
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://aeogeosearch.com/"},
         {"@type": "ListItem", "position": 2, "name": "AI Visibility & Schema Studio", "item": URL},
     ],
 }
@@ -72,11 +72,11 @@ head = f'''<!DOCTYPE html>
 <meta property="og:title" content="{TITLE}"/>
 <meta property="og:description" content="{DESC}"/>
 <meta property="og:url" content="{URL}"/>
-<meta property="og:image" content="https://aegeosearch.com/images/bg-ai-circles.jpg"/>
+<meta property="og:image" content="https://aeogeosearch.com/images/bg-ai-circles.jpg"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="{TITLE}"/>
 <meta name="twitter:description" content="{DESC}"/>
-<meta name="twitter:image" content="https://aegeosearch.com/images/bg-ai-circles.jpg"/>
+<meta name="twitter:image" content="https://aeogeosearch.com/images/bg-ai-circles.jpg"/>
 <script type="application/ld+json">{json.dumps(app_schema)}</script>
 <script type="application/ld+json">{json.dumps(crumb_schema)}</script>
 <link rel="stylesheet" href="/assets/site.css"/>
