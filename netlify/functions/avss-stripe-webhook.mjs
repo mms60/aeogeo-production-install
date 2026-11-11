@@ -6,7 +6,7 @@ export default async event => {
     const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
     const signature=event.headers["stripe-signature"];
     const raw=event.isBase64Encoded?Buffer.from(event.body,"base64"):Buffer.from(event.body||"");
-    const stripeEvent=stripe.webhooks.constructEvent(raw,signature,process.env.STRIPE_WEBHOOK_SECRET);
+    const stripeEvent=stripe.webhooks.constructEvent(raw,signature,process.env.STRIPE_AVSS_WEBHOOK_SECRET);
     const db=adminClient();
     if(["customer.subscription.created","customer.subscription.updated","customer.subscription.deleted"].includes(stripeEvent.type)){
       const sub=stripeEvent.data.object, userId=sub.metadata?.supabase_user_id;
