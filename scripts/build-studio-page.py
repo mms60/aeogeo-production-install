@@ -22,8 +22,8 @@ assert scripts.count('<script') >= 4, f'site shell scripts not found (got {scrip
 
 URL = 'https://aegeosearch.com/ai-visibility-schema-studio'
 TITLE = 'AI Visibility & Schema Studio | AEOGEO Search'
-DESC = ('Test AI crawler accessibility, audit existing structured data, and generate customized '
-        'JSON-LD schema for your website. $49 per month, per website.')
+DESC = ('Find out why AI search engines cannot read your site, fix the gaps, and generate schema '
+        'that explains your business. $49 per month, per website.')
 
 app_schema = {
     "@context": "https://schema.org",
