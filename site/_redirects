@@ -113,6 +113,10 @@
 /tools/content-checker       /tools/geo-content-checker/             301!
 /tools/content-checker/      /tools/geo-content-checker/             301!
 /tools/geo-content-checker/  /tools/geo-content-checker/index.html   200
+# AI Visibility & Schema Studio: marketing page, then the paid workspace app.
+/ai-visibility-schema-studio        /ai-visibility-schema-studio.html          200
+/ai-visibility-schema-studio/app    /ai-visibility-schema-studio/app/index.html 200
+/ai-visibility-schema-studio/app/   /ai-visibility-schema-studio/app/index.html 200
 # Private content receipt/review pages. Native directory rewrites, no forced slash redirects.
 /content-order/  /content-order/index.html  200
 /content-review/ /content-review/index.html 200
