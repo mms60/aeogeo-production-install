@@ -32,13 +32,25 @@
   <section id="auth-panel" class="panel auth-panel">
     <div>
       <h2>Sign in to your account</h2>
-      <p>Use your subscriber email. We’ll send a secure sign-in link.</p>
+      <p>Use the same email address and password you use for the rest of AEOGEO Search. No separate login to remember.</p>
+      <p class="muted">New to the studio? Enter your email, choose a password, and press <strong>Create account</strong>. An active studio subscription is still required to run audits.</p>
     </div>
-    <form id="login-form" class="inline-form">
-      <input id="email" type="email" placeholder="you@company.com" required>
-      <button type="submit">Send sign-in link</button>
+    <form id="login-form" class="auth-form" novalidate>
+      <label for="email">Email address</label>
+      <input id="email" type="email" autocomplete="email" placeholder="you@company.com" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+      <div class="auth-actions">
+        <button type="submit" id="signin-button">Sign in</button>
+        <button type="button" id="signup-button" class="secondary">Create account</button>
+      </div>
+      <div class="auth-links">
+        <button type="button" id="forgot-password" class="link-button">Forgot password?</button>
+        <button type="button" id="magic-link" class="link-button">Email me a sign-in link</button>
+        <a href="/login/?next=%2Fai-visibility-schema-studio%2Fapp%2F">Open the main sign-in page</a>
+      </div>
     </form>
-    <p id="auth-message" class="muted"></p>
+    <p id="auth-message" class="muted" role="status" aria-live="polite"></p>
   </section>
 
   <section id="paywall" class="panel hidden">

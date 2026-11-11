@@ -44,10 +44,64 @@ async function init(){
   const {data:{session}}=await supabaseClient.auth.getSession(); await updateSession(session);
   supabaseClient.auth.onAuthStateChange((_event,session)=>updateSession(session));
 }
+const APP_PATH="/ai-visibility-schema-studio/app/";
+function authBusy(busy){
+  ["signin-button","signup-button","forgot-password","magic-link"].forEach(id=>$(id).disabled=busy);
+}
+function authError(error){
+  const text=String(error?.message||"");
+  if(/invalid login credentials/i.test(text))return "That email and password don’t match an account. Check them, or use Create account / Forgot password?.";
+  if(/email not confirmed/i.test(text))return "Confirm your email address first — open the link we emailed you, then sign in here.";
+  if(/already registered/i.test(text))return "That email already has an AEOGEO Search account. Sign in with your existing password.";
+  if(/password should be at least/i.test(text))return text;
+  if(/rate limit|too many/i.test(text))return "Too many attempts. Wait a minute and try again.";
+  if(/failed to fetch|networkerror/i.test(text))return "Could not reach the sign-in service. Check your connection and try again.";
+  return text||"Something went wrong. Try again.";
+}
+const entry=()=>({email:$("email").value.trim(),password:$("password").value});
 $("login-form").addEventListener("submit",async e=>{
-  e.preventDefault();msg("auth-message","Sending sign-in link…");
-  const {error}=await supabaseClient.auth.signInWithOtp({email:$("email").value,options:{emailRedirectTo:location.origin+"/ai-visibility-schema-studio/app/"}});
-  msg("auth-message",error?error.message:"Check your email for the secure sign-in link.");
+  e.preventDefault();
+  const {email,password}=entry();
+  if(!email||!password){msg("auth-message","Enter your email address and password.");return;}
+  authBusy(true);msg("auth-message","Signing in…");
+  try{
+    const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+    msg("auth-message",error?authError(error):"Signed in.");
+  }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
+});
+$("signup-button").addEventListener("click",async()=>{
+  const {email,password}=entry();
+  if(!email){msg("auth-message","Enter your email address, then choose a password and press Create account.");$("email").focus();return;}
+  if(password.length<8){msg("auth-message","Choose a password of at least 8 characters.");$("password").focus();return;}
+  authBusy(true);msg("auth-message","Creating your account…");
+  try{
+    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+APP_PATH}});
+    if(error){msg("auth-message",authError(error));return;}
+    if(data?.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
+      msg("auth-message","That email already has an AEOGEO Search account. Sign in with your existing password, or use Forgot password?.");return;
+    }
+    msg("auth-message",data?.session
+      ?"Account created and signed in."
+      :`Account created. Open the confirmation link we emailed to ${email}, then sign in here with the password you just chose.`);
+  }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
+});
+$("forgot-password").addEventListener("click",async()=>{
+  const email=$("email").value.trim();
+  if(!email){msg("auth-message","Enter your email address, then press Forgot password?.");$("email").focus();return;}
+  authBusy(true);msg("auth-message","Sending a password reset link…");
+  try{
+    const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/auth/callback/"});
+    msg("auth-message",error?authError(error):`If ${email} has an account, a password reset link is on its way.`);
+  }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
+});
+$("magic-link").addEventListener("click",async()=>{
+  const email=$("email").value.trim();
+  if(!email){msg("auth-message","Enter your email address, then press Email me a sign-in link.");$("email").focus();return;}
+  authBusy(true);msg("auth-message","Sending a sign-in link…");
+  try{
+    const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+APP_PATH}});
+    msg("auth-message",error?authError(error):"Check your email for the secure sign-in link.");
+  }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
 });
 $("signout").addEventListener("click",async()=>{await supabaseClient.auth.signOut();});
 document.querySelectorAll("[data-plan]").forEach(b=>b.addEventListener("click",async()=>{
