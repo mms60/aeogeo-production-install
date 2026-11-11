@@ -9,7 +9,9 @@
   <link rel="stylesheet" href="/assets/audit-fonts.css" />
   <link rel="stylesheet" href="/assets/audit-tool.css" />
   <script defer src="/assets/supabase.js"></script>
+  <script defer src="/assets/implementation-guides.js"></script>
   <script defer src="/assets/audit-tool.js"></script>
+  <link rel="stylesheet" href="/assets/implementation-guides.css" />
 </head>
 <body class="bg-grid" data-page="original-tool">
   <div class="ambient-layer" aria-hidden="true"><div class="ambient-glow glow-1"></div>
@@ -84,7 +86,7 @@
             <div style="min-width:0;"><div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.35rem;flex-wrap:wrap;"><span class="font-display summary-domain" id="res-domain-name" style="font-size:1.4rem;font-weight:700;color:#fff;">Website</span><span id="res-score-badge" class="score-badge score-unavailable">Not scored</span></div><p style="font-size:.875rem;color:var(--color-ice-200);opacity:.9;">Website audit across <strong id="res-page-count" style="color:#fff;">0 pages</strong> from public discovery · 22-point framework</p><div style="display:flex;gap:1rem;font-size:.8rem;color:var(--color-ice-300);margin-top:.4rem;flex-wrap:wrap;"><span>📅 Analyzed: <strong id="res-date-str" style="color:var(--color-ice-100);">Not yet</strong></span><span>⚡ Crawler: <strong style="color:var(--color-ice-100);">aeogeosearch initial-HTML engine</strong></span></div></div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;">
-            <button type="button" id="export-pdf" class="btn-primary" style="padding:.65rem 1.25rem;font-size:.85rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><span>Download PDF Report</span></button>
+            <button type="button" id="export-pdf" class="btn-primary" style="padding:.65rem 1.25rem;font-size:.85rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><span>Download Complete PDF</span></button>
             <button type="button" id="export-md" class="btn-secondary" style="padding:.65rem 1.2rem;font-size:.85rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg><span>Download AI Brief (.md)</span></button>
             <button type="button" id="export-csv" class="btn-secondary" style="padding:.65rem 1rem;font-size:.85rem;" title="Export CSV Data"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>CSV</span></button>
             <button type="button" id="restart-audit" class="btn-secondary" style="padding:.65rem 1rem;font-size:.85rem;" title="Run New Audit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg><span>New Domain</span></button>

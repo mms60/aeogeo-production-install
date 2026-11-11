@@ -1,0 +1,51 @@
+.plain-guide{margin:.75rem 0 0;padding:1rem;border:1px solid rgba(110,168,255,.35);border-radius:.75rem;background:rgba(20,43,91,.42);line-height:1.6;color:#edf4ff;overflow-wrap:anywhere}.plain-guide p{margin:.42rem 0}.plain-guide ol{padding-left:1.4rem;margin:.45rem 0}.plain-guide li{margin:.35rem 0}.guide-unavailable{border-color:#7e8bab}.guide-pass{border-color:#5ba895}#aeogeo-page-appendix,#pdf-page-index{display:none}
+@media print{
+  @page{margin:.45in}
+  .plain-guide{background:#f5f8ff!important;border-color:#c9d6ee!important;color:#111827!important;font-size:9.5pt;line-height:1.3;padding:7pt;margin:5pt 0}
+  .plain-guide *{color:#111827!important}
+  #aeogeo-page-appendix{display:block!important;color:#111827!important;background:#fff!important;font-family:Arial,sans-serif;font-size:10pt;line-height:1.3;max-width:100%;overflow:visible}
+  #aeogeo-page-appendix *{color:#111827!important;box-sizing:border-box;overflow-wrap:anywhere}
+  #aeogeo-page-appendix>h1{font-size:18pt;color:#17336d!important}
+  #pdf-page-index{display:block!important;color:#111827!important;background:#fff!important;font:10pt/1.3 Arial,sans-serif;margin:14pt 0}
+  #pdf-page-index h2{font-size:14pt;break-after:avoid;page-break-after:avoid}
+  #pdf-page-index ol{list-style:decimal outside!important;padding-left:22pt!important}
+  #pdf-page-index li{margin:3pt 0;break-inside:avoid;page-break-inside:avoid}
+  #pdf-page-index a{color:#1d4ed8!important}
+  #pdf-page-index a,.pdf-page-heading a{text-decoration:underline}
+  /* Dark dashboard backgrounds and pale links need accessible print contrast. */
+  #metric-grid-container .metric-card>div:last-child{background:#f3f6fc!important;border:1px solid #d2dceb!important}
+  #metric-grid-container .method-chip{color:#111827!important;border-color:#8b9bb5!important}
+  body[data-page="original-tool"] .tool-container a{color:#1d4ed8!important}
+  #aeogeo-page-appendix .pdf-site-page{break-before:page;page-break-before:always}
+  /* Let the first page follow the appendix introduction; avoid an almost-empty sheet. */
+  #aeogeo-page-appendix>.pdf-site-page:first-of-type{break-before:auto;page-break-before:auto}
+  #aeogeo-page-appendix .pdf-page-heading{break-after:avoid;page-break-after:avoid}
+  #aeogeo-page-appendix .pdf-page-heading h2{font-size:15pt;color:#17336d!important}
+  .roadmap-card{break-inside:auto!important;page-break-inside:auto!important}
+  /* The on-screen table uses wide minimum widths; reset them for paper. */
+  #tab-content-pages .table-wrap{overflow:visible!important;width:100%!important}
+  #tab-content-pages table{table-layout:fixed!important;width:100%!important;font-size:8.5pt!important}
+  #tab-content-pages th,#tab-content-pages td{min-width:0!important;padding:4pt 3pt!important;overflow-wrap:anywhere;word-break:break-word;vertical-align:top;color:#111827!important}
+  #tab-content-pages th *,#tab-content-pages td *{color:#111827!important}
+  #tab-content-pages thead tr{background:#e9efff!important}
+  #tab-content-pages tr{break-inside:avoid;page-break-inside:avoid}
+  #tab-content-pages th:nth-child(1){width:27%}#tab-content-pages th:nth-child(2){width:10%}#tab-content-pages th:nth-child(3){width:10%}#tab-content-pages th:nth-child(4){width:20%}#tab-content-pages th:nth-child(5){width:33%}
+  #tab-content-pages td:nth-child(2) span{white-space:nowrap!important;padding:1pt 2pt!important;font-size:7pt!important}
+  #tab-content-pages th:last-child,#tab-content-pages td:last-child{display:none!important}
+  #aeogeo-page-appendix .pdf-metric{padding:7pt 0;border-bottom:1px solid #d2dceb;break-inside:auto;page-break-inside:auto}
+  #aeogeo-page-appendix .pdf-metric h3{font-size:11.5pt;margin:0 0 4pt;break-after:avoid;page-break-after:avoid}
+  #pdf-playbook{break-before:page;page-break-before:always}
+  #pdf-playbook h2,#pdf-playbook h3,#pdf-playbook h4{break-after:avoid;page-break-after:avoid}
+  #pdf-playbook .pdf-tutorial{padding:8pt 0;border-bottom:1px solid #d2dceb}
+  #pdf-playbook ol{padding-left:18pt}
+  #pdf-playbook li{margin:4pt 0}
+  #aeogeo-page-appendix p{margin:3pt 0}
+  #aeogeo-page-appendix .pdf-evidence{padding-left:9pt}
+  #aeogeo-page-appendix .plain-guide{background:#f5f8ff!important;color:#111827!important;border:1px solid #c9d6ee!important;padding:8pt;margin:5pt 0 2pt;border-radius:4pt}
+  #aeogeo-page-appendix .plain-guide>strong:first-child{display:block;break-after:avoid;page-break-after:avoid}
+  #aeogeo-page-appendix .plain-guide ol{margin:4pt 0;padding-left:18pt}
+  #aeogeo-page-appendix .plain-guide li{margin:3pt 0}
+  #aeogeo-page-appendix .pdf-example pre{white-space:pre-wrap;word-break:break-word;font-size:8pt;padding:8pt;border:1px solid #d2dceb}
+  body[data-page="original-tool"] footer,body[data-page="original-tool"] footer *{color:#111827!important}
+  body[data-page="original-tool"] footer a{color:#1d4ed8!important}
+}
