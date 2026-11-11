@@ -51,7 +51,7 @@ function authBusy(busy){
 function authError(error){
   const text=String(error?.message||"");
   if(/invalid login credentials/i.test(text))return "That email and password don’t match an account. Check them, or use Create account / Forgot password?.";
-  if(/email not confirmed/i.test(text))return "Confirm your email address first — open the link we emailed you, then sign in here.";
+  if(/email not confirmed/i.test(text))return "Confirm your email address first. Open the link we emailed you, then sign in here.";
   if(/already registered/i.test(text))return "That email already has an AEOGEO Search account. Sign in with your existing password.";
   if(/password should be at least/i.test(text))return text;
   if(/rate limit|too many/i.test(text))return "Too many attempts. Wait a minute and try again.";
@@ -128,7 +128,7 @@ async function pollScan(id){
 function renderCrawler(r){
   const s=r.scan, findings=r.findings||[];
   msg("crawler-status",`Scan ${s.status}. ${s.score==null?"":`Score: ${s.score}/100`}`);
-  $("crawler-results").innerHTML=`<div class="grid"><div class="metric"><strong>${s.score??"—"}</strong>Accessibility score</div><div class="metric"><strong>${s.pages_tested??0}</strong>Pages tested</div><div class="metric"><strong>${findings.length}</strong>Findings</div></div>`+
+  $("crawler-results").innerHTML=`<div class="grid"><div class="metric"><strong>${s.score??"N/A"}</strong>Accessibility score</div><div class="metric"><strong>${s.pages_tested??0}</strong>Pages tested</div><div class="metric"><strong>${findings.length}</strong>Findings</div></div>`+
     findings.map(f=>`<div class="finding ${esc(f.severity)}"><strong>${esc(f.severity)} · ${esc(f.title)}</strong><p>${esc(f.evidence||f.recommendation||"")}</p><small>${esc(f.url||"")}</small></div>`).join("");
 }
 $("schema-form").addEventListener("submit",async e=>{
