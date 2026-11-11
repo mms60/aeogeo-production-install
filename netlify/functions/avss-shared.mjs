@@ -2,9 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import dns from "node:dns/promises";
 import net from "node:net";
 
-export const json = (statusCode, body) => ({
-  statusCode, headers: {"Content-Type":"application/json","Cache-Control":"no-store"},
-  body: JSON.stringify(body)
+// These are Netlify Functions 2.0 handlers (ESM default export), so every response
+// must be a real Response object. Returning {statusCode, headers, body} makes the
+// platform reject the value with a 502 before the client ever sees the JSON.
+export const json = (statusCode, body) => new Response(JSON.stringify(body), {
+  status: statusCode,
+  headers: {"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}
 });
 export const readBody = event => {
   try { return JSON.parse(event.body || "{}"); } catch { throw new Error("Request body must be valid JSON."); }
