@@ -40,6 +40,12 @@
 <script defer src="/assets/aeogeo-footer-facebook.js?v=2" data-aeogeo-footer-facebook-loader="v2"></script>
 <script defer src="/assets/site-header.js"></script>
 <script defer src="/assets/audit-scroll-top.js"></script>
+<script defer src="/assets/content-commerce.js"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", function () {
+    if (window.AEOGEOContentCommerce) window.AEOGEOContentCommerce.mount(document);
+  });
+</script>
 <style>
 .cc-score-panel{margin:1.25rem 0;padding:1.25rem;border:1px solid rgba(129,140,248,.35);border-radius:1rem;background:rgba(30,41,80,.42)}
 .cc-score-value{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:800;line-height:1.05;margin:.25rem 0}
