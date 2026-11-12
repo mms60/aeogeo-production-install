@@ -7,7 +7,7 @@ const AUTH_KEY='sb_publishable_0T08Pe4A0ZvoHD5CXrd1iA_BvUyVxAO';
 const SITE_ORIGIN='https://aeogeosearch.com';
 const API_VERSION='2025-02-24.acacia';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PRICES=[['starter','price_1UVwsvBIJX5f6Wmh2OKHUzny',34900],['growth','price_1UVwuWBIJX5f6Wmhv6hAExhQ',64900],['authority','price_1UVwwcBIJX5f6WmhWshWzm8O',99900]];
+const PRICES=[['starter','price_1Ub0dcBIJX5f6WmhHrZin7Ah',34900],['growth','price_1Ub0egBIJX5f6WmhUficfDCI',64900],['authority','price_1UVwwcBIJX5f6WmhWshWzm8O',99900]];
 const response=(statusCode,body,extra={})=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store, private','Netlify-CDN-Cache-Control':'no-store','CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',...extra},body:JSON.stringify(body)});
 const header=(e,name)=>Object.entries(e.headers||{}).find(([k])=>k.toLowerCase()===name)?.[1];
 function priceIssues(p,entry){const issues=[];

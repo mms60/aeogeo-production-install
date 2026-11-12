@@ -6,7 +6,7 @@ const path = require('node:path');
 const { stripe } = require('./lib/stripe');
 
 // The current price, plus the earlier one, so buyers who paid before the change still get the file.
-const PRICE_IDS = ['price_1UayqxBIJX5f6WmhOyuMvPCR', 'price_1UaHa5BIJX5f6WmhiJwYMHlO'];
+const PRICE_IDS = ['price_1UaHa5BIJX5f6WmhiJwYMHlO', 'price_1UayqxBIJX5f6WmhOyuMvPCR'];
 const PRODUCT = 'directory-listing-kit';
 const FILENAME = 'AEOGEO-Search-Directory-Listing-Kit.docx';
 const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';

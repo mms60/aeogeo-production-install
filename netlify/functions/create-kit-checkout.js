@@ -3,7 +3,7 @@
 // Stripe credentials come from your existing netlify/functions/lib/stripe helper.
 const { stripe, origin } = require('./lib/stripe');
 
-const PRICE_ID = 'price_1UayqxBIJX5f6WmhOyuMvPCR';
+const PRICE_ID = 'price_1UaHa5BIJX5f6WmhiJwYMHlO';
 const PRODUCT = 'directory-listing-kit';
 
 exports.handler = async event => {

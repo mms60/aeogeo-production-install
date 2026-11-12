@@ -10,8 +10,8 @@ const attempts = new Map();
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const SERVICES = Object.freeze({
  'knowledge-base': {amount:150000, price:'price_1UVxlCBIJX5f6Wmhv8rYJG3w', test:'STRIPE_PRICE_KNOWLEDGE_BASE_TEST', monthly:false},
- 'ai-visibility-starter': {amount:34900, price:'price_1UVwsvBIJX5f6Wmh2OKHUzny', test:'STRIPE_PRICE_AI_VISIBILITY_STARTER_TEST', monthly:true},
- 'ai-search-growth': {amount:64900, price:'price_1UVwuWBIJX5f6Wmhv6hAExhQ', test:'STRIPE_PRICE_AI_SEARCH_GROWTH_TEST', monthly:true},
+ 'ai-visibility-starter': {amount:34900, price:'price_1Ub0dcBIJX5f6WmhHrZin7Ah', test:'STRIPE_PRICE_AI_VISIBILITY_STARTER_TEST', monthly:true},
+ 'ai-search-growth': {amount:64900, price:'price_1Ub0egBIJX5f6WmhUficfDCI', test:'STRIPE_PRICE_AI_SEARCH_GROWTH_TEST', monthly:true},
  'ai-search-authority': {amount:99900, price:'price_1UVwwcBIJX5f6WmhWshWzm8O', test:'STRIPE_PRICE_AI_SEARCH_AUTHORITY_TEST', monthly:true}
 });
 const fail = (status,message) => Object.assign(new Error(message),{status});
