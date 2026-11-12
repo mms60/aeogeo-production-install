@@ -16,7 +16,7 @@
 .hr-home .hr-route .hr-eyebrow{color:#fff;font-weight:700}
 
 /* DIY audit pitch below the audit illustration */
-.hr-home .hr-figure .hr-audit-pitch{margin:26px 0 0;max-width:900px;font-size:15px;line-height:1.8;color:#c8d9f4}
+.hr-home .hr-figure .hr-audit-pitch{margin:26px 0 0;max-width:900px;font-size:15px;line-height:1.8;color:#c8d9f4;text-align:left}
 .hr-home .hr-figure .hr-audit-pitch h3{margin:0 0 16px;color:#fff;font-size:26px;line-height:1.35}
 .hr-home .hr-figure .hr-audit-pitch h4{margin:26px 0 10px;color:#fff;font-size:18px;line-height:1.4}
 .hr-home .hr-figure .hr-audit-pitch p{margin:0 0 14px}
