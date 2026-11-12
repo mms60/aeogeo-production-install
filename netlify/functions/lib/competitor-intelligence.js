@@ -7,8 +7,8 @@ const KIND = 'aeogeo_competitor_v1';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const PRICE_IDS = Object.freeze({
-  single: 'price_1UYUxlBIJX5f6Wmhyv5X7Sh2',
-  monthly: 'price_1UYUwuBIJX5f6WmhgfvaYeW1'
+  single: 'price_1Ub0LgBIJX5f6WmhPvKzFPLm',
+  monthly: 'price_1Ub0LgBIJX5f6WmhUcdLG4K7'
 });
 
 const CATALOG = Object.freeze({
