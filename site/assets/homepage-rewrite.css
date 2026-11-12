@@ -40,4 +40,4 @@
 @media (max-width:700px){.hr-home .hr-tool-grid{grid-template-columns:1fr}}
 
 /* Option 2 subheadings on the homepage */
-.hr-home .hr-route h4{margin:24px 0 10px;font-size:18px;line-height:1.4;color:#fff}
+.hr-home .hr-route h4{margin:24px 0 10px;font-size:18px;line-height:1.4;font-weight:700;color:#fff}
