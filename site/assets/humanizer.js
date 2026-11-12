@@ -31,7 +31,7 @@ function updateCount() {
 }
 function setBusy(next) {
   busy = next;
-  if (runBtn) { runBtn.disabled = next; runBtn.textContent = next ? 'Humanizing…' : 'Humanize text'; }
+  if (runBtn) { runBtn.disabled = next; runBtn.textContent = next ? 'Humanizing…' : 'Instant Humanize'; }
   if (cancelBtn) cancelBtn.hidden = !next;
   if (input) input.readOnly = next;
   if (copyBtn) copyBtn.disabled = next || !output.value;
