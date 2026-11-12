@@ -56,7 +56,9 @@ function fixture(options = {}) {
  };
  const stripe = async (url, args = {}) => {
   stripeCalls.push({url, args});
-  if (url.startsWith('prices/')) return {active: true, currency: 'usd', unit_amount: options.badPrice ? 1 : url.endsWith('year') ? 47040 : 4900, recurring: {interval: url.endsWith('year') ? 'year' : 'month', interval_count: 1}, livemode: false};
+  if (url.startsWith('prices/')) return {id: url.slice('prices/'.length), product: 'prod_current', active: true, currency: 'usd', unit_amount: options.badPrice ? 1 : url.endsWith('year') ? 47040 : 4900, recurring: {interval: url.endsWith('year') ? 'year' : 'month', interval_count: 1}, livemode: false};
+  if (url.startsWith('products/')) return {id: url.slice('products/'.length), active: true};
+  if (url.startsWith('prices?lookup_keys[]=')) return {data: []};
   if (url === 'customers') return {id: 'cus_test_owned'};
   if (url.startsWith('subscriptions?')) return {data: active ? [{id: 'sub_active', status: 'active'}] : canceled ? [{id: 'sub_old', status: 'canceled'}] : [], has_more: false};
   if (url === 'checkout/sessions') {

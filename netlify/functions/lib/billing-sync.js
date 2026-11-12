@@ -20,7 +20,7 @@ function refundReview(charge, sid, end) {
  return {id: 'refund:' + charge.id, charge_id: charge.id, subscription_id: sid, original_amount: charge.amount,
   amount_refunded: charge.amount_refunded, currency: charge.currency, full_refund: charge.amount > 0 && charge.amount_refunded >= charge.amount, period_end: end};
 }
-function makeBillingSync({db, stripe, fromPrice, PLANS, UUID, mode}) {
+function makeBillingSync({db, stripe, fromPrice, fromLookupKey = () => null, PLANS, UUID, mode}) {
  async function invoiceForCharge(charge) {
   let invoice = charge.invoice;
   if (!invoice && stripeID(charge.payment_intent)) {
@@ -54,14 +54,15 @@ function makeBillingSync({db, stripe, fromPrice, PLANS, UUID, mode}) {
    const sub = await stripe('subscriptions/' + encodeURIComponent(sid) + '?expand[]=latest_invoice.charge');
    if (sub.metadata?.user_id !== uid || stripeID(sub.customer) !== customer || sub.livemode !== (mode() === 'live')) throw problem('Subscription ownership or payment mode could not be verified.');
    if (sub.items?.has_more || sub.items?.data?.length !== 1) throw problem('Subscription items require manual billing review.');
-   const p = sub.items.data[0].price, mapped = fromPrice(stripeID(p));
+   const p = sub.items.data[0].price, mapped = fromPrice(stripeID(p)) || fromLookupKey(p.lookup_key);
    if (!mapped) throw problem('The subscription price is not configured for this application.');
    const expected = mapped.interval === 'year' ? PLANS[mapped.plan].annual : PLANS[mapped.plan].monthly;
    if (p.currency !== 'usd' || p.unit_amount !== expected || p.recurring?.interval !== mapped.interval || p.recurring?.interval_count !== 1) throw problem('Subscription amount or interval does not match the configured plan.');
    const [existing] = await db('geo_subscriptions?user_id=eq.' + uid + '&select=*');
    let latest = sub.latest_invoice;
    if (typeof latest === 'string') latest = await stripe('invoices/' + encodeURIComponent(latest) + '?expand[]=charge');
-   const through = paidInvoiceThrough(latest, mapped.plan, fromPrice);
+   const mapPrice = id => id === stripeID(p) ? mapped : fromPrice(id);
+   const through = paidInvoiceThrough(latest, mapped.plan, mapPrice);
    let paidInvoice = through ? latest : null;
    if (!paidInvoice && existing?.last_paid_invoice_id && existing.subscription_id === sid)
     paidInvoice = await stripe('invoices/' + encodeURIComponent(existing.last_paid_invoice_id) + '?expand[]=charge');
@@ -153,7 +154,7 @@ function makeBillingSync({db, stripe, fromPrice, PLANS, UUID, mode}) {
  return {sync, event, account, invoiceForCharge};
 }
 function configuredBillingSync() {
- const {db, UUID} = require('./db'), {stripe} = require('./stripe'), {fromPrice, PLANS, billingMode} = require('./plans');
- return makeBillingSync({db, stripe, fromPrice, PLANS, UUID, mode: billingMode});
+ const {db, UUID} = require('./db'), {stripe} = require('./stripe'), {fromPrice, fromLookupKey, PLANS, billingMode} = require('./plans');
+ return makeBillingSync({db, stripe, fromPrice, fromLookupKey, PLANS, UUID, mode: billingMode});
 }
 module.exports = {makeBillingSync, configuredBillingSync, disputeHold, refundReview, invoiceEnd};

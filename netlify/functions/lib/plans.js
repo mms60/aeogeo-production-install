@@ -1,7 +1,12 @@
 'use strict';
 const {stripeKeyMode}=require('./stripe-credential');
 const PLANS={starter:{name:'Starter',monthly:4900,annual:47040,domains:1,pagesPerAudit:25,monthlyPages:300},professional:{name:'Professional',monthly:14900,annual:143040,domains:3,pagesPerAudit:25,monthlyPages:75},agency:{name:'Agency',monthly:49900,annual:479040,domains:10,pagesPerAudit:25,monthlyPages:250}};
+const PRICE_KEYS={starter:{month:'aeogeo-starter-month',year:'aeogeo-starter-year'},professional:{month:'aeogeo-professional-month',year:'aeogeo-professional-year'},agency:{month:'aeogeo-agency-month',year:'aeogeo-agency-year'}};
 function priceID(plan,interval){return process.env['STRIPE_PRICE_'+plan.toUpperCase()+'_'+(interval==='year'?'YEAR':'MONTH')];}
+// The lookup key names the price that belongs to the current product, so a
+// stale environment variable cannot point checkout at an archived product.
+function priceLookupKey(plan,interval){return PRICE_KEYS[plan]?.[interval==='year'?'year':'month']||null;}
+function fromLookupKey(key){if(!key)return null;for(const plan of Object.keys(PRICE_KEYS))for(const interval of ['month','year'])if(PRICE_KEYS[plan][interval]===key)return{plan,interval};return null;}
 function fromPrice(id){if(!id)return null;for(const plan of Object.keys(PLANS))for(const interval of ['month','year'])if(priceID(plan,interval)===id)return{plan,interval};return null;}
 function emailIn(name,email=''){return (process.env[name]||'').split(',').map(v=>v.trim().toLowerCase()).filter(Boolean).includes(email.trim().toLowerCase());}
 function testBillingAllowed(email=''){return emailIn('BILLING_TEST_EMAILS',email);}
@@ -26,4 +31,4 @@ function billingReady(plan='starter',email=''){
  return null;
 }
 function publicPlans(){return Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{...p,...(p.provisional?{monthlyPages:null,pagesPerAudit:null,limitsPending:true}:{limitsPending:false})}]));}
-module.exports={PLANS,priceID,fromPrice,billingReady,publicPlans,testBillingAllowed,billingAdmin,billingMode,sandboxCheckout};
+module.exports={PLANS,PRICE_KEYS,priceID,priceLookupKey,fromPrice,fromLookupKey,billingReady,publicPlans,testBillingAllowed,billingAdmin,billingMode,sandboxCheckout};

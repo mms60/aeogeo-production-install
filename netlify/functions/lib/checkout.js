@@ -1,6 +1,8 @@
 'use strict';
 const crypto = require('node:crypto');
 const {stripeID} = require('./billing-objects');
+const {resolveSellablePrice} = require('./price-resolution');
+const {priceLookupKey} = require('./plans');
 const {checkoutDiagnostic} = require('./checkout-diagnostics');
 const http = (status, message) => Object.assign(new Error(message), {status});
 const liveMode = () => require('./stripe-credential').stripeKeyMode() === 'live';
@@ -8,13 +10,10 @@ const liveMode = () => require('./stripe-credential').stripeKeyMode() === 'live'
 function checkoutHandler({db, user, reply, UUID, PLANS, priceID, billingReady, stripe, origin}) {
  async function rpc(name, body) {return db('rpc/geo_checkout_' + name, {method: 'POST', body});}
  async function price(plan, interval) {
-  const id = priceID(plan, interval);
-  if (!id) throw http(503, 'The selected Stripe price is not configured.');
-  const p = await stripe('prices/' + encodeURIComponent(id));
-  const amount = interval === 'month' ? PLANS[plan].monthly : PLANS[plan].annual;
-  if (!p.active || p.currency !== 'usd' || p.unit_amount !== amount || p.recurring?.interval !== interval || p.recurring?.interval_count !== 1 || p.livemode !== liveMode())
-   throw http(503, 'Stripe price does not match the approved amount, interval, or payment mode.');
-  return id;
+  // A configured price can be stale, inactive, or attached to an archived
+  // product. In that case the plan's lookup key resolves the price on the
+  // current product, and checkout fails rather than selling a dead product.
+  return resolveSellablePrice({stripe, plan, interval, PLANS, priceID, priceLookupKey, live: liveMode});
  }
  return async event => {
   if (event.httpMethod !== 'POST') return reply(405, {error: 'POST required'});
