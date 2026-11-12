@@ -51,6 +51,7 @@
 .st-section-head p{margin:0 0 10px;font-size:16px;line-height:1.75;color:#c7d6ed}
 .st-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
 .st-grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.st-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
 .st-card{min-width:0;padding:28px;border:1px solid #2c4267;border-radius:20px;background:linear-gradient(145deg,#101f3a,#0b1830)}
 .st-card h3{margin:0 0 12px;font-family:var(--font-display,Sora),Inter,sans-serif;font-size:22px;line-height:1.28;font-weight:700;color:#fff}
 .st-card h4{margin:22px 0 8px;font-family:var(--font-display,Sora),Inter,sans-serif;font-size:14px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#a9c5ff}
@@ -100,8 +101,8 @@
 .st-final p{margin:0 0 14px;font-size:16px;line-height:1.75;color:#c7d6ed}
 .st-final .st-button{margin-top:14px}
 .st-signature{margin:26px 0 0!important;font-size:13px!important;color:#93a9c8!important}
-@media(max-width:1024px){.st-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}.st-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.st-hero{padding:112px 0 48px}.st-section{padding:48px 0}.st-grid-2,.st-grid-4,.st-steps{grid-template-columns:1fr}.st-card{padding:22px}.st-price-card{padding:24px}.st-table th,.st-table td{padding:12px 14px;font-size:14px}.st-table tbody th{width:48%}.st-price span{font-size:40px}}
+@media(max-width:1024px){.st-grid-3,.st-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}.st-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.st-hero{padding:112px 0 48px}.st-section{padding:48px 0}.st-grid-2,.st-grid-3,.st-grid-4,.st-steps{grid-template-columns:1fr}.st-card{padding:22px}.st-price-card{padding:24px}.st-table th,.st-table td{padding:12px 14px;font-size:14px}.st-table tbody th{width:48%}.st-price span{font-size:40px}}
 @media(prefers-reduced-motion:reduce){.st-button{transition:none}}
 </style>
 <script defer src="/assets/aeogeo-cookie-consent.js?v=google-tag-rtyb910tmq-v1" data-aeogeo-cookie-consent="v1"></script>
@@ -135,292 +136,149 @@
   <div class="st-wrap">
     <p class="st-eyebrow">AI search readiness · Paid subscriber toolkit</p>
     <h1>AI Visibility &amp; Schema Studio</h1>
-    <p class="st-lede">Your website looks perfect in a browser. But when ChatGPT, Perplexity or Google’s AI answers come looking, they may hit a blocked page, an empty shell, or a business description they cannot parse. This workspace shows you exactly where that happens and hands you the markup that fixes it.</p>
+    <p class="st-lede">A workspace that tests whether AI crawlers can actually read your website, audits the structured data you already publish, and drafts the JSON-LD your pages are missing.</p>
     <div class="st-hero-copy">
-      <p>Here is the uncomfortable part of AI search: you cannot tell whether you are ready by looking at your own website. A page that loads beautifully for a visitor can return almost nothing readable to an automated crawler. Text a customer can see can be invisible to a machine because it arrives late, sits behind JavaScript, or is blocked by a rule somebody added two years ago and forgot about.</p>
-      <p>At the same time, the questions your customers used to type into Google are now typed into an assistant that gives one answer. If your site is one the assistant cannot fetch and understand cleanly, you are not in that answer, and nothing anywhere will send you a report explaining why.</p>
-      <p>AI Visibility &amp; Schema Studio is the check you run before that happens. It requests your pages the way AI crawlers do, tells you what actually came back, reviews the structured data you already publish, and generates JSON-LD that spells out your business, services and offers in a language machines can use.</p>
-      <p class="st-callout">Two questions, answered in one sitting: can AI read my website, and does my website actually say what my business is?</p>
+      <p>You cannot tell whether a site is ready for AI answers by looking at it in a browser. A page can render perfectly and still hand a crawler a blocked path, an empty shell, or a description of your business that no machine can parse. The Studio requests your pages with representative crawler user agents and shows you what came back, page by page.</p>
+      <p>Every scan ends in something you can act on: the pages that failed and why, the structured data already on the page, and a JSON-LD draft you can copy, edit and pass to whoever maintains the site.</p>
     </div>
     <div class="st-actions">
-      <a class="st-button" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Start your first audit · $49/month</a>
-      <a class="st-text-link" href="#pricing">See what is included</a>
+      <a class="st-button" href="#offer">See the offer</a>
+      <a class="st-text-link" href="#what-it-does">What the tool does</a>
     </div>
-    <p class="st-note">One subscription covers one website. Checkout is handled by Stripe. Cancel any time from your billing portal.</p>
+    <p class="st-note">The Studio is a paid tool. The workspace unlocks once an active subscription is confirmed.</p>
   </div>
 </section>
 
-<section class="st-section st-band" id="why-it-matters">
+<section class="st-section st-band" id="what-it-does">
   <div class="st-wrap">
     <div class="st-section-head">
-      <h2>The search box stopped being a list of links</h2>
-      <p>Someone researching your services today may never see your homepage. They ask an assistant a question, read a single answer, and move on. That answer is assembled from websites the assistant could actually fetch, parse and trust.</p>
-      <p>That is the whole game now. Not a position on a page of blue links. The question is whether a machine can retrieve your content, work out what it is looking at, and describe your business accurately to the person asking.</p>
+      <h2>What the tool does</h2>
+      <p>Three tabs, one website, and a report you keep. Each tab answers a different question about the same pages.</p>
+    </div>
+    <div class="st-grid-3">
+      <article class="st-card">
+        <h3>AI crawler audit</h3>
+        <p>Submit a public URL and the Studio requests it the way crawler user agents do, testing up to 20 pages. You get the robots.txt rules that apply, sitemap discovery, HTTP status, whether the page text is in the HTML itself, noindex directives, page titles and whether JSON-LD is present.</p>
+        <p>Findings are stored with the scan, and a written summary of what the crawler saw can be generated alongside them.</p>
+      </article>
+      <article class="st-card">
+        <h3>Schema audit and creation</h3>
+        <p>Read an existing page and see which structured data is already there and which properties are missing for the page type you choose. Then generate a draft JSON-LD block from details you supply.</p>
+        <p>Only enter facts you can verify. The result is a draft to review, not markup to publish unchecked.</p>
+      </article>
+      <article class="st-card">
+        <h3>Scan history</h3>
+        <p>Scans, findings and generated schema are stored on your account. Come back to an earlier report, or run the same URL again after a fix and compare what changed.</p>
+        <p>Your records are private to your account, and each user only sees their own scans and schema.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="st-section">
+  <div class="st-wrap">
+    <div class="st-section-head">
+      <h2>What you get back</h2>
+      <p>A list of findings with instructions, not a score with no next step.</p>
     </div>
     <div class="st-grid-2 st-why">
-      <div>
-        <p class="st-mini-head">What quietly goes wrong when nobody checks</p>
+      <article class="st-card">
+        <h3>In the report</h3>
         <ul class="st-list st-list-check">
-          <li>Your robots.txt blocks an AI crawler and nobody notices, because human visitors are unaffected.</li>
-          <li>Your most persuasive copy is rendered by JavaScript, so the crawler receives a near-empty page.</li>
-          <li>A noindex tag left over from the staging site is still live on your most profitable service page.</li>
-          <li>You publish no structured data, so the machine has to guess what you sell, where you are, and who you serve.</li>
-          <li>Your sitemap is out of date, so whole sections of the site are effectively invisible.</li>
-          <li>You find out six months later, when a competitor is the one being recommended.</li>
+          <li>Which pages were reachable and which returned an error or an empty shell</li>
+          <li>The robots.txt rules that stop a crawler from fetching a page</li>
+          <li>HTTP status, page title, noindex and text availability for every page tested</li>
+          <li>The JSON-LD already on the page, and the properties missing for that page type</li>
+          <li>A generated JSON-LD block you can copy out and edit</li>
         </ul>
-      </div>
-      <div class="st-emphasis">
-        <p><strong>None of this shows up in a browser.</strong> It only shows up when you look at your website the way a crawler does. That is exactly what this workspace is built to do.</p>
-        <a class="st-button" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Run the check on my site</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="st-section" id="capabilities">
-  <div class="st-wrap">
-    <div class="st-section-head">
-      <h2>Two questions decide whether AI can use your website</h2>
-      <p>Most tools answer one of them. You need both, because a site that is perfectly readable but says nothing machine-parsable is just as invisible as one that is blocked entirely.</p>
-    </div>
-    <div class="st-grid-2">
-      <article class="st-card">
-        <h3>Question one: is AI actually allowed in?</h3>
-        <p>Your website can be open to visitors and closed to machines. A single line in a robots.txt file, a firewall rule, a redirect chain or a login wall can stop an AI crawler long before it reads a word of your content.</p>
-        <p>The AI crawler audit requests your pages using representative crawler user agents and shows you what came back, page by page, in plain English.</p>
-        <h4>What we check, and why each one matters</h4>
-        <ul class="st-list">
-          <li><strong>Crawler permissions.</strong> We read your robots.txt the way an AI crawler does. If the rules block one provider while allowing another, you will see it instead of assuming.</li>
-          <li><strong>Access and response codes.</strong> Errors, soft 404s and redirect chains are dead ends. If a crawler cannot get a clean 200, it has nothing to quote.</li>
-          <li><strong>Content in the returned HTML.</strong> This is the big one. We check whether your headline, service descriptions and key facts are actually present in what the server sends, not just what renders after JavaScript runs.</li>
-          <li><strong>JavaScript dependence.</strong> Pages that only exist after the browser executes scripts are fragile for crawlers, and we flag the ones at risk.</li>
-          <li><strong>Indexing directives.</strong> An inherited noindex or a stray canonical pointing at the wrong URL can quietly remove a page from consideration entirely.</li>
-          <li><strong>Sitemap discovery.</strong> Your sitemap is the map you hand a crawler. If it is missing, broken or stale, pages stay unfound.</li>
-        </ul>
-        <p class="st-aside">You get a prioritised list of what to fix, in the order worth fixing it, not a wall of green ticks.</p>
       </article>
       <article class="st-card">
-        <h3>Question two: does your website say what your business is?</h3>
-        <p>Even when a crawler can read every word, it still has to interpret them. Is this a local plumber or a national franchise? Is that a product or a service? Which location, which price range, which person is the author?</p>
-        <p>Structured data answers those questions explicitly. Without it, an AI system is inferring your business from prose, and inference is where accuracy quietly falls apart.</p>
-        <h4>Audit what you already publish</h4>
+        <h3>What to do with it</h3>
         <ul class="st-list">
-          <li>Detect the JSON-LD already on your page, including blocks added by plugins you may have forgotten about.</li>
-          <li>See which schema types are present, and which obvious ones are missing.</li>
-          <li>Find the pages that carry no structured data at all, usually the ones closest to the money.</li>
-          <li>Spot conflicting or incomplete markup that sends mixed signals about your business.</li>
+          <li><strong>Fix access first.</strong> A blocking robots rule, or a page that only fills in through JavaScript, is why a crawler returns nothing. Copy changes cannot rescue that page.</li>
+          <li><strong>Pass the schema draft to your developer</strong>, or paste it into your CMS once every fact in it is checked.</li>
+          <li><strong>Re-run the same URL later</strong> to confirm the change reached the page.</li>
         </ul>
-        <h4>Generate markup built on your facts</h4>
-        <p>Describe the page in your own words: who you are, what you offer, where you are, what the page is about. The studio drafts the matching JSON-LD from the details you provide, rather than pouring a generic template that says “Your Company Name Here”.</p>
-        <ul class="st-types">
-          <li>Organization</li>
-          <li>LocalBusiness</li>
-          <li>Service</li>
-          <li>Article</li>
-          <li>Product</li>
-          <li>WebPage</li>
-          <li>FAQPage</li>
-        </ul>
-        <p>Review it, copy it, hand it to whoever manages your site, and publish it when you are satisfied it is accurate.</p>
-        <p class="st-aside">A page that states plainly what it is gets used. A page that leaves machines guessing gets skipped.</p>
+        <p class="st-aside">The crawler is read-only. It does not edit robots.txt and does not install anything on your website.</p>
       </article>
     </div>
   </div>
 </section>
 
-<section class="st-section st-band" id="what-you-get">
+<section class="st-section st-band" id="how-it-works">
   <div class="st-wrap">
     <div class="st-section-head">
-      <h2>What lands on your screen</h2>
-      <p>No dashboard of vanity numbers. Every result is either a diagnosis you can act on or markup you can paste.</p>
-    </div>
-    <div class="st-grid-4">
-      <article class="st-card st-card-small">
-        <h3>A verdict, not a data dump</h3>
-        <p>An accessibility score for the site and a findings list ordered by severity, critical first and nice-to-have last, so you always know what to do next.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>The page and the reason</h3>
-        <p>Each finding names the exact URL, what the crawler received, and the specific recommendation. “Service page returns 403 to AI crawler” beats “technical issue detected”.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>Draft JSON-LD</h3>
-        <p>Validated, formatted structured data for the page type you chose, ready to review and implement, using the business facts you supplied rather than invented ones.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>History you can compare</h3>
-        <p>Past audits and generated drafts stay in your account, so you can prove what changed after a fix and show a client the before and after.</p>
-      </article>
-    </div>
-    <p class="st-callout">Run it once and you have a to-do list. Run it monthly and you have a maintenance habit that keeps AI search from drifting out of reach.</p>
-  </div>
-</section>
-
-<section class="st-section" id="who-its-for">
-  <div class="st-wrap">
-    <div class="st-section-head">
-      <h2>Built for the person who has to fix it</h2>
-      <p>One website or forty, the job is the same: work out what AI search sees, then change it. Here is what that looks like for each kind of user.</p>
-    </div>
-    <div class="st-grid-4">
-      <article class="st-card st-card-small">
-        <h3>Business owners</h3>
-        <p>You do not want to become technical. You want to know what is broken and hand a clear, prioritised list to whoever built your site. This gives you that list, and lets you check the work was actually done.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>Marketing professionals</h3>
-        <p>You are already investing in content and SEO. This is how you find out whether that investment is even reachable by AI crawlers, and whether your pages carry the structured context that earns citations.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>Digital marketing agencies</h3>
-        <p>Walk into a pitch with a real diagnostic instead of a checklist. Audit the prospect’s site, show the blocked crawler or the missing schema, and turn a finding into a scoped retainer.</p>
-      </article>
-      <article class="st-card st-card-small">
-        <h3>Website developers</h3>
-        <p>Skip the vague ticket. You get the URL, the response, the severity and a JSON-LD draft. Less time reproducing the problem, more time shipping the fix.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="st-section st-band" id="workflow">
-  <div class="st-wrap">
-    <div class="st-section-head">
-      <h2>From “is my site ready?” to “here is what changed”</h2>
-      <p>The whole loop takes minutes, not a project kickoff.</p>
+      <h2>How access works</h2>
+      <p>The tool opens after payment, not before. Three steps, in this order.</p>
     </div>
     <ol class="st-steps">
-      <li><strong>Enter your website</strong><span>Paste the site or a single page. Choose how many pages to test, from five to twenty.</span></li>
-      <li><strong>Run the crawler audit</strong><span>See access, response codes, content availability, indexing directives and sitemap discovery, page by page, with severity attached.</span></li>
-      <li><strong>Audit your schema</strong><span>Find the structured data you already publish, what it says, and where the gaps are.</span></li>
-      <li><strong>Generate your markup</strong><span>Pick the page type, describe the page truthfully, and get a JSON-LD draft built on those facts.</span></li>
-      <li><strong>Review and implement</strong><span>Check every value, copy the markup, ship it, and work through the findings in priority order.</span></li>
-      <li><strong>Re-run and compare</strong><span>Confirm the fix worked. Repeat whenever content, services or your platform changes.</span></li>
+      <li><strong>Subscribe</strong><span>Pay through Stripe. One subscription covers one website, billed monthly.</span></li>
+      <li><strong>Create your account</strong><span>Use the same email address you paid with, then set a password. That email is how the subscription is matched to you.</span></li>
+      <li><strong>Open the Studio</strong><span>Sign in, submit your first URL and run the audit. The tabs stay available for every scan after that.</span></li>
     </ol>
   </div>
 </section>
 
-<section class="st-section" id="capability-table">
+<section class="st-section" id="offer">
   <div class="st-wrap">
     <div class="st-section-head">
-      <h2>Everything in one workspace</h2>
-      <p>One subscription, two disciplines that are usually sold separately.</p>
+      <h2>The offer</h2>
+      <p>One plan, one website, billed monthly. No separate tool to buy and no per-scan charge.</p>
     </div>
-    <div class="st-table-wrap" role="region" aria-labelledby="st-table-caption" tabindex="0">
-      <table class="st-table">
-        <caption id="st-table-caption">What AI Visibility &amp; Schema Studio helps you check</caption>
-        <thead>
-          <tr><th scope="col">Capability</th><th scope="col">What it helps you do</th></tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">AI crawler testing</th><td>Find the barriers that stop AI crawlers reaching your pages</td></tr>
-          <tr><th scope="row">Website content checks</th><td>See whether your real content is present in the HTML a crawler receives</td></tr>
-          <tr><th scope="row">Robots.txt analysis</th><td>Understand which crawlers your rules allow and which they turn away</td></tr>
-          <tr><th scope="row">Sitemap discovery</th><td>Confirm the pages you care about are findable at all</td></tr>
-          <tr><th scope="row">Indexing checks</th><td>Catch restrictive directives left on pages that should be visible</td></tr>
-          <tr><th scope="row">Schema detection</th><td>See the structured data you already publish, including plugin output</td></tr>
-          <tr><th scope="row">Schema opportunity analysis</th><td>Identify the schema types your pages are missing</td></tr>
-          <tr><th scope="row">AI schema generation</th><td>Create customised JSON-LD drafts from the facts you supply</td></tr>
-          <tr><th scope="row">Scan history</th><td>Keep every audit and draft on record for comparison</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<section class="st-section st-band" id="pricing">
-  <div class="st-wrap">
-    <div class="st-section-head">
-      <h2>One price. No per-scan credits, no quote request.</h2>
-      <p>Technical audits are usually a project with a proposal attached. This is a tool you keep on the desk and run whenever you need to.</p>
-    </div>
-    <article class="st-price-card">
-      <p class="st-eyebrow">AI Visibility &amp; Schema Studio</p>
-      <p class="st-price"><span>$49</span><small>/month per website</small></p>
-      <p class="st-price-intro">Full access to the paid AI crawler and schema workspace. A single one-off technical audit often costs more than a year of this.</p>
+    <div class="st-price-card">
+      <p class="st-price"><span>$49</span><small>per month, per website. Billed through Stripe.</small></p>
+      <p class="st-price-intro">The Studio is the paid tier of AEOGEO Search. The free robots.txt checker stays free and separate. This is the workspace that tests your pages, audits your schema and drafts the markup.</p>
       <ul class="st-list st-list-check">
-        <li>AI crawler accessibility audits, up to twenty pages per scan</li>
-        <li>Representative AI crawler user-agent testing</li>
-        <li>Website content availability checks</li>
-        <li>Robots.txt, sitemap and indexing analysis</li>
-        <li>Existing schema detection on any page</li>
-        <li>Schema opportunity identification by page type</li>
-        <li>AI-assisted JSON-LD generation</li>
-        <li>Prioritised findings with severity and recommendations</li>
-        <li>Saved scan history and generated drafts</li>
+        <li>AI crawler audit on up to 20 pages per scan</li>
+        <li>robots.txt, sitemap, HTTP status, noindex, title and JSON-LD checks</li>
+        <li>Schema audit against existing structured data</li>
+        <li>Generated JSON-LD drafts you can copy and edit</li>
+        <li>Scan history and saved schema on your account</li>
+        <li>Billing managed in the Stripe portal</li>
       </ul>
-      <a class="st-button st-button-wide" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Unlock AI Visibility &amp; Schema Studio</a>
-      <p class="st-note">Secure checkout through Stripe. Manage or cancel from your billing portal at any time; access continues to the end of the period you have paid for. Need it for more than one website? Contact us and we will set up the right plan.</p>
-    </article>
+      <a class="st-button st-button-wide" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Subscribe and unlock the Studio · $49/month</a>
+      <p class="st-note">Checkout is handled by Stripe. Payment alone does not open the tool. After checkout, create your account with the same email and the subscription is checked before the workspace unlocks.</p>
+    </div>
   </div>
 </section>
 
-<section class="st-section" id="faq">
+<section class="st-section st-band" id="access">
+  <div class="st-wrap">
+    <div class="st-section-head">
+      <h2>Paid already? Here is the door</h2>
+      <p>Create your account with the email you used at checkout, then sign in. If the subscription is active, the workspace unlocks. If it has not synced yet, wait a minute and sign in again.</p>
+    </div>
+    <div class="st-actions">
+      <a class="st-button" href="/ai-visibility-schema-studio/app/">Open the Studio</a>
+      <a class="st-text-link" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Not subscribed yet? Start here</a>
+    </div>
+  </div>
+</section>
+
+<section class="st-section">
   <div class="st-wrap st-faq-wrap">
     <div class="st-section-head">
-      <h2>Straight answers before you subscribe</h2>
-      <p>If your question is not here, ask us. We would rather answer it than have you buy the wrong thing.</p>
+      <h2>Before you buy</h2>
     </div>
     <div class="st-faq">
-      <details>
-        <summary>Is this just your free robots.txt tool with a price tag?</summary>
-        <p>No. The free robots.txt tool helps you write or review that one file. This workspace does something different: it requests your pages as AI crawlers would, reports what came back, audits the structured data already published, and generates new JSON-LD. Think of robots.txt as the door. This checks whether the room behind it is readable.</p>
-      </details>
-      <details>
-        <summary>Will this get me mentioned by ChatGPT?</summary>
-        <p>Nobody can promise that, and any tool that does is selling you something it cannot deliver. What this does is remove the technical reasons an AI system cannot use your site: blocked crawlers, unreadable pages, and missing structured context. Without that foundation, being mentioned is luck. With it, you have done the part you control.</p>
-      </details>
-      <details>
-        <summary>Do the crawler tests prove a real crawler visited my site?</summary>
-        <p>No, and we will not pretend otherwise. The audit sends requests using representative crawler user agents. Proving that a specific provider’s actual IP addresses reached your server requires inspecting your server or CDN logs. The audit tells you what your site returns to that class of request, which is where almost every fixable problem lives.</p>
-      </details>
-      <details>
-        <summary>Can I use the generated schema straight away?</summary>
-        <p>Review it first. The markup is built from the details you type in, so its accuracy depends on the accuracy you gave it. Check names, URLs, addresses, prices and dates, validate it, then publish. Treat the draft as a strong starting point written by someone who knows the format, not as a substitute for reading it.</p>
-      </details>
-      <details>
-        <summary>Will this change or break my live website?</summary>
-        <p>No. The audit is read-only: it fetches public pages and inspects what comes back. Nothing is written to your site, no plugin is installed, and no files are modified. You decide what to implement, and when.</p>
-      </details>
-      <details>
-        <summary>My site runs on WordPress, Shopify, Wix or Squarespace. Does it still work?</summary>
-        <p>Yes, anything publicly reachable over HTTPS. In fact plugin-generated schema is one of the most common things we find: either missing entirely, duplicated three times, or contradicting itself. The audit will show you which.</p>
-      </details>
-      <details>
-        <summary>Do I need a developer?</summary>
-        <p>Not to run the audit, and not to understand the findings. They are written in plain English with a recommendation attached. Adding JSON-LD usually means pasting a snippet into a header, theme file or a schema plugin, which many site owners can do. For anything structural, you will at least hand your developer a precise ticket instead of a vague worry.</p>
-      </details>
-      <details>
-        <summary>I already pay for an SEO tool. Why add this?</summary>
-        <p>Most SEO platforms are built around Google’s crawler and classic ranking data. This focuses on a narrower, newer question: what do AI crawlers get, and does your structured data actually describe your business? Use both. One tracks visibility; this one checks whether the technical door is open in the first place.</p>
-      </details>
-      <details>
-        <summary>How long does an audit take, and what do you store?</summary>
-        <p>A scan of ten to twenty pages usually completes in a few minutes; you can keep working while it runs. Results, findings and generated drafts are stored in your own account, visible only to you. Add the results to your own documentation if you want a permanent copy.</p>
-      </details>
-      <details>
-        <summary>What is it not for?</summary>
-        <p>It is not a site behind a login, an intranet, or a page that only exists in a staging environment. It will not design your content strategy, write your copy, or guarantee rankings, rich results or AI citations. And it will not replace a human review of the markup before it goes live. That part stays yours.</p>
-      </details>
-      <details>
-        <summary>How do I sign in, and how do I cancel?</summary>
-        <p>Use the same email and password you already use on AEOGEO Search, or create an account on the first visit. Billing runs through Stripe; you can open the billing portal from the workspace and cancel there whenever you like. Access continues until the end of the period you have paid for.</p>
-      </details>
+      <details><summary>Why can I not use the tool first?</summary><p>The Studio runs live crawler requests and stores results against an account, so access is tied to an active subscription. Checkout comes first, then your account, then the workspace. The Stripe subscription status is what unlocks it.</p></details>
+      <details><summary>What do I need before my first scan?</summary><p>A public URL for the crawler audit. For schema work you also need verified business or page details: official name, URL, description, address, phone, service details, author, product details, or the questions and answers for a FAQ page.</p></details>
+      <details><summary>Does a clean scan prove AI crawlers can reach my site?</summary><p>No. The audit uses representative crawler user agent strings. That is not proof that a real crawler's IP range passes your CDN or firewall. Use your server and CDN logs when you need that confirmation.</p></details>
+      <details><summary>Will the Studio add the schema to my website?</summary><p>No. It drafts the markup and you or your developer add it. The crawler is read-only and never edits your site or your robots.txt.</p></details>
+      <details><summary>Does it check Google-Extended?</summary><p>Google-Extended is a robots.txt control token, not a crawler that fetches pages, so it is not tested as a user agent. The audit does show the robots.txt rules that apply to the pages you test.</p></details>
+      <details><summary>How many websites does one subscription cover?</summary><p>One website per subscription, at $49 per month. Billing and cancellation are handled in the Stripe portal.</p></details>
     </div>
   </div>
 </section>
 
-<section class="st-section st-final" id="get-started">
+<section class="st-final">
   <div class="st-wrap">
-    <h2>Somebody is going to be the answer. Make sure your website can be read.</h2>
-    <p>You can spend another quarter assuming your site is fine because it looks fine. Or you can find out in the next few minutes which pages AI crawlers cannot reach, which structured data is missing, and what to do about both, while it is still cheap to fix.</p>
-    <p class="st-callout">See what the machines see. Then fix it.</p>
-    <p>AI Visibility &amp; Schema Studio. $49 a month, one website, cancel whenever you like.</p>
-    <a class="st-button" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Start your first audit</a>
-    <p class="st-signature">AEOGEO Search. Helping businesses prepare for the way people search now.</p>
+    <h2>Find out what a crawler sees before an AI answer decides for you</h2>
+    <p>One audit tells you which pages are reachable, which structured data is missing, and what to fix first.</p>
+    <a class="st-button" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Subscribe · $49/month</a>
+    <p class="st-signature">Billing through Stripe. One subscription covers one website.</p>
   </div>
-</section>
-</main><section class="relative border-t border-royal-500/15 bg-gradient-to-r from-navy-900 via-royal-700/30 to-navy-900"><div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-5 py-7 sm:px-8 md:flex-row"><p class="text-center font-display text-base font-semibold text-white md:text-left md:text-lg">Ready to get discovered in AI search? <span class="text-royal-300">Call or email us today.</span></p><div class="flex flex-wrap items-center justify-center gap-3"><a aria-label="Call us at (469) 905-2836" class="inline-flex items-center gap-2.5 rounded-full bg-royal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-royal-600/30 transition-colors hover:bg-royal-400" href="tel:+14699052836"><svg aria-hidden="true" class="lucide lucide-phone size-4.5" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>(469) 905-2836</a><a aria-label="Email us at aeogeosearch@atomicmail.io" class="inline-flex items-center gap-2.5 rounded-full border border-royal-400/40 bg-navy-950/40 px-6 py-3 text-sm font-semibold text-ice-100 transition-colors hover:bg-royal-500/15" href="mailto:aeogeosearch@atomicmail.io"><svg aria-hidden="true" class="lucide lucide-mail size-4.5 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect height="16" rx="2" width="20" x="2" y="4"></rect></svg>aeogeosearch@atomicmail.io</a></div></div></section><p hidden aria-hidden="true" style="display:none">Content updated: <time datetime="2026-10-30">October 30, 2026</time></p><footer class="relative border-t border-royal-500/15 bg-navy-950"><div aria-hidden="true" class="bg-grid absolute inset-0 opacity-40"></div><div class="relative mx-auto max-w-7xl px-5 py-16 sm:px-8"><div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4"><div><a class="flex items-center gap-2.5" data-discover="true" href="/"><span class="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-royal-500 to-royal-700 text-white shadow-lg shadow-royal-600/30"><svg aria-hidden="true" class="lucide lucide-sparkles lucide-stars size-4.5" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg></span><span class="font-display text-base font-bold tracking-wide text-white sm:text-lg">AEO<span class="text-royal-400">GEO</span> Search</span></a><p class="mt-4 max-w-xs text-sm leading-relaxed text-ice-300/70">Helping businesses get discovered, understood, and considered wherever customers are searching, across AI-powered platforms and traditional search.</p></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Explore</h2><ul class="mt-4 space-y-2.5"><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/">Home</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/about">About</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/services">Services</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/geo-audit/">GEO Audit</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing">Pricing</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/what-is-aeom">What is AEOM?</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/resources">Resources Hub</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/learn">Knowledge Library</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/tools#robots-txt-generator">Robots Text Generator</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/tools/geo-content-checker/">GEO Content Checker</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/visibility-tool">Free AI Visibility Snapshot</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/contact">Contact</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" href="/quiz" data-discover="true">Content Waste Audit</a></li></ul></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Services</h2><ul class="mt-4 space-y-2.5"><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#monthly-ai-search">Monthly AI Search Optimization Plans</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#workflow-automation">Workflow Automation Setup and Support</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#content-support">Content Support Services</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#content-repurposing">Content Repurposing Service</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#custom-websites">Custom Websites</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#knowledge-base">Knowledge Base Package</a></li></ul></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Get in Touch</h2><ul class="mt-4 space-y-3 text-sm text-ice-300/70"><li><address class="not-italic text-ice-200"><strong>AEOGEO Search</strong><br/>McKinney, TX 75072</address></li><li><a class="flex items-start gap-2.5 transition-colors hover:text-royal-400" href="mailto:aeogeosearch@atomicmail.io"><svg aria-hidden="true" class="lucide lucide-mail mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect height="16" rx="2" width="20" x="2" y="4"></rect></svg>aeogeosearch@atomicmail.io</a></li><li><a class="flex items-start gap-2.5 transition-colors hover:text-royal-400" href="tel:+14699052836"><svg aria-hidden="true" class="lucide lucide-phone mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>(469) 905-2836</a></li><li class="flex items-start gap-2.5"><svg aria-hidden="true" class="lucide lucide-map-pin mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>Based in McKinney, TX 75072, working with clients nationwide.</li></ul><a class="btn-primary mt-5 inline-block rounded-full bg-royal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-royal-600/30 transition-colors hover:bg-royal-400" data-discover="true" href="/contact">Request a Consultation</a></div></div><nav aria-label="Footer legal and accessibility" class="geo-legal-links"><div class="geo-footer-credentials-row"><div class="geo-footer-legal-copy"><h2>Legal &amp; Accessibility</h2><div class="geo-footer-legal-actions"><a data-discover="true" href="/accessibility">Accessibility</a><a data-discover="true" href="/privacy-policy">Privacy Policy</a><div class="aeogeo-footer-terms-row"><a data-discover="true" href="/terms-of-service">Terms &amp; Conditions</a><div class="aeogeo-footer-social" data-aeogeo-footer-facebook="v1"><a href="https://www.facebook.com/aeogeosearch/" target="_blank" rel="noopener noreferrer" aria-label="AEOGEO Search on Facebook (opens in a new tab)"><span class="aeogeo-facebook-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.34 21v-8.21h2.76l.41-3.2h-3.17V7.55c0-.93.26-1.56 1.59-1.56h1.7V3.13A22.8 22.8 0 0 0 14.15 3c-2.46 0-4.14 1.5-4.14 4.25v2.37H7.23v3.2h2.78V21h3.33Z"/></svg></span><span>Facebook</span></a></div></div></div></div><div class="geo-footer-badges" role="group" aria-label="Professional badges"><img class="geo-footer-badge" src="/images/footer-google-analytics.png" alt="Google Analytics Certified badge" width="400" height="400" loading="lazy" decoding="async"><img class="geo-footer-badge" src="/images/footer-google-premier-partner.png" alt="Google Premier Partner badge" width="493" height="254" loading="lazy" decoding="async"><img class="geo-footer-badge" src="/images/footer-google-ads-search.png" alt="Google Ads Search Professional Certified badge" width="478" height="476" loading="lazy" decoding="async"></div></div></nav><div class="mt-14 flex flex-col items-center justify-between gap-4 border-t border-royal-500/10 pt-8 text-xs text-ice-300/50 sm:flex-row"><p>© 2026 AEOGEO Search. All rights reserved.</p><p class="flex items-center gap-1.5">AIO <span class="text-royal-400">•</span> GEO <span class="text-royal-400">•</span> AEO <span class="text-royal-400">•</span> SEO</p></div></div></footer></div></div>
+</section></main><section class="relative border-t border-royal-500/15 bg-gradient-to-r from-navy-900 via-royal-700/30 to-navy-900"><div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-5 py-7 sm:px-8 md:flex-row"><p class="text-center font-display text-base font-semibold text-white md:text-left md:text-lg">Ready to get discovered in AI search? <span class="text-royal-300">Call or email us today.</span></p><div class="flex flex-wrap items-center justify-center gap-3"><a aria-label="Call us at (469) 905-2836" class="inline-flex items-center gap-2.5 rounded-full bg-royal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-royal-600/30 transition-colors hover:bg-royal-400" href="tel:+14699052836"><svg aria-hidden="true" class="lucide lucide-phone size-4.5" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>(469) 905-2836</a><a aria-label="Email us at aeogeosearch@atomicmail.io" class="inline-flex items-center gap-2.5 rounded-full border border-royal-400/40 bg-navy-950/40 px-6 py-3 text-sm font-semibold text-ice-100 transition-colors hover:bg-royal-500/15" href="mailto:aeogeosearch@atomicmail.io"><svg aria-hidden="true" class="lucide lucide-mail size-4.5 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect height="16" rx="2" width="20" x="2" y="4"></rect></svg>aeogeosearch@atomicmail.io</a></div></div></section><p hidden aria-hidden="true" style="display:none">Content updated: <time datetime="2026-10-30">October 30, 2026</time></p><footer class="relative border-t border-royal-500/15 bg-navy-950"><div aria-hidden="true" class="bg-grid absolute inset-0 opacity-40"></div><div class="relative mx-auto max-w-7xl px-5 py-16 sm:px-8"><div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4"><div><a class="flex items-center gap-2.5" data-discover="true" href="/"><span class="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-royal-500 to-royal-700 text-white shadow-lg shadow-royal-600/30"><svg aria-hidden="true" class="lucide lucide-sparkles lucide-stars size-4.5" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg></span><span class="font-display text-base font-bold tracking-wide text-white sm:text-lg">AEO<span class="text-royal-400">GEO</span> Search</span></a><p class="mt-4 max-w-xs text-sm leading-relaxed text-ice-300/70">Helping businesses get discovered, understood, and considered wherever customers are searching, across AI-powered platforms and traditional search.</p></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Explore</h2><ul class="mt-4 space-y-2.5"><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/">Home</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/about">About</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/services">Services</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/geo-audit/">GEO Audit</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing">Pricing</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/what-is-aeom">What is AEOM?</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/resources">Resources Hub</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/learn">Knowledge Library</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/tools#robots-txt-generator">Robots Text Generator</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/tools/geo-content-checker/">GEO Content Checker</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/visibility-tool">Free AI Visibility Snapshot</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/contact">Contact</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" href="/quiz" data-discover="true">Content Waste Audit</a></li></ul></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Services</h2><ul class="mt-4 space-y-2.5"><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#monthly-ai-search">Monthly AI Search Optimization Plans</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#workflow-automation">Workflow Automation Setup and Support</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#content-support">Content Support Services</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#content-repurposing">Content Repurposing Service</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#custom-websites">Custom Websites</a></li><li><a class="text-sm text-ice-300/70 transition-colors hover:text-royal-400" data-discover="true" href="/pricing#knowledge-base">Knowledge Base Package</a></li></ul></div><div><h2 class="font-display text-sm font-semibold uppercase tracking-widest text-white">Get in Touch</h2><ul class="mt-4 space-y-3 text-sm text-ice-300/70"><li><address class="not-italic text-ice-200"><strong>AEOGEO Search</strong><br/>McKinney, TX 75072</address></li><li><a class="flex items-start gap-2.5 transition-colors hover:text-royal-400" href="mailto:aeogeosearch@atomicmail.io"><svg aria-hidden="true" class="lucide lucide-mail mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect height="16" rx="2" width="20" x="2" y="4"></rect></svg>aeogeosearch@atomicmail.io</a></li><li><a class="flex items-start gap-2.5 transition-colors hover:text-royal-400" href="tel:+14699052836"><svg aria-hidden="true" class="lucide lucide-phone mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>(469) 905-2836</a></li><li class="flex items-start gap-2.5"><svg aria-hidden="true" class="lucide lucide-map-pin mt-0.5 size-4 shrink-0 text-royal-400" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>Based in McKinney, TX 75072, working with clients nationwide.</li></ul><a class="btn-primary mt-5 inline-block rounded-full bg-royal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-royal-600/30 transition-colors hover:bg-royal-400" data-discover="true" href="/contact">Request a Consultation</a></div></div><nav aria-label="Footer legal and accessibility" class="geo-legal-links"><div class="geo-footer-credentials-row"><div class="geo-footer-legal-copy"><h2>Legal &amp; Accessibility</h2><div class="geo-footer-legal-actions"><a data-discover="true" href="/accessibility">Accessibility</a><a data-discover="true" href="/privacy-policy">Privacy Policy</a><div class="aeogeo-footer-terms-row"><a data-discover="true" href="/terms-of-service">Terms &amp; Conditions</a><div class="aeogeo-footer-social" data-aeogeo-footer-facebook="v1"><a href="https://www.facebook.com/aeogeosearch/" target="_blank" rel="noopener noreferrer" aria-label="AEOGEO Search on Facebook (opens in a new tab)"><span class="aeogeo-facebook-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.34 21v-8.21h2.76l.41-3.2h-3.17V7.55c0-.93.26-1.56 1.59-1.56h1.7V3.13A22.8 22.8 0 0 0 14.15 3c-2.46 0-4.14 1.5-4.14 4.25v2.37H7.23v3.2h2.78V21h3.33Z"/></svg></span><span>Facebook</span></a></div></div></div></div><div class="geo-footer-badges" role="group" aria-label="Professional badges"><img class="geo-footer-badge" src="/images/footer-google-analytics.png" alt="Google Analytics Certified badge" width="400" height="400" loading="lazy" decoding="async"><img class="geo-footer-badge" src="/images/footer-google-premier-partner.png" alt="Google Premier Partner badge" width="493" height="254" loading="lazy" decoding="async"><img class="geo-footer-badge" src="/images/footer-google-ads-search.png" alt="Google Ads Search Professional Certified badge" width="478" height="476" loading="lazy" decoding="async"></div></div></nav><div class="mt-14 flex flex-col items-center justify-between gap-4 border-t border-royal-500/10 pt-8 text-xs text-ice-300/50 sm:flex-row"><p>© 2026 AEOGEO Search. All rights reserved.</p><p class="flex items-center gap-1.5">AIO <span class="text-royal-400">•</span> GEO <span class="text-royal-400">•</span> AEO <span class="text-royal-400">•</span> SEO</p></div></div></footer></div></div>
 <!-- Netlify Contact Form Detection -->
 <form aria-hidden="true" hidden="" method="POST" name="contact" style="display: none;"><input name="form-name" type="hidden" value="contact"/>
 <input name="firstName" type="text"/>
@@ -432,217 +290,4 @@
 </form>
 
 <!-- Standalone GEO Content Checker: no separate checker JavaScript file required. -->
-<script>
-(function () {
-  'use strict';
-  function initGeoContentChecker() {
-    const $ = (id) => document.getElementById(id);
-    const form = $('cc-inputs');
-    if (!form || form.dataset.checkerReady === '1') return;
-    form.dataset.checkerReady = '1';
-
-    const tabs = Array.from(document.querySelectorAll('[data-cc-tab]'));
-    const urlPanel = $('cc-url-panel');
-    const pastePanel = $('cc-paste-panel');
-    const urlInput = $('cc-url');
-    const textInput = $('cc-text');
-    const consent = $('cc-consent');
-    const runButton = $('cc-run');
-    const resetButton = $('cc-reset');
-    const status = $('cc-status');
-    const results = $('cc-results');
-    let activeMode = 'url';
-
-    function setStatus(message, isError) {
-      if (!status) return;
-      status.textContent = message || '';
-      status.classList.toggle('cc-error', Boolean(isError));
-    }
-    function setMode(mode) {
-      activeMode = mode;
-      const isUrl = mode === 'url';
-      if (urlPanel) urlPanel.hidden = !isUrl;
-      if (pastePanel) pastePanel.hidden = isUrl;
-      tabs.forEach((tab) => {
-        const selected = tab.dataset.ccTab === mode;
-        tab.setAttribute('aria-selected', String(selected));
-        tab.tabIndex = selected ? 0 : -1;
-      });
-      setStatus('');
-    }
-    tabs.forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.ccTab)));
-
-    function countWords(value) {
-      return (value.trim().match(/[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*/gu) || []).length;
-    }
-    function analyze(content) {
-      const raw = String(content || '').replace(/\r/g, '');
-      const plain = raw
-        .replace(/```[\s\S]*?```/g, ' ')
-        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-        .replace(/^\s{0,3}#{1,6}\s*/gm, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/https?:\/\/\S+/g, ' ');
-      const words = countWords(plain);
-      const headings = (raw.match(/^\s{0,3}#{1,6}\s+.+$/gm) || []).map(x => x.replace(/^\s{0,3}#{1,6}\s+/, '').trim());
-      const h1 = (raw.match(/^\s{0,3}#\s+.+$/gm) || []).length;
-      const paragraphs = plain.split(/\n\s*\n/).map(x => x.trim()).filter(x => countWords(x) >= 25);
-      const sentences = (plain.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
-      const hasQuestions = /\?/.test(plain) || headings.some(h => /^(what|why|how|when|where|who|which|can|does|is|are)\b/i.test(h));
-      const hasLists = /^\s*(?:[-*+]\s+|\d+[.)]\s+)/m.test(raw);
-      const hasNumbers = /\b\d+(?:[.,]\d+)?\s*(?:%|percent|\$|USD|years?|months?|days?|hours?|minutes?)?\b/i.test(plain);
-      const hasDates = /\b(?:20\d{2}|19\d{2}|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/i.test(plain);
-      const hasSources = /\b(?:source|sources|reference|references|according to|study|research|report|citation|cited)\b/i.test(plain) || /\[[0-9]+\]/.test(raw);
-      const hasAuthor = /\b(?:by\s+[A-Z][a-z]+|author|reviewed by|written by|our team|about the author)\b/i.test(plain);
-      const hasDefinition = /\b(?:is defined as|refers to|means|is a type of|is the process of)\b/i.test(plain);
-      const hasAction = /\b(?:steps?|how to|follow these|first|next|finally|checklist|process)\b/i.test(plain);
-      const longSentences = sentences.filter(x => countWords(x) > 30).length;
-      const shortParagraphs = paragraphs.filter(x => countWords(x) > 110).length;
-
-      const checks = [
-        { ok: headings.length >= 2, title: 'Clear section structure', category: 'implementation', detail: headings.length ? `${headings.length} Markdown heading(s) detected.` : 'No clear section headings were detected in the extracted copy.' },
-        { ok: h1 === 1, title: 'One clear main heading', category: 'implementation', detail: h1 === 1 ? 'One H1-style heading was detected.' : `${h1} H1-style heading(s) detected; aim for one descriptive main heading.` },
-        { ok: hasQuestions, title: 'Question-led answers', category: 'implementation', detail: hasQuestions ? 'Question wording or question headings were detected.' : 'No obvious question-led sections were detected.' },
-        { ok: hasDefinition, title: 'Plain-language definitions', category: 'implementation', detail: hasDefinition ? 'A definition-style phrase was detected.' : 'Consider explicitly defining important terms and concepts.' },
-        { ok: hasLists, title: 'Scannable lists or steps', category: 'implementation', detail: hasLists ? 'A list or numbered sequence was detected.' : 'No bullet or numbered lists were detected.' },
-        { ok: hasNumbers, title: 'Specific figures and measurements', category: 'implementation', detail: hasNumbers ? 'Numeric details were detected; verify their context and accuracy.' : 'No obvious statistics, quantities, prices, or measurements were detected.' },
-        { ok: hasDates, title: 'Time context and freshness', category: 'implementation', detail: hasDates ? 'A year, month, or date-like reference was detected; confirm it is current.' : 'No obvious date or year was detected where time-sensitive context may matter.' },
-        { ok: hasSources, title: 'Evidence and source attribution', category: 'implementation', detail: hasSources ? 'Source- or research-related language was detected; verify the actual references.' : 'No clear source attribution was detected.' },
-        { ok: hasAuthor, title: 'Author or reviewer context', category: 'implementation', detail: hasAuthor ? 'Author or reviewer context may be present.' : 'No obvious author, reviewer, or accountable team context was detected.' },
-        { ok: hasAction, title: 'Practical process guidance', category: 'implementation', detail: hasAction ? 'Action- or process-oriented language was detected.' : 'No obvious step-by-step guidance or process language was detected.' },
-        { ok: longSentences === 0, title: 'Sentence readability', detail: longSentences ? `${longSentences} sentence(s) exceed roughly 30 words; review for clarity.` : 'No sentences longer than roughly 30 words were detected.' },
-        { ok: shortParagraphs === 0, title: 'Paragraph scannability', detail: shortParagraphs ? `${shortParagraphs} paragraph(s) exceed roughly 110 words; consider breaking them up.` : 'No especially long paragraphs were detected.' }
-      ];
-      return { words, headings, paragraphs: paragraphs.length, sentences: sentences.length, checks };
-    }
-
-    function renderReport(report, sourceLabel) {
-      const needs = $('cc-needs');
-      const body = $('cc-results-body');
-      const source = $('cc-source');
-      const summary = $('cc-report-summary');
-      if (!needs || !body || !results) throw new Error('The results area is incomplete. Please restore the cc-needs and cc-results-body elements.');
-      needs.replaceChildren();
-      body.replaceChildren();
-      if (source) source.textContent = sourceLabel;
-      const gaps = report.checks.filter(item => !item.ok);
-      const implementationChecks = report.checks.filter(item => item.category === 'implementation');
-      const implemented = implementationChecks.filter(item => item.ok).length;
-      const total = implementationChecks.length;
-      const score = total ? Math.round((implemented / total) * 100) : 0;
-      const missing = total - implemented;
-      const scoreValue = $('cc-score-value');
-      const scoreLabel = $('cc-score-label');
-      const scoreDetail = $('cc-score-detail');
-      const scoreProgress = $('cc-score-progress');
-      const scoreFill = $('cc-score-fill');
-      const buildout = $('cc-buildout');
-      if (scoreValue) scoreValue.textContent = `${score}/100`;
-      if (scoreLabel) scoreLabel.textContent = score >= 80 ? 'Strong detected coverage' : score >= 50 ? 'Partial implementation' : 'Substantial content work remains';
-      if (scoreDetail) scoreDetail.textContent = `${implemented} of ${total} core content requirements detected; ${missing} still need attention.`;
-      if (scoreProgress) scoreProgress.setAttribute('aria-valuenow', String(score));
-      if (scoreFill) scoreFill.style.width = `${score}%`;
-      if (buildout) buildout.textContent = missing === 0 ? 'Build-out estimate: no missing core requirements were detected. Review the quality notes below.' : missing <= 2 ? `Build-out estimate: light — address ${missing} missing requirement(s).` : missing <= 5 ? `Build-out estimate: moderate — address ${missing} missing requirement(s), prioritizing evidence and useful answers.` : `Build-out estimate: substantial — address ${missing} missing requirement(s). Plan a structured content expansion rather than adding filler.`;
-      if (summary) summary.textContent = `The checker reviewed approximately ${report.words.toLocaleString()} words, ${report.headings.length} headings, and ${report.paragraphs} substantial paragraphs. It found ${gaps.length} possible content need(s). The score measures detected editorial requirements only; it is not a ranking or AI-citation prediction.`;
-      (gaps.length ? gaps : [{ title: 'No obvious checklist gaps detected', detail: 'The basic editorial cues checked here were detected. This does not certify quality, accuracy, completeness, or search performance.' }]).forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item.title;
-        needs.appendChild(li);
-      });
-      report.checks.forEach(item => {
-        const section = document.createElement('section');
-        section.className = 'cc-detected-item';
-        const heading = document.createElement('h4');
-        heading.textContent = `${item.ok ? 'Detected' : 'Potential gap'}: ${item.title}`;
-        const paragraph = document.createElement('p');
-        paragraph.textContent = item.detail;
-        section.append(heading, paragraph);
-        body.appendChild(section);
-      });
-      results.hidden = false;
-      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const title = $('cc-report-title');
-      if (title) title.focus({ preventScroll: true });
-    }
-
-    async function readPublicUrl(value) {
-      let parsed;
-      try { parsed = new URL(value); } catch (_) { throw new Error('Enter a valid public URL beginning with https://'); }
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Only public HTTP or HTTPS URLs are supported.');
-      if (parsed.username || parsed.password) throw new Error('URLs containing embedded usernames or passwords are not accepted.');
-      const endpoint = 'https://r.jina.ai/' + parsed.href;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 45000);
-      try {
-        const response = await fetch(endpoint, {
-          method: 'GET',
-          headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' },
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error(`The page reader returned HTTP ${response.status}. Try pasting the page text instead.`);
-        const text = await response.text();
-        if (!text || text.trim().length < 100) throw new Error('The reader returned too little page text. The page may block extraction; try pasting its text instead.');
-        return text;
-      } catch (error) {
-        if (error.name === 'AbortError') throw new Error('Page retrieval timed out after 45 seconds. Try pasting the page text instead.');
-        if (error instanceof TypeError) throw new Error('The page could not be retrieved from your browser. The reader may be unavailable or the request may be blocked. Try pasting the page text instead.');
-        throw error;
-      } finally { clearTimeout(timer); }
-    }
-
-    textInput && textInput.addEventListener('input', () => {
-      const count = $('cc-count');
-      if (count) count.textContent = `${countWords(textInput.value).toLocaleString()} approximate English-language words`;
-    });
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (runButton) { runButton.disabled = true; runButton.textContent = 'Checking…'; }
-      setStatus('');
-      if (results) results.hidden = true;
-      try {
-        let content, label;
-        if (activeMode === 'url') {
-          const address = (urlInput && urlInput.value || '').trim();
-          if (!address) throw new Error('Enter a public page URL first.');
-          if (!consent || !consent.checked) throw new Error('Please confirm the URL-reader notice before submitting a public URL.');
-          setStatus('Retrieving the public page through Jina AI Reader…');
-          content = await readPublicUrl(address);
-          label = `Source URL: ${address} (retrieved through Jina AI Reader)`;
-        } else {
-          content = (textInput && textInput.value || '').trim();
-          label = 'Source: text pasted into this browser (processed locally)';
-          if (!content) throw new Error('Paste the page copy before checking it.');
-        }
-        const report = analyze(content);
-        if (report.words < 100) throw new Error(`Only about ${report.words} words were found. Please provide at least 100 words for a useful check.`);
-        renderReport(report, label);
-        setStatus('Check complete. Review the possible needs below; they are editorial observations, not a certification.');
-      } catch (error) {
-        setStatus(error && error.message ? error.message : 'The checker could not complete the request. Please try again.', true);
-      } finally {
-        if (runButton) { runButton.disabled = false; runButton.textContent = 'Check my page'; }
-      }
-    });
-
-    resetButton && resetButton.addEventListener('click', () => {
-      form.reset();
-      if (results) results.hidden = true;
-      if ($('cc-needs')) $('cc-needs').replaceChildren();
-      if ($('cc-results-body')) $('cc-results-body').replaceChildren();
-      if ($('cc-count')) $('cc-count').textContent = '0 approximate English-language words';
-      setMode('url');
-      setStatus('Form and results cleared.');
-    });
-    const printButton = $('cc-print');
-    printButton && printButton.addEventListener('click', () => window.print());
-    setMode('url');
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initGeoContentChecker, { once: true });
-  else initGeoContentChecker();
-})();
-</script>
-
 </body></html>
