@@ -54,7 +54,7 @@
     <h2>Subscribe to open the workspace</h2>
     <p>$49 a month for one website, billed through Stripe. Subscribe here first, then create your account below with the same email address and the workspace unlocks automatically.</p>
     <a class="pay-cta" href="https://buy.stripe.com/fZufZgcvdf9N5A83uobwk00">Subscribe · $49/month</a>
-    <p class="muted">Already subscribed? Create your account or sign in below with the email address you paid with.</p>
+    <p class="muted">Already subscribed? Create your account or sign in below. If you paid with a different address, use Restore access in the workspace afterwards.</p>
   </section>
 
   <section id="auth-panel" class="panel auth-panel">
@@ -87,7 +87,15 @@
     <div class="plan-actions">
       <button data-plan="studio_monthly">Subscribe · $49/month per website</button>
     </div>
-    <p class="muted">Billing is handled by Stripe. This is the only place to subscribe: a payment made anywhere else cannot be attached to your login, so the workspace would still stay locked. Cancel according to your subscription terms.</p>
+    <p class="muted">Billing is handled by Stripe. Cancel according to your subscription terms.</p>
+    <div class="restore">
+      <h3>Already paid?</h3>
+      <p>If you subscribed with a different email address than the one you signed in with, enter the address you used at Stripe and we will attach that subscription to this account.</p>
+      <label for="restore-email">Email used at Stripe</label>
+      <input id="restore-email" type="email" autocomplete="email" placeholder="you@example.com">
+      <button id="restore-button" class="secondary">Restore access</button>
+      <p id="restore-status" class="muted" role="status" aria-live="polite"></p>
+    </div>
   </section>
 
   <section id="app-panel" class="hidden">

@@ -84,3 +84,9 @@ body{padding-top:73px}
 
 .pay-cta{display:inline-flex;align-items:center;justify-content:center;margin:6px 0 14px;padding:15px 24px;border-radius:12px;background:linear-gradient(135deg,#4f8bff,#3768ed);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 14px 30px rgba(55,104,237,.32)}
 .pay-cta:hover{filter:brightness(1.06)}
+
+.restore{margin-top:22px;padding-top:18px;border-top:1px solid rgba(148,180,255,.22)}
+.restore h3{margin:0 0 6px;font-size:17px}
+.restore label{display:block;margin:12px 0 6px;font-size:13px;font-weight:700;color:#b9c8e8}
+.restore input{width:100%;max-width:420px}
+.restore button{margin-top:12px}

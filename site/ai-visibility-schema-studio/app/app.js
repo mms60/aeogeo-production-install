@@ -104,6 +104,18 @@ $("magic-link").addEventListener("click",async()=>{
     msg("auth-message",error?authError(error):"Check your email for the secure sign-in link.");
   }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
 });
+const restoreButton=$("restore-button");
+if(restoreButton) restoreButton.addEventListener("click",async()=>{
+  const email=($("restore-email").value||"").trim(), status=$("restore-status");
+  if(!email){status.textContent="Enter the email address you used at Stripe.";$("restore-email").focus();return;}
+  restoreButton.disabled=true;status.textContent="Checking for a paid subscription…";
+  try{
+    await api("restore-purchase",{email});
+    status.textContent="Subscription found. Opening your workspace…";
+    await updateSession(currentSession);
+  }catch(e){status.textContent=e.message;}
+  finally{restoreButton.disabled=false;}
+});
 const checkoutState=new URLSearchParams(location.search).get("checkout");
 if(checkoutState==="success")msg("auth-message","Payment received. Sign in with the email address you used at Stripe, or create an account with it, to open your workspace.");
 else if(checkoutState==="cancelled")msg("auth-message","Checkout was cancelled. Nothing was charged, and you can start again whenever you are ready.");
