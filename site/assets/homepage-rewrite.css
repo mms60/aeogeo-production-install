@@ -11,3 +11,6 @@
 
 /* Who We Help cards: space for the whole-card link label */
 .hr-home .hr-card.hr-who-card{padding-bottom:78px}
+
+/* Route card labels: bold white like the illustration labels */
+.hr-home .hr-route .hr-eyebrow{color:#fff;font-weight:700}
