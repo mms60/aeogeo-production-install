@@ -5,7 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { stripe } = require('./lib/stripe');
 
-const PRICE_ID = 'price_1UaHa5BIJX5f6WmhiJwYMHlO';
+// The current price, plus the earlier one, so buyers who paid before the change still get the file.
+const PRICE_IDS = ['price_1UayqxBIJX5f6WmhOyuMvPCR', 'price_1UaHa5BIJX5f6WmhiJwYMHlO'];
 const PRODUCT = 'directory-listing-kit';
 const FILENAME = 'AEOGEO-Search-Directory-Listing-Kit.docx';
 const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -40,7 +41,7 @@ exports.handler = async event => {
 
     const items = await stripe(`checkout/sessions/${sessionId}/line_items`, { method: 'GET' });
     const priceIds = (items && Array.isArray(items.data) ? items.data : []).map(item => item && item.price && item.price.id).filter(Boolean);
-    if (!priceIds.includes(PRICE_ID)) return text(403, 'This receipt is for a different product. Reference: DL_MISMATCH.');
+    if (!priceIds.some(id => PRICE_IDS.includes(id))) return text(403, 'This receipt is for a different product. Reference: DL_MISMATCH.');
 
     let buffer = null;
     for (const candidate of CANDIDATES) {
