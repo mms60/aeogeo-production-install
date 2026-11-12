@@ -31,6 +31,7 @@
 .hr-home .hr-tool-card h4{margin:0 0 10px;font-size:17px;line-height:1.4;color:#fff}
 .hr-home .hr-tool-card p{margin:0 0 14px;font-size:14px;line-height:1.7;color:#c8d9f4}
 .hr-home .hr-tool-card .hr-text-link{margin-top:auto;font-size:14px;font-weight:700;color:#9abbff;text-decoration:none}
+.hr-home .hr-tool-card .hr-button{margin-top:auto;align-self:flex-start}
 .hr-home .hr-subsection{margin:30px 0 0;padding:28px;border:1px solid #354e77;border-radius:22px;background:#0e1f3c}
 .hr-home .hr-subsection>h3{margin:0 0 14px;font-size:22px;line-height:1.4;color:#fff}
 .hr-home .hr-subsection>p{max-width:920px}
