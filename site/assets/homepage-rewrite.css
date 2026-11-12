@@ -4,7 +4,7 @@
    A dark wash keeps the white question text and answer cards legible over
    the photograph at every width. */
 #frequently-asked-questions.hr-alt{
-  background-image:linear-gradient(180deg,rgba(6,14,32,.9),rgba(6,14,32,.88)),
+  background-image:linear-gradient(180deg,rgba(6,14,32,.74),rgba(6,14,32,.7)),
     url("/images/hero-ai-face.webp");
   background-size:cover;
   background-position:center 38%;
