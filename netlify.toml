@@ -52,5 +52,25 @@
     Referrer-Policy = "no-referrer"
     X-Robots-Tag = "noindex, nofollow, noarchive"
 
+# Owner-only Stripe test and billing diagnostics
+[[headers]]
+  for = "/owner-billing-check/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/owner-monthly-test/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# Demo and post-purchase pages that should never be indexed
+[[headers]]
+  for = "/competitor-intelligence/sample-preview*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/directory-listing-kit/thanks/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
 [functions."kit-download"]
   included_files = ["netlify/functions/assets/AEOGEO-Search-Directory-Listing-Kit.docx"]
