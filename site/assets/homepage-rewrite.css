@@ -2,9 +2,9 @@
 
 /* Plan comparison table: the Get Started row reads as buttons.
    Same links, same destinations, just visible as actions. */
-.hr-plan-table tbody tr:last-child td>a{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:999px;border:1px solid transparent;background:#3766e9;color:#fff;text-decoration:none;font-size:13px;font-weight:700;line-height:1.4;white-space:nowrap;box-shadow:0 8px 24px #2448c833}
-.hr-plan-table tbody tr:last-child td>a:hover{background:#4a78f4;color:#fff}
+.hr-plan-table tbody tr:last-child td>a{display:inline-flex;text-decoration:none;align-items:center;justify-content:center;padding:10px 16px;border-radius:999px;border:1px solid transparent;background:#3766e9;color:#fff;text-decoration:none;font-size:13px;font-weight:700;line-height:1.4;white-space:nowrap;box-shadow:0 8px 24px #2448c833}
+.hr-plan-table tbody tr:last-child td>a:hover{background:#2448c8;color:#fff;box-shadow:0 10px 26px #2448c855}
 .hr-plan-table tbody tr:last-child td>a:focus-visible{outline:3px solid #9abbff;outline-offset:2px}
 .hr-plan-table tbody tr:last-child td:nth-child(n+3)>a{background:#0a1634aa;border-color:#6485bd;box-shadow:none;color:#eaf1ff}
-.hr-plan-table tbody tr:last-child td:nth-child(n+3)>a:hover{background:#eaf1ff;border-color:#9abbff;color:#0a1634}
+.hr-plan-table tbody tr:last-child td:nth-child(n+3)>a:hover{background:#3766e9;border-color:#9abbff;color:#fff;box-shadow:0 10px 26px #2448c855}
 @media (max-width:640px){.hr-plan-table tbody tr:last-child td>a{padding:9px 13px;font-size:12px}}
