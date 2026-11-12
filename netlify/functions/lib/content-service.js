@@ -2,7 +2,7 @@
 const crypto=require('node:crypto');const {docx}=require('./content-document');
 const KIND='aeogeo_content_v2',OWNER='michellesilerschmidt@gmail.com',COOKIE='__Host-aeogeo-content-v2';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PRICE_IDS=Object.freeze({pages:'price_1UWhhpBIJX5f6WmhFTElhoWQ',monthly:'price_1UWhjcBIJX5f6WmhebV7aewk'});
+const PRICE_IDS=Object.freeze({pages:'price_1Ub1UFBIJX5f6WmhtLUkIHXS',monthly:'price_1UWhjcBIJX5f6WmhebV7aewk'});
 const throttles=new Map();
 const catalog=require('./content-service-catalog');
 if(catalog.pages.unitAmount!==25900||catalog.monthly.unitAmount!==100000||catalog.monthly.articles!==4)throw Error('Content catalog requires an explicit pricing review');
