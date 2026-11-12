@@ -5,7 +5,7 @@
 const {stripe} = require('./stripe');
 const {db} = require('./db');
 
-const studioPrice = () => (process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID || 'price_1Uah2rBIJX5f6WmhZs6Uq5iG').trim();
+const {studioPriceMatches} = require('./studio-price');
 const priceOf = sub => sub?.items?.data?.[0]?.price?.id || null;
 const iso = seconds => (seconds ? new Date(seconds * 1000).toISOString() : null);
 const upsert = (path, body, conflict) => db(`${path}?on_conflict=${conflict}`, {
@@ -28,7 +28,8 @@ async function emailForCustomer(customerId) {
 
 async function record(sub) {
   const priceId = priceOf(sub);
-  if (!priceId || priceId !== studioPrice()) return false;
+  const price = sub?.items?.data?.[0]?.price || null;
+  if (!priceId || !studioPriceMatches(price)) return false;
   const userId = sub.metadata?.supabase_user_id || null;
   const periodEnd = iso(sub.current_period_end);
   if (userId) {
@@ -65,14 +66,14 @@ async function handleStudioWebhook(event) {
       const session = event.data?.object || {};
       if (session.mode !== 'subscription' || !session.subscription) return false;
       const sub = await retrieveSubscription(session.subscription);
-      if (!sub || priceOf(sub) !== studioPrice()) return false;
+      if (!sub || !studioPriceMatches(sub.items?.data?.[0]?.price)) return false;
       const userId = sub.metadata?.supabase_user_id || session.metadata?.supabase_user_id || session.client_reference_id;
       if (userId && !sub.metadata?.supabase_user_id) sub.metadata = {...(sub.metadata || {}), supabase_user_id: userId};
       return await record(sub);
     }
     if (type === 'customer.subscription.updated' || type === 'customer.subscription.deleted') {
       const sub = event.data?.object || {};
-      if (priceOf(sub) !== studioPrice()) return false;
+      if (!studioPriceMatches(sub.items?.data?.[0]?.price)) return false;
       return await record(sub);
     }
   } catch (err) {
