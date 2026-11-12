@@ -26,7 +26,8 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>acti
 async function updateSession(session){
   currentSession=session;
   const signedIn=!!session;
-  show("auth-panel",!signedIn); show("signout",signedIn);
+  show("auth-panel",!signedIn); show("signout",signedIn); show("manage-billing",signedIn);
+  if(!signedIn) msg("billing-status","");
   const publicCta=$("public-cta"); if(publicCta) publicCta.classList.toggle("hidden",signedIn);
   $("account-label").textContent=signedIn?(session.user.email||"Signed in"):"Not signed in";
   if(!signedIn){show("app-panel",false);show("paywall",false);return;}
@@ -103,6 +104,13 @@ $("magic-link").addEventListener("click",async()=>{
     const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+APP_PATH}});
     msg("auth-message",error?authError(error):"Check your email for the secure sign-in link.");
   }catch(err){msg("auth-message",authError(err));}finally{authBusy(false);}
+});
+const billingButton=$("manage-billing");
+if(billingButton) billingButton.addEventListener("click",async()=>{
+  const status=$("billing-status");
+  billingButton.disabled=true; if(status) status.textContent="Opening the billing portal…";
+  try{const r=await api("stripe-portal");location.href=r.url;}
+  catch(e){if(status) status.textContent=e.message;billingButton.disabled=false;}
 });
 const restoreButton=$("restore-button");
 if(restoreButton) restoreButton.addEventListener("click",async()=>{
