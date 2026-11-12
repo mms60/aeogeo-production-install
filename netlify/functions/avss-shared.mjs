@@ -26,10 +26,35 @@ export async function userFromEvent(event) {
   if(error||!data.user) throw new Error("Your session is invalid or expired. Please sign in again.");
   return data.user;
 }
-export async function requirePaid(userId) {
+async function paidRow(userId) {
   const db=adminClient();
   const {data,error}=await db.from("subscriptions").select("status,current_period_end").eq("user_id",userId).in("status",["active","trialing"]).maybeSingle();
   if(error) throw new Error(`Subscription lookup failed: ${error.message}`);
+  return data||null;
+}
+// A subscription bought before the account existed is stored with the buyer's email.
+// The first time that email signs in, the row is attached to the account.
+async function claimPendingSubscription(user) {
+  if(!user?.email) return false;
+  const db=adminClient();
+  const {data:rows,error}=await db.from("avss_pending_subscriptions")
+    .select("id,stripe_customer_id,stripe_subscription_id,status,price_id,current_period_end")
+    .ilike("email",user.email).in("status",["active","trialing"]).limit(1);
+  if(error||!rows||!rows.length) return false;
+  const row=rows[0];
+  const {error:writeError}=await db.from("subscriptions").upsert({
+    user_id:user.id,stripe_customer_id:row.stripe_customer_id,stripe_subscription_id:row.stripe_subscription_id,
+    status:row.status,price_id:row.price_id,current_period_end:row.current_period_end,updated_at:new Date().toISOString()
+  },{onConflict:"stripe_subscription_id"});
+  if(writeError) return false;
+  if(row.stripe_customer_id) await db.from("profiles").upsert({id:user.id,stripe_customer_id:row.stripe_customer_id},{onConflict:"id"});
+  await db.from("avss_pending_subscriptions").delete().eq("id",row.id);
+  return true;
+}
+export async function requirePaid(userOrId) {
+  const user = typeof userOrId === "string" ? { id: userOrId } : userOrId;
+  let data = await paidRow(user.id);
+  if(!data && user.email && await claimPendingSubscription(user)) data = await paidRow(user.id);
   if(!data) throw new Error("An active paid subscription is required to use this tool.");
   if(data.current_period_end && new Date(data.current_period_end)<new Date()) throw new Error("Your subscription period has expired.");
   return data;

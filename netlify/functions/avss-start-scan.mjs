@@ -1,7 +1,7 @@
 import { json, readBody, userFromEvent, requirePaid, adminClient, assertPublicHttpUrl } from "./avss-shared.mjs";
 export default async event=>{
   try{
-    const user=await userFromEvent(event); await requirePaid(user.id);
+    const user=await userFromEvent(event); await requirePaid(user);
     const body=readBody(event), target=await assertPublicHttpUrl(body.url);
     const maxPages=Math.min(Math.max(Number(body.maxPages)||10,1),Number(process.env.MAX_PAGES_PER_SCAN)||20);
     const db=adminClient();

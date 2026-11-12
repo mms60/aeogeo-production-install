@@ -12,7 +12,7 @@ function validateSchema(obj,type){
 }
 export default async event=>{
   try{
-    const user=await userFromEvent(event);await requirePaid(user.id);
+    const user=await userFromEvent(event);await requirePaid(user);
     const {url,type,details,auditExisting=true}=readBody(event);
     if(!allowedTypes.has(type))return json(400,{error:"Unsupported schema type."});
     if(typeof details!=="string"||details.trim().length<10||details.length>12000)return json(400,{error:"Provide at least 10 characters of verified details (maximum 12,000)."});

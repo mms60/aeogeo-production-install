@@ -81,3 +81,6 @@ footer{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);fo
 body{padding-top:73px}
 .account-strip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 22px;font-size:12.5px;color:var(--muted)}
 .account-strip a{color:#a9c5ff}
+
+.pay-cta{display:inline-flex;align-items:center;justify-content:center;margin:6px 0 14px;padding:15px 24px;border-radius:12px;background:linear-gradient(135deg,#4f8bff,#3768ed);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 14px 30px rgba(55,104,237,.32)}
+.pay-cta:hover{filter:brightness(1.06)}

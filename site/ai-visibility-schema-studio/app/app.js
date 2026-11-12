@@ -27,6 +27,7 @@ async function updateSession(session){
   currentSession=session;
   const signedIn=!!session;
   show("auth-panel",!signedIn); show("signout",signedIn);
+  const publicCta=$("public-cta"); if(publicCta) publicCta.classList.toggle("hidden",signedIn);
   $("account-label").textContent=signedIn?(session.user.email||"Signed in"):"Not signed in";
   if(!signedIn){show("app-panel",false);show("paywall",false);return;}
   try{
