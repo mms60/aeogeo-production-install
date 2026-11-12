@@ -21,3 +21,20 @@
 .hr-home .hr-figure .hr-audit-pitch h4{margin:26px 0 10px;color:#fff;font-size:18px;line-height:1.4}
 .hr-home .hr-figure .hr-audit-pitch p{margin:0 0 14px}
 .hr-home .hr-figure .hr-audit-pitch .hr-button{margin-top:6px}
+
+/* Route 1 and Route 2 are separate services, each a full width band */
+.hr-home .hr-route-grid{grid-template-columns:1fr}
+.hr-home .hr-route{max-width:none}
+.hr-home .hr-route>p,.hr-home .hr-route>ul,.hr-home .hr-route>.hr-disclosure{max-width:920px}
+.hr-home .hr-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:26px 0 0}
+.hr-home .hr-tool-card{display:flex;flex-direction:column;border:1px solid #2f4a72;border-radius:16px;padding:20px;background:#0d1e3b}
+.hr-home .hr-tool-card h4{margin:0 0 10px;font-size:17px;line-height:1.4;color:#fff}
+.hr-home .hr-tool-card p{margin:0 0 14px;font-size:14px;line-height:1.7;color:#c8d9f4}
+.hr-home .hr-tool-card .hr-text-link{margin-top:auto;font-size:14px;font-weight:700;color:#9abbff;text-decoration:none}
+.hr-home .hr-subsection{margin:30px 0 0;padding:28px;border:1px solid #354e77;border-radius:22px;background:#0e1f3c}
+.hr-home .hr-subsection>h3{margin:0 0 14px;font-size:22px;line-height:1.4;color:#fff}
+.hr-home .hr-subsection>p{max-width:920px}
+.hr-home .hr-route-close{margin:30px 0 0;padding:28px;border:1px solid #354e77;border-radius:22px;background:linear-gradient(140deg,#112342,#0c1930)}
+.hr-home .hr-route-close>h3{margin:0 0 14px;font-size:22px;line-height:1.4;color:#fff}
+.hr-home .hr-route-close>p{max-width:920px}
+@media (max-width:700px){.hr-home .hr-tool-grid{grid-template-columns:1fr}}
