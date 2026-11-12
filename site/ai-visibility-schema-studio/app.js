@@ -44,7 +44,7 @@ async function init(){
   const {data:{session}}=await supabaseClient.auth.getSession(); await updateSession(session);
   supabaseClient.auth.onAuthStateChange((_event,session)=>updateSession(session));
 }
-const APP_PATH="/ai-visibility-schema-studio/app/";
+const APP_PATH="/ai-visibility-schema-studio/";
 function authBusy(busy){
   ["signin-button","signup-button","forgot-password","magic-link"].forEach(id=>$(id).disabled=busy);
 }
