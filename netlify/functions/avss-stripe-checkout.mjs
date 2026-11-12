@@ -22,8 +22,8 @@ export default async event => {
       customer_email:profile?.stripe_customer_id?undefined:user.email,
       client_reference_id:user.id,metadata:{supabase_user_id:user.id},
       subscription_data:{metadata:{supabase_user_id:user.id}},
-      success_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/?checkout=success`,
-      cancel_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/?checkout=cancelled`
+      success_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/app/?checkout=success`,
+      cancel_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/app/?checkout=cancelled`
     });
     return json(200,{url:session.url});
   }catch(e){return json(400,{error:e.message});}
