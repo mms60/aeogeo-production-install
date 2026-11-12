@@ -76,3 +76,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible,.tab:focus-visible{ou
 footer{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-size:12px;line-height:1.7;color:var(--muted)}
 #crawler-status,#schema-status,#auth-message{min-height:18px;margin-top:10px}
 @media(max-width:760px){.auth-panel{grid-template-columns:1fr}.inline-form{flex-wrap:wrap}.wrap{padding:32px 16px 56px}.panel{padding:20px}.topbar{flex-wrap:wrap;gap:10px}.top-actions{margin-left:0;width:100%}}
+
+/* Shared site header: reserve its height and style the account strip. */
+body{padding-top:73px}
+.account-strip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 22px;font-size:12.5px;color:var(--muted)}
+.account-strip a{color:#a9c5ff}
