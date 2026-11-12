@@ -68,3 +68,12 @@
   font-size:.875rem!important;
   line-height:1.6!important;
 }
+
+/* Opt-in: render a paragraph at the standard h2 size and weight. */
+p.type-h2,h2.type-h2{
+  font-family:var(--type-display)!important;
+  font-size:clamp(1.625rem,2.8vw,2rem)!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+  letter-spacing:-0.005em!important;
+}
