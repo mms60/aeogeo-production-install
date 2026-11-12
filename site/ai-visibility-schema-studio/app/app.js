@@ -126,7 +126,7 @@ if(restoreButton) restoreButton.addEventListener("click",async()=>{
 });
 const checkoutState=new URLSearchParams(location.search).get("checkout");
 if(checkoutState==="success")msg("auth-message","Payment received. Sign in with the email address you used at Stripe, or create an account with it, to open your workspace.");
-else if(checkoutState==="cancelled")msg("auth-message","Checkout was cancelled. Nothing was charged, and you can start again whenever you are ready.");
+else if(checkoutState==="cancelled")msg("auth-message","Checkout was canceled. Nothing was charged, and you can start again whenever you are ready.");
 $("signout").addEventListener("click",async()=>{await supabaseClient.auth.signOut();});
 document.querySelectorAll("[data-plan]").forEach(b=>b.addEventListener("click",async()=>{
   b.disabled=true;try{const r=await api("stripe-checkout",{plan:b.dataset.plan});location.href=r.url;}catch(e){alert(e.message);}finally{b.disabled=false;}
