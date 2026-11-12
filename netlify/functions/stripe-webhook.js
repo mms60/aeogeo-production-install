@@ -19,6 +19,8 @@ exports.handler = async event => {
   if (guestResult) return reply(200, {received: true, guestService: true});
   const serviceResult = await require("./lib/service-checkout").configuredServiceCheckout().webhook(e);
   if (serviceResult) return reply(200, {received: true, service: true});
+  const studioResult = await require("./lib/studio-link").handleStudioWebhook(e);
+  if (studioResult) return reply(200, {received: true, studio: true});
   const result = await configuredBillingSync().event(e);
   return reply(200, {received: true, ignored: !!result.ignored});
  } catch (err) {
