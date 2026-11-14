@@ -77,3 +77,30 @@ p.type-h2,h2.type-h2{
   font-weight:700!important;
   letter-spacing:-0.005em!important;
 }
+
+/* Mobile tap targets: FAQ rows and service-category jump pills. */
+@media (max-width:700px){
+  summary{min-height:44px}
+  nav[aria-label="Service categories"] a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+  }
+
+  /* Robots generator: compact text controls grow to 44px. */
+  #root:has(#robots-txt-generator) button[class*="text-[9px]"],
+  #root:has(#robots-txt-generator) button[class*="text-[10px]"],
+  #root:has(#robots-txt-generator) button[class*="text-[11px]"],
+  #root:has(#robots-txt-generator) button[class*="text-xs"]{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  /* Switches and icon-only controls keep their visual size, with a 44px hit area. */
+  #root:has(#robots-txt-generator) button[class*="h-6 w-11"],
+  #root:has(#robots-txt-generator) button[class*="size-7"]{position:relative}
+  #root:has(#robots-txt-generator) button[class*="h-6 w-11"]::after{content:"";position:absolute;inset:-11px 0}
+  #root:has(#robots-txt-generator) button[class*="size-7"]::after{content:"";position:absolute;inset:-8px}
+}

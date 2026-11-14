@@ -48,3 +48,30 @@
 
 /* Option 2 subheadings on the homepage */
 .hr-home .hr-route h4{margin:24px 0 10px;font-size:18px;line-height:1.4;font-weight:700;color:#fff}
+
+/* FAQ band: AI network artwork behind the questions. */
+#frequently-asked-questions.hr-alt {
+  background-color:#071127;
+  background-image:linear-gradient(180deg,rgba(6,14,32,.64),rgba(6,14,32,.76)),url("/images/faq-ai-bg.webp");
+  background-position:68% 40%;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+#frequently-asked-questions h2,
+#frequently-asked-questions .hr-intro,
+#frequently-asked-questions .hr-eyebrow{text-shadow:0 2px 16px rgba(3,8,22,.85)}
+@media (min-width:701px){
+  #frequently-asked-questions.hr-alt{background-attachment:fixed;background-position:center center}
+}
+@media (max-width:700px){
+  #frequently-asked-questions.hr-alt{
+    background-image:linear-gradient(180deg,rgba(6,14,32,.45) 0,rgba(6,14,32,.64) 290px,rgba(6,14,32,.86) 100%),url("/images/faq-ai-bg.webp");
+    background-size:100% 100%,100% auto;
+    background-position:center top;
+    background-repeat:no-repeat;
+    padding-top:calc(56vw + 32px);
+  }
+}
+@media print{
+  #frequently-asked-questions.hr-alt{background-image:none!important}
+}

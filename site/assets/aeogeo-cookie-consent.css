@@ -16,6 +16,12 @@ body[data-aeogeo-cookie-ui]{padding-bottom:calc(var(--aeogeo-cookie-base-padding
 #aeogeo-cookie-banner .aeogeo-cookie-close:hover{background:#ffffff12}
 #aeogeo-cookie-banner button:focus-visible,#aeogeo-cookie-banner a:focus-visible,#aeogeo-cookie-preferences:focus-visible{outline:3px solid #bcd4ff;outline-offset:3px}
 #aeogeo-cookie-preferences{appearance:none;position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:2147482999;max-width:calc(100% - 24px);min-height:44px;border:1px solid #6485bd;border-radius:9px;padding:10px 14px;background:var(--color-navy-900,#0a1533);font-size:12px;font-weight:600;line-height:1.5;cursor:pointer;box-shadow:0 3px 12px #050b1f55;text-transform:none;letter-spacing:normal}
+@media(max-width:700px){
+  body[data-aeogeo-cookie-ui]:has(#aeogeo-cookie-preferences:not([hidden])){padding-bottom:var(--aeogeo-cookie-base-padding,0px)!important}
+  #aeogeo-cookie-preferences{position:static;inset:auto;z-index:auto;display:block;width:100%;max-width:none;min-height:52px;margin:0;border:0;border-top:1px solid #6485bd;border-radius:0;padding:14px 20px max(14px,env(safe-area-inset-bottom));box-shadow:none;text-align:center;font-size:13px}
+  #geo-scroll-to-top,
+  #root [aria-label="Scroll back to top"]{bottom:calc(68px + env(safe-area-inset-bottom,0px))!important}
+}
 @media(max-width:850px){#aeogeo-cookie-banner .aeogeo-cookie-inner{flex-direction:column;align-items:stretch;gap:16px;padding-right:0}#aeogeo-cookie-banner #aeogeo-cookie-title{padding-right:32px}#aeogeo-cookie-banner .aeogeo-cookie-actions button{flex:1;min-width:0}}
 @media(max-width:380px){#aeogeo-cookie-banner{padding-left:16px;padding-right:16px}#aeogeo-cookie-banner .aeogeo-cookie-actions{gap:8px}#aeogeo-cookie-banner .aeogeo-cookie-actions button{padding:10px 8px;font-size:13px}}
 @media print{#aeogeo-cookie-banner,#aeogeo-cookie-preferences{display:none!important}body[data-aeogeo-cookie-ui]{padding-bottom:var(--aeogeo-cookie-base-padding,0px)!important}}
