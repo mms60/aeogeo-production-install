@@ -1,6 +1,8 @@
 [build]
   publish = "site"
   functions = "netlify/functions"
+  # Block publishing if the shared eyebrow styling regresses.
+  command = "node --test tests/eyebrow-consistency.test.cjs"
 [build.environment]
   NODE_VERSION = "22"
 [functions]
