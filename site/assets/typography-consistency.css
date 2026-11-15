@@ -104,3 +104,21 @@ p.type-h2,h2.type-h2{
   #root:has(#robots-txt-generator) button[class*="h-6 w-11"]::after{content:"";position:absolute;inset:-11px 0}
   #root:has(#robots-txt-generator) button[class*="size-7"]::after{content:"";position:absolute;inset:-8px}
 }
+
+/* Eyebrow labels: one color and one size on every page. */
+html body :is(
+  .eyebrow,.hr-eyebrow,.st-eyebrow,.cc-eyebrow,.route-eyebrow,.hz-eyebrow,.ea-card-eyebrow,
+  .ea-output-kicker,.kicker,.route-role,.kit-hero-card-label,.hr-card-number,.tag,
+  p[class~="uppercase"][class~="text-royal-400"],
+  p[class~="uppercase"][class~="text-royal-300"],
+  :is(h1,h2,h3,h4,h5,h6)[class~="uppercase"]:is([class~="text-royal-400"],[class~="text-royal-300"]),
+  span[class~="uppercase"][class~="text-royal-400"]:not([class*="rounded-full"])
+){
+  color:#50c878!important;
+  -webkit-text-fill-color:#50c878!important;
+  font-size:12px!important;
+  line-height:16px!important;
+  font-weight:700!important;
+  letter-spacing:.12em!important;
+  margin:0 0 12px!important;
+}
