@@ -75,3 +75,8 @@
 @media print{
   #frequently-asked-questions.hr-alt{background-image:none!important}
 }
+
+/* Homepage FAQ: multi-paragraph answers and example prompt lists */
+.hr-home .hr-faq details ul.hr-faq-list{margin:12px 0 0;padding-left:22px;list-style:disc}
+.hr-home .hr-faq details ul.hr-faq-list li+li{margin-top:7px}
+.hr-home .hr-faq details p+p,.hr-home .hr-faq details ul+p{margin-top:12px}

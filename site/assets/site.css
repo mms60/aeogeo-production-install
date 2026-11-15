@@ -142,3 +142,8 @@ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block
  html body .geo-footer-legal-actions{flex-direction:column;align-items:flex-start;gap:4px}
  html body .geo-legal-links .geo-footer-badges{gap:12px;max-width:320px}
 }
+
+/* Keep long-copy four-up card grids at two columns on tablet widths. */
+@media (min-width:1024px) and (max-width:1279px){
+  .tablet-2up{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
