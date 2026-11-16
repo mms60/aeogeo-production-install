@@ -24,7 +24,7 @@ a{color:var(--royal-300)}
 .notice strong{color:#fff}
 .panel{background:linear-gradient(145deg,var(--navy-700),var(--navy-850));border:1px solid var(--line);border-radius:20px;padding:26px;margin:18px 0;box-shadow:0 20px 44px rgba(4,10,24,.45)}
 .auth-panel{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
-.panel h2{font-family:var(--display);font-size:22px;line-height:1.25;margin:4px 0 8px;color:#fff}
+main .panel h2{font-family:var(--display);font-size:22px!important;line-height:1.3!important;letter-spacing:normal!important;margin:4px 0 8px;color:#fff}
 .panel h3{font-family:var(--display);font-size:17px;margin:0 0 8px;color:#fff}
 .panel p{color:var(--ice-300);line-height:1.65;margin:0 0 10px}
 .inline-form{display:flex;gap:8px}
