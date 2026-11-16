@@ -87,6 +87,7 @@
     # tap-spot crashes on Checklinks failures under Netlify Build; raw TAP
     # output keeps the same checks without the formatter bug.
     pretty = false
+    todoPatterns = [""]
     skipPatterns = [
       ".netlify/functions/",
       "/tools#robots-txt-generator",
