@@ -13,13 +13,23 @@
 // is safe to keep here. To rotate it, replace both the site/<key>.txt file and
 // DEFAULT_KEY below, or set INDEXNOW_KEY to override the constant.
 //
+// Changed URLs are selected by comparing each sitemap <lastmod> with a ledger
+// of the last value successfully submitted for that URL. The ledger lives in
+// Netlify Blobs, so it survives deploys. This keeps the decision tied to when
+// the copy was edited rather than when the deploy ran: an edit made before a
+// delayed deploy is still submitted, while unchanged pages are not sent again.
+// The first successful run seeds the ledger with every sitemap URL once.
+//
 // Optional environment variables (Netlify site configuration):
 //   INDEXNOW_KEY            Override the committed public key.
 //   INDEXNOW_URLS           Comma/whitespace-separated URLs to submit instead of
 //                           selecting from the sitemap (for a one-off push).
-//   INDEXNOW_SUBMIT_ALL     "true" submits every sitemap URL (first-time seeding).
-//   INDEXNOW_LOOKBACK_DAYS  How many days of <lastmod> dates to submit.
-//                           Defaults to 7; 0 submits only today's changes.
+//   INDEXNOW_SUBMIT_ALL     "true" submits every sitemap URL (manual full refresh).
+//   INDEXNOW_LOOKBACK_DAYS  Fallback window used only when the ledger cannot be
+//                           read. Defaults to 7; 0 submits only today's changes.
+
+import { getStore } from "@netlify/blobs";
+import { mergeSubmitted, normalizeLastmod, selectChangedEntries } from "./lib/indexnow-selection.mjs";
 
 const DEFAULT_KEY = "8e63d09f86525125461b411e6f7e1dec";
 const DEFAULT_SITE_URL = "https://aeogeosearch.com";
@@ -27,6 +37,8 @@ const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 const MAX_URLS = 10000;
 const TIMEOUT_MS = 15000;
 const DEFAULT_LOOKBACK_DAYS = 7;
+const LEDGER_STORE = "indexnow";
+const LEDGER_KEY = "submitted-urls.json";
 
 function lookbackDays() {
   const value = Number.parseInt(process.env.INDEXNOW_LOOKBACK_DAYS || "", 10);
@@ -78,6 +90,54 @@ function uniqueUrls(values) {
   return urls;
 }
 
+// Reads the site-wide Netlify Blobs ledger. A missing or malformed ledger is
+// treated as unseeded, so the next successful run replaces it with a full set
+// of submitted URLs rather than silently skipping pages forever.
+async function readLedger() {
+  const store = getStore({ name: LEDGER_STORE, consistency: "strong" });
+  const raw = await store.get(LEDGER_KEY);
+  if (raw === null) {
+    return { store, submitted: {}, seeded: false };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    console.log("[indexnow] Submission ledger contains invalid JSON; reseeding it.");
+    return { store, submitted: {}, seeded: false };
+  }
+
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !parsed.submitted ||
+    typeof parsed.submitted !== "object" ||
+    Array.isArray(parsed.submitted)
+  ) {
+    console.log("[indexnow] Submission ledger has an unexpected shape; reseeding it.");
+    return { store, submitted: {}, seeded: false };
+  }
+
+  const submitted = {};
+  for (const [url, lastmod] of Object.entries(parsed.submitted)) {
+    if (typeof lastmod === "string") submitted[url] = normalizeLastmod(lastmod);
+  }
+  return { store, submitted, seeded: true };
+}
+
+async function writeLedger(ledger, entries, submittedUrls) {
+  const submitted = mergeSubmitted(entries, ledger.submitted, submittedUrls);
+  await ledger.store.set(
+    LEDGER_KEY,
+    JSON.stringify({
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      submitted,
+    }),
+  );
+}
+
 export default {
   async deploySucceeded(event) {
     try {
@@ -89,16 +149,17 @@ export default {
 
       const key = (process.env.INDEXNOW_KEY || DEFAULT_KEY).trim();
       const siteUrl = (process.env.URL || event?.site?.url || DEFAULT_SITE_URL).replace(/\/+$/, "");
-      const today = new Date().toISOString().slice(0, 10);
-      const lookback = lookbackDays();
-      const cutoff = new Date(Date.now() - lookback * 86400000).toISOString().slice(0, 10);
       const forced = (process.env.INDEXNOW_URLS || "")
         .split(/[\s,]+/)
         .map((value) => value.trim())
         .filter(Boolean);
       const submitAll = (process.env.INDEXNOW_SUBMIT_ALL || "").trim().toLowerCase() === "true";
 
+      let entries = [];
+      let ledger = null;
+      let ledgerError = null;
       let candidates;
+
       if (forced.length) {
         candidates = uniqueUrls(forced);
         console.log(`[indexnow] Using INDEXNOW_URLS override (${candidates.length} URL(s)).`);
@@ -117,16 +178,40 @@ export default {
           return;
         }
 
-        const entries = sitemapEntries(xml);
-        const selected = submitAll
-          ? entries
-          : entries.filter((entry) => entry.lastmod.slice(0, 10) >= cutoff);
-        candidates = uniqueUrls(selected.map((entry) => entry.loc));
-        console.log(
-          submitAll
-            ? `[indexnow] INDEXNOW_SUBMIT_ALL=true: ${candidates.length} sitemap URL(s) selected.`
-            : `[indexnow] ${candidates.length} sitemap URL(s) changed since ${cutoff} (${lookback}-day window).`,
-        );
+        entries = sitemapEntries(xml);
+
+        try {
+          ledger = await readLedger();
+        } catch (error) {
+          ledgerError = error;
+        }
+
+        if (submitAll) {
+          candidates = uniqueUrls(entries.map((entry) => entry.loc));
+          console.log(
+            ledgerError
+              ? `[indexnow] INDEXNOW_SUBMIT_ALL=true, but the submission ledger is unavailable (${ledgerError.message}); ${candidates.length} sitemap URL(s) selected without recording them.`
+              : `[indexnow] INDEXNOW_SUBMIT_ALL=true: ${candidates.length} sitemap URL(s) selected.`,
+          );
+        } else if (ledger) {
+          const selected = selectChangedEntries(entries, ledger.submitted);
+          candidates = uniqueUrls(selected.map((entry) => entry.loc));
+          if (!ledger.seeded) {
+            console.log(`[indexnow] No prior submission ledger; seeding all ${candidates.length} sitemap URL(s).`);
+          }
+          console.log(
+            `[indexnow] ${candidates.length} of ${entries.length} sitemap URL(s) are new or changed since their last submission.`,
+          );
+        } else {
+          const lookback = lookbackDays();
+          const cutoff = new Date(Date.now() - lookback * 86400000).toISOString().slice(0, 10);
+          const recent = entries.filter((entry) => entry.lastmod.slice(0, 10) >= cutoff);
+          candidates = uniqueUrls(recent.map((entry) => entry.loc));
+          console.log(
+            `[indexnow] Submission ledger unavailable (${ledgerError?.message || "unknown error"}); using the ${lookback}-day sitemap fallback.`,
+          );
+          console.log(`[indexnow] ${candidates.length} sitemap URL(s) changed since ${cutoff} (${lookback}-day fallback).`);
+        }
       }
 
       if (!candidates.length) {
@@ -162,6 +247,16 @@ export default {
       console.log(`[indexnow] Submitted ${urlList.length} URL(s) for ${payload.host}: HTTP ${response.status}.`);
       if (!response.ok) {
         console.log(`[indexnow] Response: ${(await response.text()).slice(0, 500)}`);
+        return;
+      }
+
+      if (ledger) {
+        try {
+          await writeLedger(ledger, entries, new Set(urlList));
+          console.log(`[indexnow] Recorded ${urlList.length} submitted URL(s) in the submission ledger.`);
+        } catch (error) {
+          console.log(`[indexnow] Submitted URLs but could not update the submission ledger: ${error.message}`);
+        }
       }
     } catch (error) {
       // Event handlers run in the background; log instead of throwing.
