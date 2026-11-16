@@ -122,3 +122,38 @@ html body :is(
   letter-spacing:.12em!important;
   margin:0 0 12px!important;
 }
+
+/* Pricing cards: use the same 18px title and 30px amount scale across tools and services. */
+#plans .price-card h3,
+#geo-pricing-rewrite article > h3{
+  font-size:18px!important;
+  line-height:1.35!important;
+}
+
+/* Card-level h2s use the same 22px scale as the Directory Listing Kit card h3s. */
+#geo-pricing-rewrite article.glass h2,
+body.services-page .route-details section.glass h2,
+#kg-title{
+  font-size:1.375rem!important;
+  line-height:1.3!important;
+  letter-spacing:normal!important;
+}
+#plans .price-card .price,
+.pricing-grid .price-card .price,
+#geo-pricing-rewrite article > p[class*="text-3xl"],
+#geo-pricing-rewrite article > p[class*="text-2xl"][class*="text-royal-400"],
+main section.max-w-5xl .glass p[class*="text-6xl"]{
+  font-size:30px!important;
+  line-height:1.15!important;
+}
+
+/* Footer legal links: keep Accessibility, Privacy Policy and Terms on one row. */
+html body .geo-legal-links .geo-footer-legal-actions{
+  display:grid!important;
+  grid-template-columns:max-content max-content minmax(0,1fr)!important;
+  align-items:center!important;
+  column-gap:8px!important;
+  row-gap:12px!important;
+}
+html body .geo-legal-links .aeogeo-footer-terms-row{display:contents!important}
+html body .geo-legal-links .aeogeo-footer-social{grid-column:1/-1!important;justify-self:start}
