@@ -30,3 +30,32 @@
 .cc-page #cc-results #cc-results-body{line-height:1.75}
 .cc-page #cc-results .cc-actions{margin-top:32px;gap:14px}
 .cc-page #cc-results{padding-left:max(20px,clamp(20px,4vw,36px));padding-right:max(20px,clamp(20px,4vw,36px))}
+
+/* Checker hero: match the wide, left-aligned product heroes without changing the checker flow. */
+.cc-hero.cc-checker-hero{
+  max-width:none;
+  margin:0;
+  text-align:left;
+}
+.cc-hero.cc-checker-hero h1,
+.cc-hero.cc-checker-hero > p:not(.cc-eyebrow),
+.cc-hero.cc-checker-hero .cc-steps{
+  max-width:46rem;
+}
+.cc-hero.cc-checker-hero h1{
+  text-wrap:balance;
+}
+.cc-hero.cc-checker-hero .cc-actions{
+  justify-content:flex-start;
+}
+
+/* Price option cards: smaller titles and amounts so the section heading stays dominant. */
+.cc-page #order .cc-price > h3{
+  font-size:1.125rem!important;
+  line-height:1.35!important;
+}
+.cc-page #order .cc-price > .cc-amount{
+  font-size:1.875rem!important;
+  line-height:1.15!important;
+  letter-spacing:-.02em;
+}
