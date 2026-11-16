@@ -349,7 +349,8 @@
 
       var group = document.createElementNS(SVG_NS, "g");
       var rect = document.createElementNS(SVG_NS, "rect");
-      rect.setAttribute("x", midX - pillWidth / 2);
+      var pillX = narrow ? Math.max(4, Math.min(midX - pillWidth / 2, width - pillWidth - 4)) : midX - pillWidth / 2;
+      rect.setAttribute("x", pillX);
       rect.setAttribute("y", midY - 10);
       rect.setAttribute("width", pillWidth);
       rect.setAttribute("height", 20);
@@ -357,7 +358,7 @@
       rect.setAttribute("class", "kg-edge-pill");
 
       var text = document.createElementNS(SVG_NS, "text");
-      text.setAttribute("x", midX);
+      text.setAttribute("x", pillX + pillWidth / 2);
       text.setAttribute("y", midY + 3.5);
       text.setAttribute("class", "kg-edge-pill-text");
       text.textContent = textValue;
