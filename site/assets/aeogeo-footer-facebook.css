@@ -1,14 +1,17 @@
-/* Scoped Facebook footer link only. Existing footer and badge rules are unchanged. */
-.aeogeo-footer-social{box-sizing:border-box;display:inline-flex;position:relative;z-index:1;margin:0;padding:0;text-align:left;font-family:inherit;flex-shrink:0}
+/* Scoped Facebook and Instagram footer links. Existing footer and badge rules are unchanged. */
+.aeogeo-footer-social{box-sizing:border-box;display:inline-flex;flex-wrap:wrap;gap:8px;max-width:100%;position:relative;z-index:1;margin:0;padding:0;text-align:left;font-family:inherit;flex-shrink:0}
 .aeogeo-footer-social a{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:flex-start;gap:10px;min-width:44px;min-height:44px;padding:4px 10px 4px 4px;border:1px solid #6485bd;border-radius:999px;background:#0a1533;color:#fff!important;font-size:14px;font-weight:600;line-height:1.5;text-decoration:none!important}
 .aeogeo-footer-social a:hover{background:#19376b;border-color:#a9c5ff}
 .aeogeo-footer-social a:focus-visible{outline:3px solid #bcd4ff;outline-offset:4px}
-.aeogeo-footer-social .aeogeo-facebook-icon{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1877f2;color:#fff}
+.aeogeo-footer-social .aeogeo-facebook-icon,.aeogeo-footer-social .aeogeo-instagram-icon{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;color:#fff}
+.aeogeo-footer-social .aeogeo-facebook-icon{background:#1877f2}
+.aeogeo-footer-social .aeogeo-instagram-icon{background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 55%,#6228d7 100%)}
+.aeogeo-footer-social .aeogeo-instagram-icon svg{fill:none;stroke:currentColor;stroke-width:2}
 .aeogeo-footer-social svg{display:block;flex-shrink:0;width:22px;height:22px;fill:currentColor}
 footer.aeogeo-social-only{background:#071329;color:#fff}
 @media print{.aeogeo-footer-social{break-inside:avoid}.aeogeo-footer-social a{color:#000!important;background:#fff;border-color:#555}}
 
-/* Keep Facebook immediately beside Terms & Conditions, including narrow screens. */
+/* Keep the social links immediately beside Terms & Conditions, including narrow screens. */
 html body .geo-legal-links .aeogeo-footer-terms-row{display:inline-flex;align-items:center;gap:12px;min-width:0;max-width:100%}
 html body .geo-legal-links .aeogeo-footer-terms-row>a{min-width:0;white-space:normal}
 html body .geo-legal-links .aeogeo-footer-social a{padding:4px 10px 4px 4px;text-decoration:none!important}
