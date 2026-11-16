@@ -561,6 +561,7 @@
   .kg-inspector { padding: 12px; }
   .kg-json { max-height: 200px; }
 }
+.kg-graph.is-narrow { min-height: 680px; }
 @media (prefers-reduced-motion: reduce) {
   .kg-edge.is-animated { animation: none; }
   .kg-node { transition: none; }

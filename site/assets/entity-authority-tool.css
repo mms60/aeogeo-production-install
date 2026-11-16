@@ -1069,18 +1069,18 @@
   border-radius: 16px;
   background: rgba(10, 20, 48, .45);
 }
-.ea-example summary {
+.ea-example-title {
+  margin: 0;
   padding: 15px 18px;
+  border-bottom: 1px solid #2c4267;
   color: #dbe7ff;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
   font-size: 13px;
   font-weight: 700;
-  cursor: pointer;
-}
-.ea-example summary:hover {
-  color: #fff;
+  line-height: 1.4;
 }
 .ea-example-inner {
-  padding: 0 14px 14px;
+  padding: 14px;
 }
 .ea-example .kg-demo {
   margin-top: 0;
@@ -1174,7 +1174,7 @@
     width: 100%;
   }
   .ea-example-inner {
-    padding: 0 8px 8px;
+    padding: 14px 8px 8px;
   }
   .ea-plan-actions {
     display: grid;

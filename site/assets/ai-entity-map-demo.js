@@ -249,6 +249,19 @@
   var state = { mode: "after", selected: "org" };
   var byId = new Map(NODES.map(function (node) { return [node.id, node]; }));
 
+  // Narrow-screen layout: two columns, four spaced rows. Desktop positions
+  // remain in NODES so the wide layout is unchanged.
+  var NARROW_POSITIONS = {
+    local: { x: 25, y: 10 },
+    wikidata: { x: 75, y: 10 },
+    org: { x: 25, y: 36 },
+    gbp: { x: 75, y: 36 },
+    service: { x: 25, y: 62 },
+    crunchbase: { x: 75, y: 62 },
+    person: { x: 25, y: 88 },
+    linkedin: { x: 75, y: 88 }
+  };
+
   function byIdLookup(id) {
     return byId.get(id);
   }
@@ -294,6 +307,8 @@
 
     var width = graph.clientWidth;
     var height = graph.clientHeight;
+    var narrow = width < 560;
+    graph.classList.toggle("is-narrow", narrow);
     var selected = state.selected;
     var isAfter = state.mode === "after";
 
@@ -307,10 +322,12 @@
       var target = byIdLookup(edge.to);
       if (!source || !target) return;
 
-      var x1 = (source.x / 100) * width;
-      var y1 = (source.y / 100) * height;
-      var x2 = (target.x / 100) * width;
-      var y2 = (target.y / 100) * height;
+      var sourcePosition = narrow ? (NARROW_POSITIONS[source.id] || source) : source;
+      var targetPosition = narrow ? (NARROW_POSITIONS[target.id] || target) : target;
+      var x1 = (sourcePosition.x / 100) * width;
+      var y1 = (sourcePosition.y / 100) * height;
+      var x2 = (targetPosition.x / 100) * width;
+      var y2 = (targetPosition.y / 100) * height;
       var active = edge.from === selected || edge.to === selected;
 
       var line = document.createElementNS(SVG_NS, "line");
@@ -358,8 +375,9 @@
         "kg-node" +
         (node.category === "external" ? " is-external" : "") +
         (isSelected ? " is-selected" : "");
-      button.style.left = node.x + "%";
-      button.style.top = node.y + "%";
+      var position = narrow ? (NARROW_POSITIONS[node.id] || node) : node;
+      button.style.left = position.x + "%";
+      button.style.top = position.y + "%";
       button.setAttribute("aria-label", node.shortType + ": " + node.label);
       button.setAttribute("aria-pressed", String(isSelected));
       button.addEventListener("click", function () { selectNode(node.id); });
