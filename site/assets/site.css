@@ -162,3 +162,9 @@ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block
 @media (min-width:1024px) and (max-width:1279px){
   .tablet-2up{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Mobile full-service project cards: keep the title beside its number and wrap the price below. */
+@media (max-width:639px){
+  [data-aeogeo-readable-card] > div:first-child > .min-w-0{flex:1 1 calc(100% - 4.5rem)}
+  [data-aeogeo-readable-card] > div:first-child > span:last-child{margin-left:auto}
+}
