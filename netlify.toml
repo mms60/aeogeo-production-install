@@ -76,3 +76,17 @@
 
 [functions."kit-download"]
   included_files = ["netlify/functions/assets/AEOGEO-Search-Directory-Listing-Kit.docx"]
+
+# Checklinks follows same-origin checkout links into the functions namespace,
+# where they are not static files. It also flags pretty-URL fragments and font
+# preconnects; keep the useful checks while excluding only these known cases.
+[[plugins]]
+  package = "netlify-plugin-checklinks"
+
+  [plugins.inputs]
+    skipPatterns = [
+      ".netlify/functions/",
+      "/tools#robots-txt-generator",
+      "fonts.gstatic.com",
+      "fonts.googleapis.com"
+    ]
