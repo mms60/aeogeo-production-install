@@ -18,7 +18,12 @@
     holder.innerHTML = CARD_HTML.trim();
     const card = holder.firstElementChild;
     if (!card) return;
-    if (guideSection) main.insertBefore(card, guideSection);
+
+    // The guide heading is nested inside layout wrappers. Walk up to the
+    // direct child of main so insertBefore gets a valid reference node.
+    let anchor = guideSection;
+    while (anchor && anchor.parentElement !== main) anchor = anchor.parentElement;
+    if (anchor) main.insertBefore(card, anchor);
     else main.appendChild(card);
   }
 
