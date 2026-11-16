@@ -19,12 +19,13 @@
     const card = holder.firstElementChild;
     if (!card) return;
 
-    // The guide heading is nested inside layout wrappers. Walk up to the
-    // direct child of main so insertBefore gets a valid reference node.
-    let anchor = guideSection;
-    while (anchor && anchor.parentElement !== main) anchor = anchor.parentElement;
-    if (anchor) main.insertBefore(card, anchor);
-    else main.appendChild(card);
+    // Place the card immediately before the guide inside the page's content
+    // container, so it follows the tool and keeps the same gutters.
+    if (guideSection && guideSection.parentElement) {
+      guideSection.parentElement.insertBefore(card, guideSection);
+    } else {
+      main.appendChild(card);
+    }
   }
 
   insertQuizCard();
