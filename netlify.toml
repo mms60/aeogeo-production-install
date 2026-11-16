@@ -90,6 +90,8 @@
     skipPatterns = [
       ".netlify/functions/",
       "/tools#robots-txt-generator",
+      "fragment",
+      "preconnect",
       "fonts.gstatic.com",
       "fonts.googleapis.com"
     ]
