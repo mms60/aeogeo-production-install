@@ -76,6 +76,9 @@
   #frequently-asked-questions.hr-alt{background-image:none!important}
 }
 
+/* Option 1's six-paragraph opening: keep the desktop measure readable and avoid short orphan lines. */
+.hr-home #diy-route>p:not(.hr-eyebrow){max-width:760px;text-wrap:pretty}
+
 /* Homepage FAQ: multi-paragraph answers and example prompt lists */
 .hr-home .hr-faq details ul.hr-faq-list{margin:12px 0 0;padding-left:22px;list-style:disc}
 .hr-home .hr-faq details ul.hr-faq-list li+li{margin-top:7px}
