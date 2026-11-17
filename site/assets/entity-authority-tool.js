@@ -408,7 +408,7 @@
   function auditError(message) {
     var output = $("ea-audit-output");
     output.setAttribute("aria-busy", "false");
-    output.innerHTML = '<div class="ea-error"><strong>The check could not finish.</strong>' + esc(message) + '</div><p class="ea-fine">Try again in a moment, or email <a href="mailto:aeogeosearch@atomicmail.io">aeogeosearch@atomicmail.io</a> with the URL.</p>';
+    output.innerHTML = '<div class="ea-error"><strong>The check could not finish.</strong>' + esc(message) + '</div><p class="ea-fine">Try again in a moment, or use the <a href="/contact">contact form</a> and include the URL.</p>';
   }
 
   function auditValue(value, fallback) {
@@ -792,10 +792,10 @@
           body: new URLSearchParams(data).toString()
         });
         if (!response.ok) throw new Error("The form service did not accept the request.");
-        form.innerHTML = '<div class="ea-success"><strong>Request received, ' + esc(name) + '.</strong> We will confirm the scope and send the next step within one business day. If you need us sooner, email <a href="mailto:aeogeosearch@atomicmail.io">aeogeosearch@atomicmail.io</a>.</div>';
+        form.innerHTML = '<div class="ea-success"><strong>Request received, ' + esc(name) + '.</strong> We will confirm the scope and send the next step within one business day. If you need us sooner, use the <a href="/contact">contact form</a>.</div>';
       } catch (error) {
         if (status) {
-          status.innerHTML = 'The form could not send. Email <a href="mailto:aeogeosearch@atomicmail.io">aeogeosearch@atomicmail.io</a> or call <a href="tel:+14699052836">(469) 905-2836</a>.';
+          status.innerHTML = 'The form could not send. Use the <a href="/contact">contact form</a> or call <a href="tel:+14699052836">(469) 905-2836</a>.';
           status.classList.add("is-error");
         }
         if (button) button.disabled = false;

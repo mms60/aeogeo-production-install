@@ -2,7 +2,7 @@
 
 > AEOGEO Search is an AIO, GEO, AEO, and SEO agency in McKinney, Texas. Founder Michelle S. has 15 years’ experience in digital marketing.
 
-Contact: aeogeosearch@atomicmail.io · (469) 905-2836 · McKinney, Texas
+Contact: https://aeogeosearch.com/contact · (469) 905-2836 · McKinney, Texas
 
 ## Services
 Our pricing page is the source of truth: 12 service options in six categories. Combination packages combine existing services and are not additional underlying options.
@@ -35,7 +35,7 @@ Our pricing page is the source of truth: 12 service options in six categories. C
 - [Accessibility](https://aeogeosearch.com/accessibility)
 
 ## Free GEO website audit
-- [Free 25-page GEO Website Audit](https://aeogeosearch.com/geo-audit/): One free audit per verified account, up to 25 accessible pages across 22 readiness checks. Findings distinguish measured checks, heuristics and unavailable data. The customer or their developer implements the changes. No credit card required. The audit page lists the current paid DIY audit plans and billing options.
+- [Free 25-page GEO Website Audit](https://aeogeosearch.com/geo-audit/): One free audit per verified account, up to 25 accessible pages across 20 scored readiness checks (two additional dimensions are in development and unscored). Findings distinguish measured checks, heuristics and unavailable data. The customer or their developer implements the changes. No credit card required. The audit page lists the current paid DIY audit plans and billing options.
 - [GEO Content Checker](https://aeogeosearch.com/tools/geo-content-checker/): Needs-only editorial checklist, not an outline or implementation guide. Optional content services remain separate.
 
 ## Individual guides
