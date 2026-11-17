@@ -85,6 +85,7 @@ Formspree is wired into this branch:
 - Hidden Netlify detection forms and `form-name` fields were removed.
 - Both endpoints accepted a test submission with HTTP 200 and `{"ok":true}`.
 - The audit owner notice now posts to the contact Formspree endpoint instead of the Netlify site.
+- The React contact component in `site/assets/app.js` now posts to Formspree; the previous Netlify `/` handler was why the form showed an error.
 
 Why:
 
