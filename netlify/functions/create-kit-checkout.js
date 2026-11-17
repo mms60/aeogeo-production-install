@@ -30,7 +30,9 @@ exports.handler = async event => {
     if (!session || !session.url) {
       throw Object.assign(new Error('Checkout could not be created. Reference: CHECKOUT_SESSION_MISSING.'), { status: 503, code: 'CHECKOUT_SESSION_MISSING' });
     }
-    return { statusCode: 303, headers: { Location: session.url, 'Cache-Control': 'no-store' }, body: '' };
+    // Keep no-store so browsers do not cache this permanent redirect and reuse
+    // a one-time Stripe session URL on a later checkout.
+    return { statusCode: 301, headers: { Location: session.url, 'Cache-Control': 'no-store' }, body: '' };
   } catch (error) {
     const status = error && error.status === 503 ? 503 : 500;
     const message = (error && error.message) ? String(error.message).slice(0, 300) : 'Payment is unavailable right now. Please try again. Reference: CHECKOUT_UNAVAILABLE.';
