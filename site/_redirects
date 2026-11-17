@@ -45,6 +45,10 @@
 /knowledge-library     /learn                 301
 /knowledge-library/    /learn                 301
 
+# Knowledge Library guide
+/knowledge-library/how-to-get-your-website-on-google-search/ /knowledge-library/how-to-get-your-website-on-google-search 301
+/knowledge-library/how-to-get-your-website-on-google-search  /knowledge-library/how-to-get-your-website-on-google-search.html 200
+
 # --- 2. Normalise the homepage ------------------------------------------------
 # "!" is required because /index.html is a real deployed file; without force,
 # Netlify would serve the file instead of redirecting.
