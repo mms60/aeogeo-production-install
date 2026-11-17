@@ -196,12 +196,25 @@ Still excluded until their platform dependencies are replaced:
 3. Verify the Formspree forms on the Cloudflare preview.
 4. IndexNow deploy trigger.
 
-## Secrets blocker (current)
+## Secrets status
 
-Netlify's Secrets Controller returns only masked values through the API and CLI.
-The Worker has its non-secret configuration, but the real `STRIPE_SECRET_KEY`,
-`STRIPE_WEBHOOK_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` must be entered directly
-in Cloudflare. The placeholder values were removed so the Worker fails closed.
+Resolved: `SUPABASE_SERVICE_ROLE_KEY` is an encrypted Cloudflare secret holding
+the real Supabase `service_role` key. A local `wrangler dev` run with the same
+code and the same secret completed a real Supabase sign-in and a
+`product-api?action=account` lookup against the live database.
+
+Still missing: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and
+`STRIPE_MONTHLY_TEST_SECRET_KEY`. Netlify's Secrets Controller returns only masked
+values through the API and CLI, so those must be entered directly in Cloudflare.
+The placeholder values were removed so the Worker fails closed.
+
+Do not add any of them to `wrangler.jsonc` `vars`. That file is committed, and
+`vars` are stored and displayed as plain text. Use Workers & Pages →
+`aeogeo-search` → Settings → Variables and Secrets, with type **Secret**. Wrangler
+deployments preserve secrets and drop plain-text variables that exist only in the
+dashboard, so a secret survives the next deploy and a dashboard variable does not.
+A plain-text `SUPABASE_SERVICE_ROLE_KEY` also blocks setting the secret with the
+same name (`Binding name already in use`).
 
 Audit crawler note: the Node HTTPS and DNS calls were replaced with `fetch`
 and Cloudflare DNS-over-HTTPS. The public-address check validates A and AAAA
