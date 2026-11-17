@@ -172,6 +172,8 @@ The following functions are wired and bundle successfully:
 - `billing-portal`, `billing-review`, `owner-billing-check`
 - `owner-monthly-test`, `owner-monthly-test-setup`, `owner-monthly-test-webhook`
 - `stripe-webhook`, `content-service`, `content-notifications`
+- `start-audit`, `run-audit-background`
+- `entity-audit` and all `avss-*` functions
 
 Verified locally:
 
@@ -186,16 +188,19 @@ Verified locally:
 
 Still excluded until their platform dependencies are replaced:
 
-1. `start-audit`, `run-audit-background`, and `entity-audit` use the crawler's
-   `node:https` and `node:dns`; replace with `fetch` and DNS-over-HTTPS.
-2. `avss-*` functions use `node:dns/promises` and `node:net`; replace the DNS
-   and address validation checks.
-3. `kit-download` uses `node:fs`; move the generated kit into R2 or a static
+1. `kit-download` uses `node:fs`; move the generated kit into R2 or a static
    asset.
-4. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
-5. Background dispatch/Queues must replace Netlify background-function calls.
-6. Verify the Formspree forms on the Cloudflare preview.
-7. IndexNow deploy trigger.
+2. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
+3. Background dispatch/Queues must replace Netlify background-function calls.
+   `start-audit` currently dispatches to `run-audit-background` over HTTP; test
+   that this stays within Workers subrequest and CPU limits before cutover.
+4. Verify the Formspree forms on the Cloudflare preview.
+5. IndexNow deploy trigger.
+
+Audit crawler note: the Node HTTPS and DNS calls were replaced with `fetch`
+and Cloudflare DNS-over-HTTPS. The public-address check validates A and AAAA
+answers before the fetch; Cloudflare's egress controls remain the final SSRF
+protection.
 
 ### 5. Test before cutover
 

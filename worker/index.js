@@ -1,4 +1,14 @@
 import * as auditCheckoutReadiness from "../netlify/functions/audit-checkout-readiness.js";
+import * as avssRestorePurchase from "../netlify/functions/avss-restore-purchase.mjs";
+import * as avssScanBackground from "../netlify/functions/avss-scan-background.mjs";
+import * as avssScanHistory from "../netlify/functions/avss-scan-history.mjs";
+import * as avssScanStatus from "../netlify/functions/avss-scan-status.mjs";
+import * as avssSchemaGenerate from "../netlify/functions/avss-schema-generate.mjs";
+import * as avssStartScan from "../netlify/functions/avss-start-scan.mjs";
+import * as avssStripeCheckout from "../netlify/functions/avss-stripe-checkout.mjs";
+import * as avssStripePortal from "../netlify/functions/avss-stripe-portal.mjs";
+import * as avssSubscriptionStatus from "../netlify/functions/avss-subscription-status.mjs";
+import * as entityAudit from "../netlify/functions/entity-audit.mjs";
 import * as billingPortal from "../netlify/functions/billing-portal.js";
 import * as billingReview from "../netlify/functions/billing-review.js";
 import * as competitorIntelligence from "../netlify/functions/competitor-intelligence.js";
@@ -15,12 +25,23 @@ import * as ownerMonthlyTestSetup from "../netlify/functions/owner-monthly-test-
 import * as ownerMonthlyTestWebhook from "../netlify/functions/owner-monthly-test-webhook.js";
 import * as productApi from "../netlify/functions/product-api.js";
 import * as runCompetitorReportBackground from "../netlify/functions/run-competitor-report-background.js";
+import * as runAuditBackground from "../netlify/functions/run-audit-background.js";
 import * as serviceCheckout from "../netlify/functions/service-checkout.js";
+import * as startAudit from "../netlify/functions/start-audit.js";
 import * as stripeWebhook from "../netlify/functions/stripe-webhook.js";
 import * as studioCheckout from "../netlify/functions/studio-checkout.js";
 
 const FUNCTIONS = {
   "audit-checkout-readiness": auditCheckoutReadiness,
+  "avss-restore-purchase": avssRestorePurchase,
+  "avss-scan-background": avssScanBackground,
+  "avss-scan-history": avssScanHistory,
+  "avss-scan-status": avssScanStatus,
+  "avss-schema-generate": avssSchemaGenerate,
+  "avss-start-scan": avssStartScan,
+  "avss-stripe-checkout": avssStripeCheckout,
+  "avss-stripe-portal": avssStripePortal,
+  "avss-subscription-status": avssSubscriptionStatus,
   "billing-portal": billingPortal,
   "billing-review": billingReview,
   "competitor-intelligence": competitorIntelligence,
@@ -29,6 +50,7 @@ const FUNCTIONS = {
   "content-service-status": contentServiceStatus,
   "create-checkout": createCheckout,
   "create-kit-checkout": createKitCheckout,
+  "entity-audit": entityAudit,
   "entity-authority-checkout": entityAuthorityCheckout,
   "guest-service-checkout": guestServiceCheckout,
   "owner-billing-check": ownerBillingCheck,
@@ -36,8 +58,10 @@ const FUNCTIONS = {
   "owner-monthly-test-setup": ownerMonthlyTestSetup,
   "owner-monthly-test-webhook": ownerMonthlyTestWebhook,
   "product-api": productApi,
+  "run-audit-background": runAuditBackground,
   "run-competitor-report-background": runCompetitorReportBackground,
   "service-checkout": serviceCheckout,
+  "start-audit": startAudit,
   "stripe-webhook": stripeWebhook,
   "studio-checkout": studioCheckout,
 };
@@ -52,9 +76,9 @@ function copyEnvironment(env, origin) {
   for (const [key, value] of Object.entries(env || {})) {
     if (typeof value === "string") process.env[key] = value;
   }
-  // A request origin is only a preview/development fallback. Production
-  // settings must still come from Cloudflare secrets.
-  if (!process.env.URL) process.env.URL = origin;
+  // The request origin follows the actual hostname (workers.dev or the
+  // production domain). PUBLIC_SITE_URL remains a secret when set.
+  process.env.URL = origin;
   if (!process.env.PUBLIC_SITE_URL) process.env.PUBLIC_SITE_URL = origin;
   if (!process.env.CONTEXT) process.env.CONTEXT = "production";
 }

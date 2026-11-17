@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import dns from "node:dns/promises";
-import net from "node:net";
+import ipaddr from "ipaddr.js";
 
 // These are Netlify Functions 2.0 handlers (ESM default export), so every response
 // must be a real Response object. Returning {statusCode, headers, body} makes the
@@ -59,27 +58,38 @@ export async function requirePaid(userOrId) {
   if(data.current_period_end && new Date(data.current_period_end)<new Date()) throw new Error("Your subscription period has expired.");
   return data;
 }
+const DOH_ENDPOINT="https://cloudflare-dns.com/dns-query";
+async function dnsQuery(host,type){
+  let response;try{response=await fetch(DOH_ENDPOINT+"?name="+encodeURIComponent(host)+"&type="+type,{headers:{Accept:"application/dns-json"},redirect:"manual",signal:AbortSignal.timeout(5000)});}catch{throw new Error("The hostname DNS check timed out.");}
+  if(!response.ok)throw new Error("The hostname DNS check could not run.");
+  let data;try{data=await response.json();}catch{throw new Error("The hostname DNS check returned an invalid response.");}
+  if(data?.Status!==0)throw new Error("The hostname could not be resolved.");
+  return Array.isArray(data.Answer)?data.Answer:[];
+}
+async function resolvePublicAddresses(host,seen=new Set()){
+  if(seen.size>5)throw new Error("Too many hostname DNS aliases.");
+  if(seen.has(host))throw new Error("The hostname DNS alias loops.");
+  seen.add(host);
+  const answers=(await Promise.all([dnsQuery(host,"A"),dnsQuery(host,"AAAA")])).flat();
+  const addresses=[...new Set(answers.filter(a=>a.type===1||a.type===28).map(a=>String(a.data||"")))];
+  if(addresses.length)return addresses;
+  const cname=answers.find(a=>a.type===5)?.data;
+  if(cname)return resolvePublicAddresses(String(cname).replace(/\.$/,""),seen);
+  throw new Error("The hostname could not be resolved.");
+}
 export async function assertPublicHttpUrl(raw) {
   let u; try{u=new URL(raw);}catch{throw new Error("Enter a valid website URL.");}
   if(!["http:","https:"].includes(u.protocol)) throw new Error("Only HTTP and HTTPS websites are supported.");
   if(u.username||u.password) throw new Error("URLs containing credentials are not allowed.");
   const host=u.hostname.toLowerCase();
   if(host==="localhost"||host.endsWith(".localhost")||host.endsWith(".local")||host==="metadata.google.internal") throw new Error("Private and local hosts cannot be scanned.");
-  const records=await dns.lookup(host,{all:true,verbatim:true}).catch(()=>[]);
-  if(!records.length) throw new Error("The hostname could not be resolved.");
-  for(const rec of records) if(isPrivateIp(rec.address)) throw new Error("Private, local, or reserved IP addresses cannot be scanned.");
+  const addresses=await resolvePublicAddresses(host);
+  if(!addresses.length) throw new Error("The hostname could not be resolved.");
+  for(const address of addresses) if(isPrivateIp(address)) throw new Error("Private, local, or reserved IP addresses cannot be scanned.");
   return u;
 }
 function isPrivateIp(ip){
-  if(net.isIPv4(ip)){
-    const [a,b]=ip.split(".").map(Number);
-    return a===0||a===10||a===127||a>=224||(a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||(a===100&&b>=64&&b<=127);
-  }
-  if(net.isIPv6(ip)){
-    const x=ip.toLowerCase();
-    return x==="::"||x==="::1"||x.startsWith("fc")||x.startsWith("fd")||x.startsWith("fe8")||x.startsWith("fe9")||x.startsWith("fea")||x.startsWith("feb")||x.startsWith("::ffff:127.")||x.startsWith("::ffff:10.");
-  }
-  return true;
+  try{return ipaddr.process(ip).range()!=="unicast";}catch{return true;}
 }
 export async function safeFetch(url, options={}) {
   let current=await assertPublicHttpUrl(url);

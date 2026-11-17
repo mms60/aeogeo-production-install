@@ -1,10 +1,9 @@
 'use strict';
-const https=require('node:https');
-const dns=require('node:dns').promises;
 const ipaddr=require('ipaddr.js');
 const cheerio=require('cheerio');
 const USER_AGENT='AEOGEOAuditBot/1.0 (+https://aeogeosearch.com; user-requested technical audit)';
 const MAX_BYTES=1800000;
+const DOH_ENDPOINT='https://cloudflare-dns.com/dns-query';
 function normalURL(value){
  let s=String(value||'').trim(); if(!/^https?:\/\//i.test(s))s='https://'+s;
  let u;try{u=new URL(s);}catch{throw new Error('Enter a valid public website address.');}
@@ -15,27 +14,39 @@ function normalURL(value){
  u.hash='';return u;
 }
 function isPublicIP(value){try{const a=ipaddr.process(value);return a.range()==='unicast';}catch{return false;}}
-async function resolvePublic(host){
- const addresses=await Promise.race([dns.lookup(host,{all:true,verbatim:true}),new Promise((_,reject)=>{const t=setTimeout(()=>reject(new Error('Website DNS timed out.')),5000);t.unref();})]);
- if(!addresses.length||addresses.some(a=>!isPublicIP(a.address)))throw new Error('This address does not resolve exclusively to public internet addresses.');
- return addresses[0];
+async function dnsQuery(host,type){
+ const url=DOH_ENDPOINT+'?name='+encodeURIComponent(host)+'&type='+type;
+ let response;try{response=await fetch(url,{headers:{Accept:'application/dns-json'},redirect:'manual',signal:AbortSignal.timeout(5000)});}catch{throw new Error('Website DNS timed out.');}
+ if(!response.ok)throw new Error('Website DNS could not be checked.');
+ let data;try{data=await response.json();}catch{throw new Error('Website DNS returned an invalid response.');}
+ if(data?.Status!==0)throw new Error('This website name could not be resolved.');
+ return Array.isArray(data.Answer)?data.Answer:[];
+}
+async function resolvePublic(host,seen=new Set()){
+ if(seen.size>5)throw new Error('Too many website DNS aliases.');
+ if(seen.has(host))throw new Error('The website DNS alias loops.');
+ seen.add(host);
+ const answers=(await Promise.all([dnsQuery(host,'A'),dnsQuery(host,'AAAA')])).flat();
+ const addresses=[...new Set(answers.filter(a=>a.type===1||a.type===28).map(a=>String(a.data||'')))];
+ if(addresses.length){
+  if(addresses.some(a=>!isPublicIP(a)))throw new Error('This address does not resolve exclusively to public internet addresses.');
+  return {address:addresses[0],family:addresses.find(a=>a.includes(':'))?'IPv6':'IPv4'};
+ }
+ const cname=answers.find(a=>a.type===5)?.data;
+ if(cname)return resolvePublic(String(cname).replace(/\.$/,''),seen);
+ throw new Error('This website name has no public internet address.');
 }
 async function getPage(value,redirects=0){
  const u=normalURL(value);if(redirects>5)throw new Error('Too many website redirects.');
- const resolved=await resolvePublic(u.hostname);
- const result=await new Promise((resolve,reject)=>{
-  // Pin the connection to the validated IP; preserve hostname for TLS and Host header.
-  const req=https.request(u,{method:'GET',agent:false,servername:u.hostname,lookup:(_host,opts,cb)=>{if(opts?.all)cb(null,[resolved]);else cb(null,resolved.address,resolved.family);},headers:{'User-Agent':USER_AGENT,Accept:'text/html,application/xhtml+xml,application/xml,text/xml,text/plain;q=0.8','Accept-Encoding':'identity'}},res=>{
-   if([301,302,303,307,308].includes(res.statusCode)&&res.headers.location){res.resume();resolve({redirect:new URL(res.headers.location,u).href});return;}
-   let bytes=0;const chunks=[];
-   res.on('data',c=>{bytes+=c.length;if(bytes>MAX_BYTES){res.destroy(new Error('Page exceeds the 1.8 MB audit download limit.'));return;}chunks.push(c);});
-   res.on('error',reject);res.on('end',()=>resolve({status:res.statusCode,type:String(res.headers['content-type']||''),text:Buffer.concat(chunks).toString('utf8'),url:u.href}));
-  });
-  req.setTimeout(6500,()=>req.destroy(new Error('Website response timed out.')));
-  const hard=setTimeout(()=>req.destroy(new Error('Website download timed out.')),10000);hard.unref();
-  req.on('close',()=>clearTimeout(hard));req.on('error',reject);req.end();
- });
- return result.redirect?getPage(result.redirect,redirects+1):result;
+ await resolvePublic(u.hostname);
+ const response=await fetch(u.href,{method:'GET',redirect:'manual',headers:{'User-Agent':USER_AGENT,Accept:'text/html,application/xhtml+xml,application/xml,text/xml,text/plain;q=0.8','Accept-Encoding':'identity'},signal:AbortSignal.timeout(10000)});
+ if([301,302,303,307,308].includes(response.status)&&response.headers.get('location'))return getPage(new URL(response.headers.get('location'),u).href,redirects+1);
+ const declared=Number(response.headers.get('content-length')||0);
+ if(declared>MAX_BYTES)throw new Error('Page exceeds the 1.8 MB audit download limit.');
+ if(!response.body)return {status:response.status,type:String(response.headers.get('content-type')||''),text:'',url:u.href};
+ const reader=response.body.getReader(),chunks=[];let bytes=0;
+ while(true){const {done,value:chunk}=await reader.read();if(done)break;bytes+=chunk.length;if(bytes>MAX_BYTES){try{await reader.cancel();}catch{}throw new Error('Page exceeds the 1.8 MB audit download limit.');}chunks.push(chunk);}
+ return {status:response.status,type:String(response.headers.get('content-type')||''),text:Buffer.concat(chunks).toString('utf8'),url:u.href};
 }
 function robotsGroups(text){
  const groups=[];let group=null,sawRule=false;
