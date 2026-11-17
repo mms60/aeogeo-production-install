@@ -14,34 +14,34 @@
     * Re-submit in GSC (Sitemaps > add /sitemap.xml) after deploying.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://aeogeosearch.com/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/about</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/services</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/pricing</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/what-is-aeom</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://aeogeosearch.com/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/about</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/services</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/pricing</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/what-is-aeom</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://aeogeosearch.com/learn</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://aeogeosearch.com/knowledge-library/how-to-get-your-website-on-google-search</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://aeogeosearch.com/knowledge-library/how-to-get-your-website-on-bing-search</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://aeogeosearch.com/tools</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/visibility-tool</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/contact</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/terms-of-service</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/privacy-policy</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://aeogeosearch.com/accessibility</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/what-is-ai-search-optimization/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/what-is-geo/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/what-is-aeo/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/ai-overviews-changing-search/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/zero-click-search/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/get-cited-ai-answers/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/which-ai-platforms/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/what-is-aeom/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/resources/measure-ai-visibility/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/tools/geo-content-checker/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://aeogeosearch.com/geo-audit/</loc><lastmod>2026-11-16</lastmod></url>
+  <url><loc>https://aeogeosearch.com/tools</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/visibility-tool</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/contact</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/terms-of-service</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/privacy-policy</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/accessibility</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-ai-search-optimization/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-geo/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-aeo/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/ai-overviews-changing-search/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/zero-click-search/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/get-cited-ai-answers/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/which-ai-platforms/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/what-is-aeom/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/resources/measure-ai-visibility/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/tools/geo-content-checker/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/geo-audit/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://aeogeosearch.com/ai-content-humanizer</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://aeogeosearch.com/competitor-intelligence</loc><lastmod>2026-11-10</lastmod></url>
-  <url><loc>https://aeogeosearch.com/ai-visibility-schema-studio</loc><lastmod>2026-11-16</lastmod></url>
+  <url><loc>https://aeogeosearch.com/competitor-intelligence</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://aeogeosearch.com/ai-visibility-schema-studio</loc><lastmod>2026-11-17</lastmod></url>
 </urlset>
