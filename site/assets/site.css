@@ -173,3 +173,13 @@ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block
 @media(max-width:359px){
   section[aria-labelledby="content-waste-quiz-title"] a > div:first-child{flex-direction:column;gap:12px}
 }
+
+
+/* Footer link accordions: keep the long Explore and Services lists collapsed. */
+html body footer details.footer-accordion{border-top:1px solid rgba(255,255,255,.18)}
+html body footer details.footer-accordion summary{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:14px 0;cursor:pointer;list-style:none;text-align:left}
+html body footer details.footer-accordion summary::-webkit-details-marker{display:none}
+html body footer details.footer-accordion summary::after{content:"+";font-size:1.35rem;line-height:1;font-weight:400;color:#9fc6ff;flex:none}
+html body footer details.footer-accordion[open] summary::after{content:"−"}
+html body footer details.footer-accordion>ul{margin-top:0!important;padding:0 0 16px}
+html body footer details.footer-accordion summary:focus-visible{outline:2px solid #9fc6ff;outline-offset:4px;border-radius:2px}
