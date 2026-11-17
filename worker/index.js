@@ -19,6 +19,7 @@ import * as createCheckout from "../netlify/functions/create-checkout.js";
 import * as createKitCheckout from "../netlify/functions/create-kit-checkout.js";
 import * as entityAuthorityCheckout from "../netlify/functions/entity-authority-checkout.js";
 import * as guestServiceCheckout from "../netlify/functions/guest-service-checkout.js";
+import kitDownload from "./kit-download.js";
 import * as ownerBillingCheck from "../netlify/functions/owner-billing-check.js";
 import * as ownerMonthlyTest from "../netlify/functions/owner-monthly-test.js";
 import * as ownerMonthlyTestSetup from "../netlify/functions/owner-monthly-test-setup.js";
@@ -53,6 +54,7 @@ const FUNCTIONS = {
   "entity-audit": entityAudit,
   "entity-authority-checkout": entityAuthorityCheckout,
   "guest-service-checkout": guestServiceCheckout,
+  "kit-download": { handler: kitDownload },
   "owner-billing-check": ownerBillingCheck,
   "owner-monthly-test": ownerMonthlyTest,
   "owner-monthly-test-setup": ownerMonthlyTestSetup,

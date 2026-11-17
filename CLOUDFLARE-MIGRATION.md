@@ -173,6 +173,7 @@ The following functions are wired and bundle successfully:
 - `owner-monthly-test`, `owner-monthly-test-setup`, `owner-monthly-test-webhook`
 - `stripe-webhook`, `content-service`, `content-notifications`
 - `start-audit`, `run-audit-background`
+- `kit-download` (the DOCX is bundled privately in the Worker)
 - `entity-audit` and all `avss-*` functions
 
 Verified locally:
@@ -188,14 +189,19 @@ Verified locally:
 
 Still excluded until their platform dependencies are replaced:
 
-1. `kit-download` uses `node:fs`; move the generated kit into R2 or a static
-   asset.
-2. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
-3. Background dispatch/Queues must replace Netlify background-function calls.
+1. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
+2. Background dispatch/Queues must replace Netlify background-function calls.
    `start-audit` currently dispatches to `run-audit-background` over HTTP; test
    that this stays within Workers subrequest and CPU limits before cutover.
-4. Verify the Formspree forms on the Cloudflare preview.
-5. IndexNow deploy trigger.
+3. Verify the Formspree forms on the Cloudflare preview.
+4. IndexNow deploy trigger.
+
+## Secrets blocker (current)
+
+Netlify's Secrets Controller returns only masked values through the API and CLI.
+The Worker has its non-secret configuration, but the real `STRIPE_SECRET_KEY`,
+`STRIPE_WEBHOOK_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` must be entered directly
+in Cloudflare. The placeholder values were removed so the Worker fails closed.
 
 Audit crawler note: the Node HTTPS and DNS calls were replaced with `fetch`
 and Cloudflare DNS-over-HTTPS. The public-address check validates A and AAAA
