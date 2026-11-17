@@ -145,7 +145,7 @@ Check:
 - `/account/` has `Cache-Control: no-store`.
 - `/assets/site.css` and images load.
 
-This preview has no working API or forms.
+The static preview includes the Formspree forms. The API layer is served by `worker/index.js` after the next build.
 
 ### 3. Add the Cloudflare preview deployment
 
@@ -157,23 +157,43 @@ domain.
 
 ### 4. Port the function layer
 
-Build a Worker adapter that:
+The first Worker adapter is implemented in `worker/index.js`. It keeps the
+existing `/.netlify/functions/*` paths, converts a `Request` into the Netlify
+event shape, converts the result back to a `Response`, handles ESM and CommonJS
+handlers, copies string bindings into `process.env`, and serves static assets
+through `env.ASSETS`.
 
-- Converts a `Request` into the Netlify event shape:
-  `httpMethod`, `headers`, `body`, `queryStringParameters`, `path`, `rawUrl`.
-- Converts `{statusCode, headers, body, isBase64Encoded}` back to a `Response`.
-- Handles ESM default handlers and CommonJS `exports.handler` handlers.
-- Copies string bindings/secrets into `process.env` for the existing code.
-- Sets `URL` and `PUBLIC_SITE_URL` from the request origin.
-- Preserves multiple `Set-Cookie` headers.
+The following functions are wired and bundle successfully:
 
-Then replace the platform dependencies in this order:
+- `audit-checkout-readiness`, `product-api`, `content-service-status`
+- `create-checkout`, `create-kit-checkout`, `service-checkout`, `studio-checkout`
+- `entity-authority-checkout`, `guest-service-checkout`
+- `competitor-intelligence`, `run-competitor-report-background`
+- `billing-portal`, `billing-review`, `owner-billing-check`
+- `owner-monthly-test`, `owner-monthly-test-setup`, `owner-monthly-test-webhook`
+- `stripe-webhook`, `content-service`, `content-notifications`
 
-1. `kit-download` filesystem read.
-2. `avss-shared` DNS lookup.
-3. `indexnow` Blobs ledger.
-4. Background dispatch and Queues.
-5. Cron Trigger.
+Verified locally:
+
+- Static `/` returns 200.
+- `audit-checkout-readiness` returns its normal JSON response.
+- `product-api?action=config` returns 200 JSON.
+- `content-service-status` returns 200 JSON.
+- `stripe-webhook` rejects a bad signature with 400, proving the raw POST body
+  and `stripe-signature` header reach the existing handler.
+- Unknown function names return a clear 503, not a crash.
+- Hourly Cron Trigger is configured for `content-notifications`.
+
+Still excluded until their platform dependencies are replaced:
+
+1. `start-audit`, `run-audit-background`, and `entity-audit` use the crawler's
+   `node:https` and `node:dns`; replace with `fetch` and DNS-over-HTTPS.
+2. `avss-*` functions use `node:dns/promises` and `node:net`; replace the DNS
+   and address validation checks.
+3. `kit-download` uses `node:fs`; move the generated kit into R2 or a static
+   asset.
+4. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
+5. Background dispatch/Queues must replace Netlify background-function calls.
 6. Verify the Formspree forms on the Cloudflare preview.
 7. IndexNow deploy trigger.
 
@@ -198,8 +218,11 @@ Required checks:
 
 1. Lower DNS TTL at least 24 hours before cutover.
 2. Deploy the tested Worker to a preview URL.
-3. Add the Stripe webhook endpoint for the Cloudflare hostname; keep the
-   Netlify endpoint until the new one is confirmed.
+3. Keep the Stripe webhook URL as
+   `https://aeogeosearch.com/.netlify/functions/stripe-webhook`. The same path
+   exists on Cloudflare, so after cutover Stripe can keep the endpoint and the
+   same `STRIPE_WEBHOOK_SECRET`; do not create a new endpoint unless the path
+   changes. Keep the Netlify endpoint until the new one is confirmed.
 4. Add the Cloudflare callback URLs to Supabase; keep the Netlify URLs until
    cutover is complete.
 5. Switch nameservers only after all checks pass.
@@ -215,7 +238,8 @@ Names observed in the functions include:
 `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PUBLIC_SITE_URL`,
 `SITE_URL`, `GROQ_API_KEY`, `GOOGLE_KG_API_KEY`, `INDEXNOW_KEY`,
 `CONTENT_SERVICE_ENABLED`, `ADVANCED_PLANS_READY`, `PLAN_LIMITS_APPROVED`,
-`LIVE_PAYMENTS_ENABLED`, `COMPETITOR_INTELLIGENCE_DISABLED`, and the price IDs
-referenced in the function files.
+`LIVE_PAYMENTS_ENABLED`, `COMPETITOR_INTELLIGENCE_DISABLED`, the
+`STRIPE_PRICE_*` audit catalog IDs, the content-service price IDs, and any
+portal configuration IDs. Never put live Stripe keys on a public preview.
 
 Set these in Cloudflare's secret store, never in `wrangler.jsonc` or Git.

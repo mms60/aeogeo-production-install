@@ -2,14 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "aeogeo-search",
   "compatibility_date": "2026-11-17",
+  "main": "worker/index.js",
+  "compatibility_flags": ["nodejs_compat"],
 
-  // Static preview only. The API Worker entrypoint is added after the
-  // Netlify-compatible function layer has been ported and tested.
-  // Do not add `main` here until that layer is ready.
   "assets": {
     "directory": "./.cloudflare/site",
+    "binding": "ASSETS",
+    "run_worker_first": ["/.netlify/functions/*"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
+  },
+
+  "triggers": {
+    "crons": ["0 * * * *"]
   },
 
   "observability": {
