@@ -1,6 +1,6 @@
 # Cloudflare migration
 
-Status: **static preview prepared; production remains on Netlify.**
+Status: **static preview prepared; contact forms wired to Formspree; production remains on Netlify.**
 
 This branch does not change DNS, Netlify, Stripe, or Supabase. The only working
 artifact so far is a local Cloudflare Workers static-assets preview. The API and
@@ -76,9 +76,15 @@ preview will fail. That is expected, not a regression in the static preview.
 | Netlify Forms | 30 pages | hosted form endpoint |
 | Netlify `deploySucceeded` | IndexNow | GitHub Action or scheduled Worker |
 
-## Forms recommendation
+## Forms implementation
 
-Use **Formspree** for the first Cloudflare deployment.
+Formspree is wired into this branch:
+
+- Contact forms: `https://formspree.io/f/mbgooqgz`
+- Entity-authority form: `https://formspree.io/f/xrpqqrpa`
+- Hidden Netlify detection forms and `form-name` fields were removed.
+- Both endpoints accepted a test submission with HTTP 200 and `{"ok":true}`.
+- The audit owner notice now posts to the contact Formspree endpoint instead of the Netlify site.
 
 Why:
 
@@ -167,7 +173,7 @@ Then replace the platform dependencies in this order:
 3. `indexnow` Blobs ledger.
 4. Background dispatch and Queues.
 5. Cron Trigger.
-6. Netlify Forms.
+6. Verify the Formspree forms on the Cloudflare preview.
 7. IndexNow deploy trigger.
 
 ### 5. Test before cutover

@@ -3,7 +3,7 @@ const {db: defaultDb, reply, verifySignature: defaultVerifySignature, UUID} = re
 const {crawlSite: defaultCrawlSite} = require('./lib/audit-engine');
 
 const OWNER_EMAIL = 'michellesilerschmidt@gmail.com';
-const SITE_FORM_URL = 'https://aeogeosearch.com/';
+const SITE_FORM_URL = 'https://formspree.io/f/mbgooqgz';
 
 const cleanLine = v => String(v ?? '').replace(/[\r\n]+/g, ' ').trim();
 
@@ -83,12 +83,12 @@ async function sendOwnerNotice({job, report, errorMessage, db, env, fetchImpl}) 
   }
 
   const fields = {
-    'form-name': 'contact',
+    _subject: report ? 'AEOGEO GEO Audit Completed' : 'AEOGEO GEO Audit Failed',
     firstName: 'AEOGEOSearch',
     lastName: report ? 'GEO Audit Completed' : 'GEO Audit Failed',
     email: OWNER_EMAIL,
     phone: '',
-    'bot-field': '',
+    _gotcha: '',
     message: lines.join('\n')
   };
   const response = await fetchImpl(SITE_FORM_URL, {
@@ -103,7 +103,7 @@ async function sendOwnerNotice({job, report, errorMessage, db, env, fetchImpl}) 
   }
   if ([302, 303].includes(response.status)) {
     const dest = new URL(response.headers.get('location') || '', SITE_FORM_URL);
-    if (dest.origin !== 'https://aeogeosearch.com') {
+    if (dest.origin !== new URL(SITE_FORM_URL).origin) {
       throw new Error('Unexpected owner notice redirect');
     }
   }
