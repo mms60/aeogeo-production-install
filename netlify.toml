@@ -33,6 +33,7 @@
   [headers.values]
     Cache-Control = "no-store"
     Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
 
 # Isolated content-service private pages and owner-notice retries.
 # AI Visibility & Schema Studio: crawler scans run as a background function.

@@ -64,10 +64,14 @@ html body .geo-footer-legal-actions{display:flex;flex-wrap:wrap;align-items:cent
 html body .geo-legal-links .geo-footer-badges{display:flex;align-items:center;justify-content:flex-end;gap:24px;flex:0 0 auto;max-width:100%}
 html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block;height:128px;width:auto;max-width:none;object-fit:contain;flex:none}
 @media(min-width:1280px){html body .geo-legal-links .geo-footer-badges{gap:40px}}
+@media(min-width:1024px) and (max-width:1279px){
+ html body .geo-legal-links .geo-footer-badges{gap:16px}
+ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{height:112px}
+}
 @media(max-width:1023px){
  html body .geo-legal-links>.geo-footer-credentials-row{flex-direction:column;align-items:stretch;gap:24px}
- html body .geo-legal-links .geo-footer-badges{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.94fr) minmax(0,1fr);align-items:center;justify-content:start;gap:20px;width:100%;max-width:420px;flex:0 1 auto}
- html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{min-width:0;max-width:100%;width:100%;height:auto;max-height:none}
+ html body .geo-legal-links .geo-footer-badges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;justify-items:center;gap:20px;width:100%;max-width:360px;flex:0 1 auto}
+ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{min-width:0;max-width:100%;width:100%;height:auto;max-height:128px;object-fit:contain}
 }
 @media(max-width:639px){
  html body .geo-legal-links .geo-footer-badges{gap:16px;max-width:340px}

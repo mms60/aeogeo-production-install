@@ -1,4 +1,4 @@
-/* site-header-v2: multi-dropdown shared navigation (`AI Audit Tools` + `All 9 DIY Tools`). No authentication, audit or billing requests. */
+/* site-header-v2: multi-dropdown shared navigation (`AI Audit Tools` + `Free DIY Tools`). No authentication, audit or billing requests. */
 (()=>{'use strict';
  const header=document.querySelector('.website-header');if(!header)return;
  const toggle=document.getElementById('site-navigation-toggle'),nav=document.getElementById('site-navigation'),wide=matchMedia('(min-width:1024px)');

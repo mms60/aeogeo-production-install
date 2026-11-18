@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { inspectEntityHtml } = require('../netlify/functions/lib/entity-audit');
-const graph = require('../site/assets/entity-graph-builder');
+const graph = require('../netlify/functions/lib/entity-graph-builder');
 
 const unifiedHtml = `<html><head>
 <script type="application/ld+json">

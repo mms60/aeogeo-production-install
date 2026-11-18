@@ -19,8 +19,8 @@ export function adminClient() {
 export async function userFromEvent(event) {
   const token=(event.headers.authorization||event.headers.Authorization||"").replace(/^Bearer\s+/i,"");
   if(!token) throw new Error("Sign in is required.");
-  const anon=process.env.SUPABASE_ANON_KEY;
-  if(!anon) throw new Error("SUPABASE_ANON_KEY is missing.");
+  const anon=process.env.SUPABASE_ANON_KEY||process.env.SUPABASE_PUBLISHABLE_KEY;
+  if(!anon) throw new Error("The Supabase public key is missing.");
   const client=createClient(process.env.SUPABASE_URL,anon,{auth:{persistSession:false}});
   const {data,error}=await client.auth.getUser(token);
   if(error||!data.user) throw new Error("Your session is invalid or expired. Please sign in again.");

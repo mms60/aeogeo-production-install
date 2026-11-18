@@ -1,6 +1,6 @@
 /*
- * AI Entity & Citation Authority Setup: public audit and graph-builder UI.
- * No dependencies beyond the shared AEOEntityGraph compiler.
+ * AI Entity & Citation Authority Setup: public audit and paid builder UI.
+ * The JSON-LD compiler runs on the server and is never shipped to the browser.
  */
 (function () {
   "use strict";
@@ -16,6 +16,88 @@
   };
   var LIMIT_KEY = { location: "locations", person: "people", service: "services" };
   var STATUS_TIMER = 0;
+  var SUPABASE_URL = "https://ftwohoenimegsmtliqgz.supabase.co";
+  var SUPABASE_PUBLIC_KEY = "sb_publishable_0T08Pe4A0ZvoHD5CXrd1iA_BvUyVxAO";
+  var authClient = null;
+  var access = { checked: false, signedIn: false, email: "", active: false, plan: null, limits: null };
+
+  function supabaseClient() {
+    if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
+    if (!authClient) {
+      authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
+        auth: { flowType: "pkce", detectSessionInUrl: false, persistSession: true, autoRefreshToken: true }
+      });
+    }
+    return authClient;
+  }
+
+  async function currentSession() {
+    var client = supabaseClient();
+    if (!client) return null;
+    try {
+      var result = await client.auth.getSession();
+      return result.data && result.data.session ? result.data.session : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function authFetch(name, body) {
+    var session = await currentSession();
+    if (!session) return { status: 401, data: { error: "Sign in to continue.", code: "SIGN_IN_REQUIRED" } };
+    var response;
+    try {
+      response = await fetch("/.netlify/functions/" + name, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
+        body: JSON.stringify(body || {}),
+        cache: "no-store"
+      });
+    } catch (error) {
+      return { status: 0, data: { error: "The server could not be reached. Check your connection and try again." } };
+    }
+    var data = null;
+    try { data = await response.json(); } catch (error) { data = null; }
+    return { status: response.status, data: data || {} };
+  }
+
+  async function refreshAccess() {
+    var session = await currentSession();
+    access.checked = true;
+    access.signedIn = Boolean(session);
+    access.email = session && session.user ? session.user.email || "" : "";
+    access.active = false;
+    access.plan = null;
+    access.limits = null;
+    if (!session) return access;
+    var result = await authFetch("entity-entitlement", {});
+    if (result.status === 200 && result.data && result.data.active) {
+      access.active = true;
+      access.plan = result.data.plan || null;
+      access.limits = result.data.limits || null;
+    }
+    return access;
+  }
+
+  function signInUrl() {
+    return "/login/?next=" + encodeURIComponent("/ai-visibility-schema-studio#entity-audit-tool");
+  }
+
+  function planName(plan) {
+    return PLAN_LABEL[plan] || "Paid implementation";
+  }
+
+  function updateAccessStatus() {
+    var node = $("ea-access-status");
+    if (!node) return;
+    if (access.active) {
+      node.textContent = "Signed in as " + (access.email || "your account") + ". " + planName(access.plan) + " implementation unlocked.";
+    } else if (access.signedIn) {
+      node.textContent = "Signed in as " + (access.email || "your account") + ". No paid implementation is linked to this account yet.";
+    } else {
+      node.textContent = "";
+    }
+  }
 
   function $(id) {
     return document.getElementById(id);
@@ -479,7 +561,7 @@
       html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API. The done-for-you setup includes the full namesake and collision audit.</p></div>';
     }
 
-    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Build the connected map →</button><a href="#pricing">See the done-for-you setup</a></div>' +
+    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">See the done-for-you setup</a></div>' +
       '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers. The paid setup includes before-and-after prompt testing across four AI engines.</p>';
 
     output.setAttribute("aria-busy", "false");
@@ -503,7 +585,7 @@
     if (!brandField("brandName") && data.brandName) setBrandField("brandName", data.brandName);
     showPanel("builder");
     if (!itemCount("location")) addItem("location");
-    setStatus("Domain and brand name copied from the check. Add a verified location, then build the map.");
+    setStatus("Domain and brand name copied from the check. Add a verified location, then preview the map.");
     scrollToolIntoView();
     window.setTimeout(function () {
       var locationName = document.querySelector('#ea-locations [data-field="name"]');
@@ -565,10 +647,10 @@
 
   /* Graph builder --------------------------------------------------------- */
 
-  function mapLoading() {
+  function mapLoading(message) {
     var output = $("ea-builder-output");
     output.setAttribute("aria-busy", "true");
-    output.innerHTML = '<div class="ea-loading"><span class="ea-spinner" aria-hidden="true"></span><span>Compiling the connected entity graph…</span></div>';
+    output.innerHTML = '<div class="ea-loading"><span class="ea-spinner" aria-hidden="true"></span><span>' + esc(message || "Preparing your structure preview...") + '</span></div>';
   }
 
   function mapError(message) {
@@ -613,28 +695,93 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
-  function renderMap(json, input) {
-    var payload = JSON.parse(json);
-    var graph = Array.isArray(payload["@graph"]) ? payload["@graph"] : [];
-    var organization = graph.find(function (node) { return node["@type"] === "Organization"; });
-    var anchors = new Set();
-    graph.forEach(function (node) {
-      [].concat(node.sameAs || []).forEach(function (url) { anchors.add(url); });
+  function domainOrigin(value) {
+    try { return new URL(String(value || "")).origin; } catch (error) { return ""; }
+  }
+
+  function structureRows(input) {
+    var base = domainOrigin(input.domain);
+    var rows = [];
+    if (!base) return rows;
+    rows.push({ type: "Organization", id: base + "/#organization", note: "Parent brand identity" });
+    rows.push({ type: "WebSite", id: base + "/#website", note: "Publisher points to the Organization" });
+    (input.locations || []).forEach(function (location, index) {
+      rows.push({
+        type: location.businessType || "LocalBusiness",
+        id: base + "/locations/" + slugify(location.slug || location.name || ("location-" + (index + 1))) + "/#localbusiness",
+        note: "parentOrganization points to the Organization"
+      });
     });
-    var plan = currentPlan();
+    (input.people || []).forEach(function (person, index) {
+      rows.push({
+        type: "Person",
+        id: base + "/#person-" + slugify(person.slug || person.name || ("person-" + (index + 1))),
+        note: "worksFor points to the Organization"
+      });
+    });
+    (input.services || []).forEach(function (service, index) {
+      rows.push({
+        type: "Service",
+        id: base + "/services/" + slugify(service.slug || service.name || ("service-" + (index + 1))) + "/#service",
+        note: "provider points to the Organization"
+      });
+    });
+    return rows;
+  }
+
+  function renderPreview(input, state) {
+    state = state || {};
+    var rows = structureRows(input);
     var output = $("ea-builder-output");
     output.setAttribute("aria-busy", "false");
+    var accessNote = state.signedIn
+      ? '<p class="ea-access-note">Signed in as ' + esc(state.email || "your account") + '. No paid implementation is linked to this account yet.</p>' +
+        '<p class="ea-access-note">If you completed checkout, use the same email you entered at Stripe. <a href="' + esc(signInUrl()) + '">Sign in again</a> or <a href="/contact">contact us</a>.</p>'
+      : '<p class="ea-access-note">Already purchased? <a href="' + esc(signInUrl()) + '">Sign in</a> with the email you used at Stripe to unlock the complete builder.</p>';
     output.innerHTML = '' +
-      '<div class="ea-result-head"><div><p class="ea-output-kicker">IMPLEMENTATION SPEC</p><h3>' + esc(input.brandName) + '</h3><p>' + esc(organization ? organization["@id"] : "") + '</p></div><span class="ea-http">JSON-LD</span></div>' +
+      '<div class="ea-result-head"><div><p class="ea-output-kicker">FREE STRUCTURE PREVIEW</p><h3>' + esc(input.brandName || "Your brand") + '</h3><p>' + esc(domainOrigin(input.domain)) + '</p></div><span class="ea-http">STRUCTURE ONLY</span></div>' +
       '<div class="ea-map-summary">' +
-        '<div><strong>' + graph.length + '</strong><span>Connected entities</span></div>' +
-        '<div><strong>' + input.locations.length + '</strong><span>Locations</span></div>' +
-        '<div><strong>' + anchors.size + '</strong><span>External anchors</span></div>' +
+        '<div><strong>' + rows.length + '</strong><span>Planned entities</span></div>' +
+        '<div><strong>' + (input.locations || []).length + '</strong><span>Locations</span></div>' +
+        '<div><strong>' + (input.people || []).length + '</strong><span>People</span></div>' +
+        '<div><strong>' + (input.services || []).length + '</strong><span>Services</span></div>' +
       '</div>' +
+      '<div class="ea-block"><h4>Planned entity relationships</h4>' +
+        '<ul class="ea-preview-list">' + rows.map(function (row) {
+          return '<li><strong>' + esc(row.type) + '</strong><code>' + esc(row.id) + '</code><span>' + esc(row.note) + '</span></li>';
+        }).join("") + '</ul>' +
+        '<p class="ea-fine">This preview shows the structure and stable identifiers only. It is not a JSON-LD implementation and cannot be copied into a site.</p>' +
+      '</div>' +
+      '<div class="ea-locked">' +
+        '<p class="ea-output-kicker">PAID IMPLEMENTATION</p>' +
+        '<h3>Build Your Complete Brand Entity Architecture</h3>' +
+        '<p>Your business deserves more than disconnected schema markup.</p>' +
+        '<p>Our complete implementation connects your brand identity, locations, services, leadership, and supporting authority signals into a structured entity architecture designed to help search systems better understand your business.</p>' +
+        '<p><strong>Unlock the complete implementation with AEOGEO Search.</strong></p>' +
+        '<a class="ea-button" href="#pricing">View Implementation Packages</a>' +
+        '<p class="ea-fine">The paid implementation includes the complete customized JSON-LD, copy and download tools, validation, implementation instructions, and the verification report for the plan you purchase.</p>' +
+        accessNote +
+      '</div>';
+    output.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderPaidMap(data, input) {
+    var json = JSON.stringify(data.jsonLd, null, 2);
+    var output = $("ea-builder-output");
+    output.setAttribute("aria-busy", "false");
+    var validation = Array.isArray(data.validation) ? data.validation : [];
+    var instructions = Array.isArray(data.instructions) ? data.instructions : [];
+    output.innerHTML = '' +
+      '<div class="ea-result-head"><div><p class="ea-output-kicker">PAID IMPLEMENTATION</p><h3>' + esc(input.brandName) + '</h3><p>' + esc(planName(data.plan)) + '</p></div><span class="ea-http">JSON-LD</span></div>' +
       '<pre class="ea-json" id="ea-json-output">' + esc(json) + '</pre>' +
       '<div class="ea-output-actions"><button class="ea-copy" id="ea-copy-json" type="button">Copy JSON-LD</button><button class="ea-copy" id="ea-download-json" type="button">Download .json</button></div>' +
-      '<p class="ea-output-note">Draft only. Verify every fact, URL, and relationship before publishing. This is the implementation spec; it does not change your site.</p>' +
-      '<a class="ea-output-cta" href="#get-started" data-ea-plan="' + esc(plan) + '">Have AEOGEO implement it →</a>';
+      '<div class="ea-block"><h4>Validation</h4>' +
+        (validation.length
+          ? '<ul class="ea-issue-list">' + validation.map(function (item) { return '<li class="ea-issue">' + esc(item) + '</li>'; }).join("") + '</ul>'
+          : '<p class="ea-pass">The generated graph passed the built-in structure and reference checks. Validate the published markup with a Schema.org validator before release.</p>') +
+      '</div>' +
+      '<div class="ea-block"><h4>Implementation instructions</h4><ol class="ea-instructions">' + instructions.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join("") + '</ol></div>' +
+      '<p class="ea-output-note">Draft only. Verify every fact, URL, and relationship before publishing. This output does not change your site, and it does not guarantee rankings, citations, or recommendations.</p>';
     var copyButton = $("ea-copy-json");
     if (copyButton) {
       copyButton.addEventListener("click", function () {
@@ -697,7 +844,7 @@
       name: "AI Search & Entity Optimization",
       slug: "entity-booster",
       serviceUrl: "https://examplebrand.com/services/entity-booster/",
-      description: "Connects the brand to its locations, people, and verified profiles so AI systems resolve the business accurately.",
+      description: "Connects the brand to its locations, people, and verified profiles so search systems can interpret the business consistently.",
       areaServedCities: "Dallas | https://www.wikidata.org/wiki/Q16557\nPlano"
     });
     updateCounts();
@@ -712,29 +859,49 @@
     addItem("location");
     updateCounts();
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
       event.preventDefault();
       setStatus("");
       var input = readBrand();
-      if (!window.AEOEntityGraph) {
-        mapError("The graph builder did not load. Refresh the page and try again.");
-        return;
-      }
       if (!input.locations.length) {
-        var message = "Add at least one location or service area before building the map.";
+        var message = "Add at least one location or service area before previewing the entity map.";
         setStatus(message, true);
         mapError(message);
         var name = document.querySelector('#ea-locations [data-field="name"]');
         if (name) name.focus();
         return;
       }
-      mapLoading();
-      try {
-        var json = window.AEOEntityGraph.buildMasterKnowledgeGraph(input);
-        renderMap(json, input);
-      } catch (error) {
-        mapError(error && error.message ? error.message : "Check the brand details and try again.");
+      mapLoading("Preparing your structure preview...");
+      var state = await refreshAccess();
+      updateAccessStatus();
+      if (!state.active) {
+        renderPreview(input, state);
+        if (!state.signedIn) setStatus("Preview only. Sign in with a purchased account to generate the complete JSON-LD.");
+        return;
       }
+      mapLoading("Generating your complete JSON-LD...");
+      var result = await authFetch("entity-implementation", { input: input });
+      if (result.status === 200 && result.data && result.data.jsonLd) {
+        renderPaidMap(result.data, input);
+        setStatus("Complete implementation generated for the " + planName(result.data.plan) + " plan.");
+        return;
+      }
+      if (result.status === 401) {
+        access.active = false;
+        access.signedIn = false;
+        updateAccessStatus();
+        renderPreview(input, access);
+        setStatus("Sign in to generate the complete implementation.", true);
+        return;
+      }
+      if (result.status === 403 && result.data && result.data.code === "PURCHASE_REQUIRED") {
+        access.active = false;
+        updateAccessStatus();
+        renderPreview(input, access);
+        setStatus(result.data.error, true);
+        return;
+      }
+      mapError(result.data && result.data.error ? result.data.error : "The complete implementation could not be generated. Try again.");
     });
 
     document.querySelectorAll("[data-ea-add]").forEach(function (button) {
@@ -809,23 +976,85 @@
     });
   }
 
-  function initCheckout() {
+  function cleanupCheckoutUrl() {
+    if (!window.history || !window.history.replaceState) return;
+    try {
+      window.history.replaceState(null, "", "/ai-visibility-schema-studio#entity-audit-tool");
+    } catch (error) {
+      // Keep the URL if the browser blocks history cleanup.
+    }
+  }
+
+  function checkoutMessage(html, isError) {
     var result = $("ea-checkout-result");
-    var state = new URLSearchParams(window.location.search).get("checkout");
-    if (result && (state === "success" || state === "cancelled")) {
-      result.hidden = false;
-      if (state === "success") {
-        result.innerHTML = "<strong>Secure checkout finished.</strong>If Stripe accepted your payment, a receipt is on its way by email. Send the intake details in the form so we can confirm the brand and start the 10-day build.";
+    if (!result) return;
+    result.hidden = false;
+    result.innerHTML = html;
+    result.classList.toggle("is-error", Boolean(isError));
+  }
+
+  async function claimSession(sessionId) {
+    var session = await currentSession();
+    if (session && session.user && session.user.email) access.email = session.user.email;
+    var result = await authFetch("entity-purchase-claim", { sessionId: sessionId });
+    if (result.status === 200 && result.data && result.data.active) {
+      access.checked = true;
+      access.signedIn = true;
+      access.active = true;
+      access.plan = result.data.plan || null;
+      access.limits = result.data.limits || null;
+      try { sessionStorage.removeItem("ea-entity-session"); } catch (error) { }
+      updateAccessStatus();
+      checkoutMessage("<strong>Purchase verified.</strong> The " + esc(planName(access.plan)) + " implementation is now unlocked in the builder above. Add the verified brand details and generate the complete JSON-LD.", false);
+      setStatus("Purchase verified. " + planName(access.plan) + " implementation unlocked.");
+      showPanel("builder");
+      scrollToolIntoView();
+      return true;
+    }
+    if (result.status === 401) {
+      checkoutMessage("<strong>Payment received.</strong> Sign in with the email you used at Stripe to unlock the complete builder. <a href=\"" + esc(signInUrl()) + "\">Sign in</a>", false);
+      return false;
+    }
+    if (result.status === 403 && result.data && result.data.code === "EMAIL_MISMATCH") {
+      checkoutMessage("<strong>Use the purchase email.</strong> This account does not match the email on the Stripe payment. Sign in with the address used at checkout, or <a href=\"/contact\">contact us</a> if the purchase used a different address.", true);
+      return false;
+    }
+    if (result.status === 409) {
+      checkoutMessage("<strong>This purchase is already linked.</strong> " + esc(result.data.error || "") + " <a href=\"/contact\">Contact us</a> if that is not right.", true);
+      return false;
+    }
+    checkoutMessage("<strong>The purchase check did not finish.</strong> " + esc(result.data && result.data.error ? result.data.error : "Try again in a moment.") + " <a href=\"/contact\">Contact us</a> if it keeps failing.", true);
+    return false;
+  }
+
+  async function claimStoredSession() {
+    var sessionId = "";
+    try { sessionId = sessionStorage.getItem("ea-entity-session") || ""; } catch (error) { }
+    if (!sessionId) return false;
+    var session = await currentSession();
+    if (!session) return false;
+    return claimSession(sessionId);
+  }
+
+  async function initCheckout() {
+    var params = new URLSearchParams(window.location.search);
+    var state = params.get("checkout");
+    var sessionId = params.get("session_id") || "";
+
+    if (state === "cancelled") {
+      checkoutMessage("<strong>Checkout cancelled.</strong> No charge was made. You can try again from the pricing section, or use the intake form to talk it through first.", false);
+      cleanupCheckoutUrl();
+    } else if (state === "success" && sessionId) {
+      try { sessionStorage.setItem("ea-entity-session", sessionId); } catch (error) { }
+      var session = await currentSession();
+      if (!session) {
+        checkoutMessage("<strong>Payment received.</strong> Sign in with the email you used at Stripe to unlock the complete builder. <a href=\"" + esc(signInUrl()) + "\">Sign in</a>", false);
       } else {
-        result.innerHTML = "<strong>Checkout cancelled.</strong>No charge was made. You can try again above, or use this form to talk it through first.";
+        checkoutMessage("<strong>Verifying your purchase...</strong>", false);
+        if (await claimSession(sessionId)) cleanupCheckoutUrl();
       }
-      if (window.history && window.history.replaceState) {
-        try {
-          window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-        } catch (error) {
-          // Keep the URL if the browser blocks history cleanup.
-        }
-      }
+    } else {
+      await claimStoredSession();
     }
 
     document.addEventListener("click", function (event) {
@@ -836,7 +1065,7 @@
         return;
       }
       trigger.setAttribute("aria-busy", "true");
-      trigger.textContent = "Opening secure checkout…";
+      trigger.textContent = "Opening secure checkout...";
     });
   }
 
@@ -857,6 +1086,7 @@
     initIntake();
     initCheckout();
     initPlans();
+    refreshAccess().then(updateAccessStatus);
   }
 
   init();
