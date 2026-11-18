@@ -203,10 +203,17 @@ the real Supabase `service_role` key. A local `wrangler dev` run with the same
 code and the same secret completed a real Supabase sign-in and a
 `product-api?action=account` lookup against the live database.
 
-Still missing: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and
-`STRIPE_MONTHLY_TEST_SECRET_KEY`. Netlify's Secrets Controller returns only masked
-values through the API and CLI, so those must be entered directly in Cloudflare.
-The placeholder values were removed so the Worker fails closed.
+Resolved: `STRIPE_SECRET_KEY` (a live restricted key, chosen because the price
+catalog is live-mode and the full secret key could not be revealed) and
+`STRIPE_WEBHOOK_SECRET` are encrypted secrets. Verified by running the Worker
+locally with the real values: the checkout readiness check returns
+`AUDIT_CONFIGURATION_VERIFIED`, all six live plan prices resolve at the approved
+amounts, the default billing-portal configuration is valid, a webhook signed with
+the real endpoint secret is accepted (`200 {"received":true}`), and a forged
+signature is rejected (`400`).
+
+Still missing: `STRIPE_MONTHLY_TEST_SECRET_KEY`, used only by the owner monthly
+test flow, not by checkout or the live webhook.
 
 Do not add any of them to `wrangler.jsonc` `vars`. That file is committed, and
 `vars` are stored and displayed as plain text. Use Workers & Pages →
