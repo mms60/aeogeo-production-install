@@ -95,7 +95,8 @@ main .h-\[46vh\].min-h-\[320px\] > .absolute.inset-x-0.bottom-0 > div > p{
 }
 [data-aeogeo-learn] a.glass h3,[data-aeogeo-learn] article.glass h3{font-size:1rem!important;line-height:1.5!important}
 /* Resources Hub article cards: same 16px card title and description spacing as the Knowledge Library. */
-[data-aeogeo-article-preview] h2{font-size:1rem!important;line-height:1.5!important}
+article[data-aeogeo-article-preview] h2,
+article[data-aeogeo-article-preview] h2 *{font-size:1rem!important;line-height:1.5!important}
 [data-aeogeo-article-preview]>p{margin-top:.625rem}
 @media(max-width:767px){
  .marketing-header a[href="tel:+14699052836"]{display:grid}
