@@ -120,7 +120,7 @@ export default async request => {
   }
 
   try {
-    const body = webRequest ? await request.json() : readBody(request);
+    const body = webRequest ? await request.json() : await readBody(request);
     const rawUrl = String(body?.url || "").trim().slice(0, 2048);
     const brandName = String(body?.brandName || "").trim().slice(0, 120);
     if (!brandName) return json(400, { error: "Enter the brand name you want AI engines to resolve." });

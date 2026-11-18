@@ -7,7 +7,7 @@ const liveMode = () => String(process.env.STRIPE_SECRET_KEY || "").startsWith("s
 
 export default async event => {
   try{
-    const user=await userFromEvent(event), {plan}=readBody(event);
+    const user=await userFromEvent(event), {plan}=await readBody(event);
     const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
     const priceMap={
       studio_monthly:process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID,

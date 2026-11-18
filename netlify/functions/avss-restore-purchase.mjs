@@ -1,4 +1,4 @@
-import { json, readBody, userFromEvent, adminClient } from "./avss-shared.mjs";
+import { json, readBody, headerValue, userFromEvent, adminClient } from "./avss-shared.mjs";
 
 const HOUR = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
@@ -23,14 +23,14 @@ export default async event => {
       await db.from("avss_restore_attempts").insert({
         user_id: user.id,
         email: email || null,
-        ip: event.headers?.["x-nf-client-connection-ip"] || event.headers?.["x-forwarded-for"] || null,
+        ip: headerValue(event?.headers, "x-nf-client-connection-ip") || headerValue(event?.headers, "x-forwarded-for") || null,
         outcome
       });
     } catch {}
   };
 
   try {
-    const { email: rawEmail } = readBody(event);
+    const { email: rawEmail } = await readBody(event);
     email = String(rawEmail || "").trim().toLowerCase();
 
     if (!user.email_confirmed_at) {

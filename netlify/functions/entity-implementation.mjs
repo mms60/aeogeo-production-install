@@ -1,9 +1,9 @@
-import { json, readBody, userFromEvent } from "./avss-shared.mjs";
+import { json, readBody, requestMethod, userFromEvent } from "./avss-shared.mjs";
 import purchases from "./lib/entity-purchases.js";
 import graph from "./lib/entity-graph-builder.js";
 
 export default async event => {
-  if (String(event.httpMethod || "POST").toUpperCase() !== "POST") {
+  if (requestMethod(event) !== "POST") {
     return json(405, { error: "Use POST to generate an implementation." });
   }
 
@@ -26,7 +26,7 @@ export default async event => {
 
     let body;
     try {
-      body = readBody(event);
+      body = await readBody(event);
     } catch (error) {
       return json(400, { error: error.message, code: "INVALID_JSON" });
     }

@@ -1,8 +1,8 @@
-import { json, userFromEvent } from "./avss-shared.mjs";
+import { json, requestMethod, userFromEvent } from "./avss-shared.mjs";
 import purchases from "./lib/entity-purchases.js";
 
 export default async event => {
-  if (!["GET", "POST"].includes(String(event.httpMethod || "GET").toUpperCase())) {
+  if (!["GET", "POST"].includes(requestMethod(event))) {
     return json(405, { error: "Use GET or POST to check entitlement." });
   }
 

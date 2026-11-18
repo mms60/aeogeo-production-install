@@ -1,8 +1,8 @@
-import { json, readBody, userFromEvent } from "./avss-shared.mjs";
+import { json, readBody, requestMethod, userFromEvent } from "./avss-shared.mjs";
 import purchases from "./lib/entity-purchases.js";
 
 export default async event => {
-  if (String(event.httpMethod || "POST").toUpperCase() !== "POST") {
+  if (requestMethod(event) !== "POST") {
     return json(405, { error: "Use POST to claim a purchase." });
   }
 
@@ -14,7 +14,7 @@ export default async event => {
   }
 
   try {
-    const { sessionId } = readBody(event);
+    const { sessionId } = await readBody(event);
     const result = await purchases.claimPurchase(user, sessionId);
     return json(200, { active: true, plan: result.plan, limits: result.limits });
   } catch (error) {

@@ -9,15 +9,24 @@ export const json = (statusCode, body) => new Response(JSON.stringify(body), {
   status: statusCode,
   headers: {"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}
 });
-export const readBody = event => {
-  try { return JSON.parse(event.body || "{}"); } catch { throw new Error("Request body must be valid JSON."); }
+export function headerValue(headers, name) {
+  if (!headers) return "";
+  if (typeof headers.get === "function") return headers.get(name) || "";
+  return headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || "";
+}
+export const requestMethod = event => String(event?.method || event?.httpMethod || "GET").toUpperCase();
+export const readBody = async event => {
+  const raw = typeof event?.text === "function" && typeof event?.headers?.get === "function"
+    ? await event.text()
+    : event?.body || "";
+  try { return JSON.parse(raw || "{}"); } catch { throw new Error("Request body must be valid JSON."); }
 };
 export function adminClient() {
   if(!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase server environment variables are missing.");
   return createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 }
 export async function userFromEvent(event) {
-  const token=(event.headers.authorization||event.headers.Authorization||"").replace(/^Bearer\s+/i,"");
+  const token=headerValue(event?.headers,"authorization").replace(/^Bearer\s+/i,"");
   if(!token) throw new Error("Sign in is required.");
   const anon=process.env.SUPABASE_ANON_KEY||process.env.SUPABASE_PUBLISHABLE_KEY;
   if(!anon) throw new Error("The Supabase public key is missing.");

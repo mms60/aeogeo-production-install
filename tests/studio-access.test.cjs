@@ -74,6 +74,20 @@ test('a claim must match the Stripe email and only paid sessions are recorded', 
   assert.match(purchases, /payment_status !== 'paid'/);
 });
 
+test('the shared function layer reads modern Netlify Request objects', async () => {
+  const { headerValue, requestMethod, readBody } = await import('../netlify/functions/avss-shared.mjs');
+  const request = new Request('https://aeogeosearch.com/.netlify/functions/entity-entitlement', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hello: 'world' })
+  });
+
+  assert.equal(requestMethod(request), 'POST');
+  assert.equal(headerValue(request.headers, 'authorization'), 'Bearer test-token');
+  assert.deepEqual(await readBody(request), { hello: 'world' });
+  assert.deepEqual(await readBody({ body: '{"legacy":true}' }), { legacy: true });
+});
+
 test('the studio content uses no hashtags, decorative symbols, or em dashes', () => {
   const main = page.slice(page.indexOf('<main'), page.indexOf('</main>'));
   assert.ok(main.length > 0);

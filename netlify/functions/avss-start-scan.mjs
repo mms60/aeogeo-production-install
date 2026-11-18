@@ -2,7 +2,7 @@ import { json, readBody, userFromEvent, requirePaid, adminClient, assertPublicHt
 export default async event=>{
   try{
     const user=await userFromEvent(event); await requirePaid(user);
-    const body=readBody(event), target=await assertPublicHttpUrl(body.url);
+    const body=await readBody(event), target=await assertPublicHttpUrl(body.url);
     const maxPages=Math.min(Math.max(Number(body.maxPages)||10,1),Number(process.env.MAX_PAGES_PER_SCAN)||20);
     const db=adminClient();
     const {data:scan,error}=await db.from("crawler_scans").insert({
