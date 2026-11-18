@@ -31,8 +31,20 @@ test('entity-audit accepts a Netlify Web Request and returns parsed JSON-LD', as
     </script>
   </head><body></body></html>`;
 
+  // The public-address check resolves hosts through DNS-over-HTTPS, so the stub
+  // answers the resolver and the page fetch separately.
   globalThis.fetch = async (url) => {
-    assert.equal(String(url), 'https://93.184.216.34/');
+    const href = String(url);
+    if (href.startsWith('https://cloudflare-dns.com/dns-query')) {
+      const query = new URL(href);
+      assert.equal(query.searchParams.get('name'), 'example.com');
+      const type = query.searchParams.get('type');
+      return Response.json({
+        Status: 0,
+        Answer: type === 'A' ? [{ type: 1, data: '93.184.216.34' }] : []
+      });
+    }
+    assert.equal(href, 'https://example.com/');
     return new Response(html, {
       status: 200,
       headers: { 'content-type': 'text/html; charset=utf-8' }
@@ -56,7 +68,7 @@ test('entity-audit accepts a Netlify Web Request and returns parsed JSON-LD', as
       'x-forwarded-for': '203.0.113.10'
     },
     body: JSON.stringify({
-      url: 'https://93.184.216.34/',
+      url: 'https://example.com/',
       brandName: 'Example'
     })
   });
