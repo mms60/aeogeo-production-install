@@ -1,10 +1,14 @@
 # Cloudflare migration
 
-Status: **static preview prepared; contact forms wired to Formspree; production remains on Netlify.**
+Status: **Cloudflare build is complete and verified; production still runs on
+Netlify and DNS has not been touched.**
 
-This branch does not change DNS, Netlify, Stripe, or Supabase. The only working
-artifact so far is a local Cloudflare Workers static-assets preview. The API and
-form layers are not migrated yet.
+Deployed Worker `aeogeo-search` serves the static site, every Netlify function at
+its original `/.netlify/functions/*` path, hourly cron, KV-backed IndexNow and
+queue-backed background jobs. All credentials are Cloudflare secrets. The free
+audit path has been exercised end to end against the live database; the paid
+paths still need one real purchase to be proven on Cloudflare (see the cutover
+runbook).
 
 ## Target architecture
 
@@ -269,20 +273,63 @@ Required checks:
 - IndexNow submission and ledger update.
 - Hourly content notification run.
 
-### 6. Cutover
+### 6. Cutover runbook
 
-1. Lower DNS TTL at least 24 hours before cutover.
-2. Deploy the tested Worker to a preview URL.
-3. Keep the Stripe webhook URL as
-   `https://aeogeosearch.com/.netlify/functions/stripe-webhook`. The same path
-   exists on Cloudflare, so after cutover Stripe can keep the endpoint and the
-   same `STRIPE_WEBHOOK_SECRET`; do not create a new endpoint unless the path
-   changes. Keep the Netlify endpoint until the new one is confirmed.
-4. Add the Cloudflare callback URLs to Supabase; keep the Netlify URLs until
-   cutover is complete.
-5. Switch nameservers only after all checks pass.
-6. Keep Netlify deployed and do not delete its environment variables or forms
-   until the rollback window closes.
+The domain is registered with **Namecheap** and currently uses Netlify DNS
+(`dns1.p07.nsone.net` through `dns4.p07.nsone.net`). Cloudflare assigned
+**`paloma.ns.cloudflare.com`** and **`randall.ns.cloudflare.com`** to the zone
+`acc3d8d9ff08b7c74a55832c582ed30c`, which is still `pending`.
+
+Nothing here changes the Stripe endpoint, the Supabase project or the site
+itself. The Worker answers the same URLs Netlify answers today, so Stripe's
+webhook keeps working with the existing `STRIPE_WEBHOOK_SECRET`.
+
+**Step 1 — confirm the records came across.** In Cloudflare open
+`aeogeosearch.com` → **DNS → Records** and check that the zone already holds the
+live records, because switching nameservers hands the zone to Cloudflare:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| A | `aeogeosearch.com` | `52.52.192.191`, `13.52.188.95` |
+| AAAA | `aeogeosearch.com` | `2600:1f1c:446:4900::258`, `2600:1f1c:446:4900::259` |
+| TXT | `aeogeosearch.com` | `google-site-verification=A-k1eR4MGfqBIcPuPXsAqSOlAwyh_quvbwXshKXT4Jo` |
+
+Add anything missing before switching. There are no MX records on this domain,
+so no email is at risk.
+
+**Step 2 — switch the nameservers at Namecheap.** Domain List →
+`aeogeosearch.com` → Manage → **Nameservers** → *Custom DNS* → replace the four
+`nsone.net` entries with the two Cloudflare names above → save. Activation
+usually takes minutes.
+
+**Step 3 — point the domain at the Worker.** Once the zone shows **Active** in
+Cloudflare: Workers & Pages → `aegeo-search` → Settings → **Domains & Routes** →
+*Add* → **Custom domain** → add `aegeosearch.com`, then `www.aegeosearch.com`.
+Cloudflare creates the proxied DNS records for you. This is also the switch from
+Netlify to the Worker; until this moment traffic still reaches Netlify.
+
+**Step 4 — verify, in this order.**
+
+1. `/` loads and `/assets/site.css` returns CSS, not HTML.
+2. `/competitor-tool` redirects to `/visibility-tool`.
+3. `/account/` returns `Cache-Control: no-store`.
+4. A non-existent path returns the 404 page with a 404 status.
+5. Sign in, run a free audit, confirm the report appears and the queue logs a
+   completed job.
+6. Buy one plan, confirm the webhook lands (Stripe → Developers → the endpoint →
+   recent deliveries), the report portal opens, and the kit downloads. Refund
+   the charge from Stripe afterwards.
+7. Confirm the hourly cron ran (Workers → `aegeo-search` → Logs).
+
+**Rollback.** At any point, set the nameservers at Namecheap back to
+`dns1.p07.nsone.net`, `dns2.p07.nsone.net`, `dns3.p07.nsone.net`,
+`dns4.p07.nsone.net`. Netlify still holds the deploy and its environment, so the
+site comes back as it is today. Alternatively, in Cloudflare delete the custom
+domain from the Worker and traffic returns to the imported Netlify records.
+
+**Do not**, until the rollback window closes: cancel Netlify, delete its
+environment variables, remove the Stripe endpoint, or change the Supabase
+project URL.
 
 ## Environment variables
 
