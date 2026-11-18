@@ -20,6 +20,7 @@ import * as createKitCheckout from "../netlify/functions/create-kit-checkout.js"
 import * as entityAuthorityCheckout from "../netlify/functions/entity-authority-checkout.js";
 import * as guestServiceCheckout from "../netlify/functions/guest-service-checkout.js";
 import kitDownload from "./kit-download.js";
+import { submitIndexNow } from "./indexnow.js";
 import * as ownerBillingCheck from "../netlify/functions/owner-billing-check.js";
 import * as ownerMonthlyTest from "../netlify/functions/owner-monthly-test.js";
 import * as ownerMonthlyTestSetup from "../netlify/functions/owner-monthly-test-setup.js";
@@ -67,6 +68,59 @@ const FUNCTIONS = {
   "stripe-webhook": stripeWebhook,
   "studio-checkout": studioCheckout,
 };
+
+// Netlify ran these as separate background deployments that the handler called
+// over HTTPS. Cloudflare cannot call itself that way (the call would have to
+// crawl, and the caller would time out), so the call is intercepted before it
+// reaches the network and becomes a queue message. The queue consumer then runs
+// the long job outside the request that started it.
+const BACKGROUND_FUNCTIONS = new Set([
+  "run-audit-background",
+  "run-competitor-report-background",
+  "avss-scan-background",
+]);
+
+let dispatchInstalled = false;
+
+function installDispatcher(env, selfOrigin) {
+  if (dispatchInstalled || !env.JOBS) return;
+  const nativeFetch = globalThis.fetch;
+  globalThis.fetch = async function (input, init) {
+    try {
+      const target =
+        typeof input === "string" ? input : input instanceof URL ? input.href : input?.url;
+      const url = new URL(String(target));
+      // The handlers build the dispatch URL from PUBLIC_SITE_URL, which is the
+      // public domain rather than the host this request arrived on, so the match
+      // is on the function name instead of the origin.
+      if (url.pathname.startsWith("/.netlify/functions/")) {
+        const name = url.pathname.slice("/.netlify/functions/".length).split("/")[0];
+        if (BACKGROUND_FUNCTIONS.has(name)) {
+          const request = input instanceof Request ? input : new Request(url, init || {});
+          const headers = {};
+          for (const [key, value] of request.headers) headers[key] = value;
+          const body = ["GET", "HEAD"].includes(request.method)
+            ? ""
+            : await request.clone().text();
+          await env.JOBS.send({
+            name,
+            origin: selfOrigin,
+            httpMethod: request.method,
+            headers,
+            body,
+            query: Object.fromEntries(url.searchParams),
+            path: url.pathname,
+          });
+          return Response.json({ queued: true }, { status: 202 });
+        }
+      }
+    } catch (error) {
+      console.error("Background dispatch interception failed", error?.message);
+    }
+    return nativeFetch(input, init);
+  };
+  dispatchInstalled = true;
+}
 
 function resolveHandler(module) {
   const candidate = module?.handler ?? module?.default?.handler ?? module?.default;
@@ -135,15 +189,54 @@ export default {
     const prefix = "/.netlify/functions/";
     if (url.pathname.startsWith(prefix)) {
       const name = url.pathname.slice(prefix.length).split("/")[0];
+      installDispatcher(env, url.origin);
       return invoke(name, request, env);
     }
     return env.ASSETS.fetch(request);
   },
 
+  async queue(batch, env, _ctx) {
+    for (const message of batch.messages) {
+      const job = message.body || {};
+      try {
+        const handler = resolveHandler(FUNCTIONS[job.name]);
+        if (!handler) throw new Error(`No background handler for ${job.name}`);
+        copyEnvironment(env, job.origin || "https://aegeosearch.com");
+        const result = await handler(
+          {
+            httpMethod: job.httpMethod || "POST",
+            headers: job.headers || {},
+            body: job.body || "",
+            queryStringParameters: job.query || {},
+            path: job.path || `/.netlify/functions/${job.name}`,
+            rawUrl: `${job.origin || ""}${job.path || ""}`,
+          },
+          {},
+        );
+        const status = Number(result?.statusCode) || 200;
+        if (status >= 500) throw new Error(`Background handler returned ${status}`);
+        message.ack();
+      } catch (error) {
+        console.error("Background job failed", job?.name, error?.message);
+        message.retry();
+      }
+    }
+  },
+
   async scheduled(_event, env, _ctx) {
     copyEnvironment(env, "https://aegeosearch.com");
     const handler = resolveHandler(FUNCTIONS["content-notifications"]);
-    if (!handler) return;
-    await handler({ httpMethod: "POST", headers: {}, body: "", queryStringParameters: {} }, {});
+    if (handler) {
+      try {
+        await handler({ httpMethod: "POST", headers: {}, body: "", queryStringParameters: {} }, {});
+      } catch (error) {
+        console.error("content-notifications failed", error?.message);
+      }
+    }
+    try {
+      await submitIndexNow(env);
+    } catch (error) {
+      console.error("indexnow failed", error?.message);
+    }
   },
 };

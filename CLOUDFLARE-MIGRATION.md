@@ -187,14 +187,38 @@ Verified locally:
 - Unknown function names return a clear 503, not a crash.
 - Hourly Cron Trigger is configured for `content-notifications`.
 
-Still excluded until their platform dependencies are replaced:
+## Platform replacements (done)
 
-1. `indexnow-submit` uses Netlify Blobs; replace with KV/R2 or a static ledger.
-2. Background dispatch/Queues must replace Netlify background-function calls.
-   `start-audit` currently dispatches to `run-audit-background` over HTTP; test
-   that this stays within Workers subrequest and CPU limits before cutover.
-3. Verify the Formspree forms on the Cloudflare preview.
-4. IndexNow deploy trigger.
+Netlify background functions and Blobs no longer have a Cloudflare gap:
+
+- **Background jobs use Cloudflare Queues.** `start-audit`, `avss-start-scan` and
+  the competitor tool dispatch to `/.netlify/functions/*-background` exactly as
+  before, but `worker/index.js` intercepts those calls before they reach the
+  network and enqueues them on `aegeo-jobs` (`JOBS` binding). The queue consumer
+  runs the handler with its original headers and body, so the existing HMAC
+  dispatch signature still verifies. A job that returns a 5xx is retried twice,
+  then dropped. This replaces the self-referential HTTPS call, which could not
+  work on Workers: the caller only waited 15 seconds, while the crawl runs for
+  up to 105 seconds.
+- **IndexNow uses KV and the Cron Trigger.** `worker/indexnow.js` reuses the
+  shared `indexnow-selection.mjs` rules, keeps the submission ledger in the
+  `INDEXNOW_LEDGER` KV namespace, and runs from the hourly cron instead of
+  Netlify's `deploySucceeded` event. The key file stays public at
+  `/8e63d09f86525125461b411e6f7e1dec.txt`.
+
+Verified locally with `wrangler dev`:
+
+- A real Supabase sign-in, then `start-audit` returned `202 queued`; the queue
+  consumer ran the crawl and logged `GEO audit completed` with a score. The test
+  user and job row were deleted afterwards.
+- The Cron Trigger submitted a URL to IndexNow and received `HTTP 202`.
+- After deploy, the queue consumer is attached to `aegeo-search`
+  (`batch_size 1`, `max_retries 2`) and a remote KV write/read/delete round-trip
+  succeeded.
+
+Still to confirm before cutover: the Formspree forms on the deployed Worker
+(already tested on the static preview), AVSS, kit download and the billing
+portal, then the full browser click-through.
 
 ## Secrets status
 

@@ -20,6 +20,30 @@
     "not_found_handling": "404-page"
   },
 
+  "kv_namespaces": [
+    {
+      "binding": "INDEXNOW_LEDGER",
+      "id": "b21a96e588704f9787e6c579ccd450fb"
+    }
+  ],
+
+  "queues": {
+    "producers": [
+      {
+        "binding": "JOBS",
+        "queue": "aegeo-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "aegeo-jobs",
+        "max_batch_size": 1,
+        "max_batch_timeout": 2,
+        "max_retries": 2
+      }
+    ]
+  },
+
   "triggers": {
     "crons": ["0 * * * *"]
   },
