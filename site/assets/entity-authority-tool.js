@@ -596,12 +596,12 @@
         '<span class="ea-http">HTTP ' + esc(auditValue(data.httpStatus, "Unknown")) + '</span>' +
       '</div>' +
       '<div class="ea-score-grid">' +
-        score("Brand graph", data.hasUnifiedGraph ? "Connected" : "Fragmented", data.hasUnifiedGraph ? "One connected entity graph" : "Separate identity blocks", graphTone) +
-        score("Permanent IDs", data.hasPersistentIds ? "Present" : "Missing", data.hasPersistentIds ? "Canonical entity anchors found" : "The brand cannot be merged reliably", idTone) +
-        score("External anchors", data.hasSameAsAnchors ? data.sameAsCount + " found" : "None found", hosts.length ? hosts.slice(0, 3).join(" · ") : "No verified profile links", anchorTone) +
+        score("Brand graph", data.hasUnifiedGraph ? "Connected" : "Fragmented", data.hasUnifiedGraph ? "One graph on this page" : "Separate blocks on this page", graphTone) +
+        score("Permanent IDs", data.hasPersistentIds ? "Present" : "Not found", data.hasPersistentIds ? "Stable @id values on this page" : "No stable @id values on this page", idTone) +
+        score("External anchors", data.hasSameAsAnchors ? data.sameAsCount + " found" : "Not found", hosts.length ? hosts.slice(0, 3).join(" · ") : "No profile links on this page", anchorTone) +
         score("Collision check", collisionValue, collisionNote, collisionTone) +
       '</div>' +
-      '<div class="ea-block"><h4>' + (issues.length ? "What is holding the brand back" : "Public page signals") + '</h4>' +
+              '<div class="ea-block"><h4>' + (issues.length ? "What this page is missing" : "Public page signals") + '</h4>' +
         (issues.length
           ? '<ul class="ea-issue-list">' + issues.map(function (issue) { return '<li class="ea-issue">' + esc(issue) + '</li>'; }).join("") + '</ul>'
           : '<p class="ea-pass">No fragmentation issues were detected in the public page markup. That does not prove every location, person, or profile is connected; this check only reads one public page.</p>') +

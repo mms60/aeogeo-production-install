@@ -125,17 +125,17 @@ function inspectEntityHtml(html) {
   }
   if (blocks.length > 0 && !hasPersistentIds) {
     fragmentationIssues.push(
-      'The identity blocks do not use persistent entity IDs (for example #organization). The same business can be treated as a different entity on every page.'
+      'The identity blocks on this page do not use persistent entity IDs (for example #organization). Without stable IDs, the same business can be treated as a different entity across pages.'
     );
   }
   if (blocks.length > 0 && sameAsCount === 0) {
     fragmentationIssues.push(
-      'No verified external profiles are linked to the brand identity. Google Business Profile, LinkedIn, Crunchbase, and public knowledge bases are left to guesswork.'
+      'No verified external profiles are linked to the brand on this page. Google Business Profile, LinkedIn, Crunchbase, or public knowledge bases may still be linked on other pages.'
     );
   }
   if (blocks.length > 0 && coreEntityTypes.size === 0) {
     fragmentationIssues.push(
-      'No Organization, LocalBusiness, Person, or Service entity was found. The page describes content, but not who the business is.'
+      'No Organization, LocalBusiness, Person, or Service entity was found on this page. The page describes content, but not who the business is.'
     );
   }
 

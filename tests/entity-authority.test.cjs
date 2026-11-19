@@ -164,6 +164,17 @@ test('flags multiple disconnected blocks, missing IDs, and missing anchors', () 
   assert.ok(result.fragmentationIssues.some(issue => issue.includes('external profiles')));
 });
 
+test('page-level findings never claim the whole site is missing them', () => {
+  const singleBlock = inspectEntityHtml('<script type="application/ld+json">{"@type":"Organization","name":"A"}</script>');
+  const text = singleBlock.fragmentationIssues.join(' ');
+  assert.match(text, /on this page/);
+  assert.ok(singleBlock.fragmentationIssues.every(issue => !/linked to the brand identity\./i.test(issue)));
+  assert.ok(singleBlock.fragmentationIssues.every(issue => !/found\. The page describes/i.test(issue)));
+
+  const empty = inspectEntityHtml('<html><body>No schema</body></html>');
+  assert.ok(empty.fragmentationIssues.every(issue => !/entire (site|website)|sitewide/i.test(issue)));
+});
+
 test('flags malformed JSON-LD without hiding the rest of the page', () => {
   const html = `<script type="application/ld+json">{bad json}</script>
     <script type="application/ld+json">{"@type":"Organization","@id":"https://example.com/#organization","name":"Example","sameAs":["https://www.linkedin.com/company/example"]}</script>`;
