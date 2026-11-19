@@ -581,6 +581,15 @@
       collisionTone = matches.length > 1 ? "is-warn" : "is-neutral";
     }
 
+    var recommendations = [];
+    if (!data.hasUnifiedGraph) recommendations.push("Publish one connected @graph, or one Organization block that every page references, instead of several disconnected identity blocks.");
+    if (!data.hasPersistentIds) recommendations.push("Give the Organization and each connected entity a stable @id so search systems can merge the same business across pages.");
+    if (!data.hasSameAsAnchors) recommendations.push("Add sameAs links to the official profiles you control, such as LinkedIn, Wikidata, or your Google Business Profile.");
+    if (matches.length > 1) recommendations.push("Disambiguate the brand name so namesake companies are not blended with yours.");
+    if (!types.length) recommendations.push("Publish Organization markup first, then connect the locations, people, and services that belong to it.");
+    if (types.length && types.indexOf("Person") === -1) recommendations.push("Connect the founders or lead specialists to the brand with Person entities and verified profile links.");
+    if (!recommendations.length) recommendations.push("Keep the published graph stable and re-run this check after any site or profile change.");
+
     var html = '' +
       '<div class="ea-result-head">' +
         '<div><p class="ea-output-kicker">PUBLIC ENTITY CHECK</p><h3>' + esc(auditValue(data.brandName, "Your brand")) + '</h3><p>' + safeLink(url, url) + '</p></div>' +
@@ -595,8 +604,9 @@
       '<div class="ea-block"><h4>' + (issues.length ? "What is holding the brand back" : "Public page signals") + '</h4>' +
         (issues.length
           ? '<ul class="ea-issue-list">' + issues.map(function (issue) { return '<li class="ea-issue">' + esc(issue) + '</li>'; }).join("") + '</ul>'
-          : '<p class="ea-pass">No fragmentation issues were detected in the public page markup. The paid setup also verifies real AI answers and cross-platform consistency, which a page-only check cannot see.</p>') +
-      '</div>';
+          : '<p class="ea-pass">No fragmentation issues were detected in the public page markup. That does not prove every location, person, or profile is connected; this check only reads one public page.</p>') +
+      '</div>' +
+      '<div class="ea-block"><h4>Recommended next steps</h4><ol class="ea-instructions">' + recommendations.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join("") + '</ol></div>';
 
     if (types.length) {
       html += '<div class="ea-block"><h4>Entity types found</h4><div class="ea-types">' + types.map(function (type) { return '<span class="ea-type">' + esc(type) + '</span>'; }).join("") + '</div></div>';
@@ -606,7 +616,7 @@
       html += '<div class="ea-block"><h4>Google Knowledge Graph candidates</h4>';
       if (matches.length) {
         if (matches.length > 1) {
-          html += '<p class="ea-issue" style="margin-bottom:7px">More than one matching entity can split or blur the brand. The full setup resolves the collision.</p>';
+          html += '<p class="ea-issue" style="margin-bottom:7px">More than one matching entity can split or blur the brand. The paid implementation adds disambiguating signals to the entity graph.</p>';
         }
         html += '<div class="ea-kg-list">' + matches.map(function (match) {
           return '<div class="ea-kg"><strong>' + esc(match.name || "Unnamed entity") + '</strong>' +
@@ -620,11 +630,11 @@
       }
       html += '</div>';
     } else {
-      html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API, so it cannot test for namesake collisions. The paid DIY builder is a JSON-LD generator and does not run that audit for you.</p></div>';
+              html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API, so it cannot test for namesake collisions. The paid implementation connects the entity graph, but it does not query live AI answers.</p></div>';
     }
 
-    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">See the DIY builder</a></div>' +
-      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers, and the paid DIY builder does not test AI answers for you.</p>';
+    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">View Implementation Packages</a></div>' +
+      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers, and the paid implementation does not query live AI answers either.</p>';
 
     output.setAttribute("aria-busy", "false");
     output.innerHTML = html;
@@ -820,13 +830,13 @@
         '<p class="ea-fine">This preview shows the structure and stable identifiers only. It is not a JSON-LD implementation and cannot be copied into a site.</p>' +
       '</div>' +
       '<div class="ea-locked">' +
-        '<p class="ea-output-kicker">DIY JSON-LD BUILDER</p>' +
-        '<h3>Unlock the Complete JSON-LD Builder</h3>' +
-        '<p>This is a self-serve tool. You supply verified facts; it assembles the graph, validation, and implementation instructions.</p>' +
-        '<p>The complete builder connects your brand identity, locations, services, and leadership into one Schema.org @graph with stable IDs.</p>' +
-        '<p><strong>Unlock the DIY builder with AEOGEO Search.</strong></p>' +
-        '<a class="ea-button" href="#pricing">View DIY Builder Packages</a>' +
-        '<p class="ea-fine">The paid DIY builder includes the complete customized JSON-LD, copy and download tools, validation, and implementation instructions. It does not include a done-for-you build, third-party verification, or an AI testing report.</p>' +
+        '<p class="ea-output-kicker">PAID IMPLEMENTATION</p>' +
+        '<h3>Build Your Complete Brand Entity Architecture</h3>' +
+        '<p>Your business deserves more than disconnected schema markup.</p>' +
+        '<p>Our complete implementation connects your brand identity, locations, services, leadership, and supporting authority signals into a structured entity architecture designed to help search systems better understand your business.</p>' +
+        '<p><strong>Unlock the complete implementation with AEOGEO Search.</strong></p>' +
+        '<a class="ea-button" href="#pricing">View Implementation Packages</a>' +
+        '<p class="ea-fine">The free preview shows structure only. The paid implementation includes the complete customized JSON-LD, copy and download tools, validation, and implementation instructions for the plan you choose. It does not include a done-for-you build or an AI testing report; full-service implementation is available from AEOGEO Search.</p>' +
         accessNote +
       '</div>';
     output.scrollIntoView({ behavior: "smooth", block: "start" });

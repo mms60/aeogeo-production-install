@@ -17,7 +17,7 @@
       y: 48,
       uri: "https://examplebrand.com/#organization",
       beforeUri: "No @id (anonymous inline block)",
-      aiUnified: "Acts as the root Entity Home. ChatGPT Search, Perplexity, and Google AI Overviews resolve brand queries here first, traversing subOrganization, founder, and sameAs edges with zero ambiguity.",
+      aiUnified: "Acts as the root Entity Home. One canonical @id gives search systems a single node for the brand, while subOrganization, founder, and sameAs edges describe how locations, people, and verified profiles relate to it. Schema markup helps search systems interpret those relationships; it does not control how any AI platform answers a query.",
       aiFragmented: "Without a canonical @id, AI crawlers treat the homepage Organization snippet as an isolated mention disconnected from location pages, founders, and third-party profiles.",
       unifiedJson: {
         "@type": "Organization",
