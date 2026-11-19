@@ -14,7 +14,7 @@ export default async event => {
   }
 
   try {
-    const entitlement = await purchases.entitlementForUser(user.id);
+    const entitlement = await purchases.entitlementForUser(user.id, user);
     if (!entitlement) return json(200, { active: false, plan: null, limits: null });
     return json(200, {
       active: true,

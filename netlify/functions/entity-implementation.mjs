@@ -16,7 +16,7 @@ export default async event => {
 
   try {
     // Entitlement is checked before any input is compiled or returned.
-    const entitlement = await purchases.entitlementForUser(user.id);
+    const entitlement = await purchases.entitlementForUser(user.id, user);
     if (!entitlement) {
       return json(403, {
         error: "A paid AI Entity and Citation Authority implementation is required to generate the complete JSON-LD.",
@@ -44,6 +44,13 @@ export default async event => {
     }
 
     const validation = purchases.validateGraph(payload);
+    if (validation.length) {
+      return json(422, {
+        error: 'The generated graph did not pass validation. ' + validation[0],
+        code: 'GRAPH_VALIDATION_FAILED',
+        validation
+      });
+    }
     return json(200, {
       plan: entitlement.plan,
       limits: entitlement.limits,

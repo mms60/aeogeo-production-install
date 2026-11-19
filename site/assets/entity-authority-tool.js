@@ -6,6 +6,7 @@
   "use strict";
 
   var AUDIT_ENDPOINT = "/.netlify/functions/entity-audit";
+  var CHECKOUT_ENDPOINT = "/.netlify/functions/entity-authority-checkout";
   var LIMITS = {
     single: { locations: 3, people: 2, services: 10 },
     multi: { locations: 10, people: 6, services: 10 }
@@ -83,20 +84,81 @@
     return "/login/?next=" + encodeURIComponent("/ai-visibility-schema-studio#entity-audit-tool");
   }
 
+  function checkoutSignInUrl() {
+    return "/login/?next=" + encodeURIComponent("/ai-visibility-schema-studio#pricing");
+  }
+
   function planName(plan) {
-    return PLAN_LABEL[plan] || "Paid implementation";
+    return PLAN_LABEL[plan] || "DIY builder";
   }
 
   function updateAccessStatus() {
     var node = $("ea-access-status");
     if (!node) return;
     if (access.active) {
-      node.textContent = "Signed in as " + (access.email || "your account") + ". " + planName(access.plan) + " implementation unlocked.";
+      node.textContent = "Signed in as " + (access.email || "your account") + ". " + planName(access.plan) + " DIY builder unlocked.";
     } else if (access.signedIn) {
-      node.textContent = "Signed in as " + (access.email || "your account") + ". No paid implementation is linked to this account yet.";
+      node.textContent = "Signed in as " + (access.email || "your account") + ". No DIY builder purchase is linked to this account yet.";
     } else {
-      node.textContent = "";
+      node.textContent = "Sign in to check a purchase. The free preview is available without an account.";
     }
+  }
+
+  function updateSubmitLabel() {
+    var button = document.querySelector("#ea-builder-form button[type=submit]");
+    if (button) button.textContent = access.active ? "Generate my JSON-LD" : "Preview the entity map";
+  }
+
+  function applyPlanLock() {
+    var select = $("ea-plan");
+    if (!select) return;
+    var locked = Boolean(access.active && access.plan);
+    if (locked) {
+      select.value = access.plan;
+      select.disabled = true;
+    } else {
+      select.disabled = false;
+    }
+    var note = $("ea-plan-lock");
+    if (note) {
+      note.hidden = !locked;
+      note.textContent = locked ? "Your purchased plan is locked for this account." : "";
+    }
+    updateCounts();
+    updateSubmitLabel();
+  }
+
+  function updateCheckoutUI() {
+    var single = $("ea-checkout-single");
+    var multi = $("ea-checkout-multi");
+    var note = $("ea-checkout-note");
+    if (!single || !multi) return;
+    single.hidden = false;
+    multi.hidden = false;
+    single.textContent = "Buy Single-Hub ($799)";
+    multi.textContent = "Buy Multi-Location ($1,199)";
+    multi.removeAttribute("data-ea-upgrade");
+
+    if (access.active && access.plan === "single") {
+      single.hidden = true;
+      multi.textContent = "Upgrade to Multi-Location ($400)";
+      multi.setAttribute("data-ea-upgrade", "1");
+      if (note) note.textContent = "Single-Hub DIY builder unlocked. Upgrade for the $400 difference to add up to 10 locations and 6 people.";
+    } else if (access.active && access.plan === "multi") {
+      single.hidden = true;
+      multi.hidden = true;
+      if (note) note.innerHTML = "Multi-Location DIY builder unlocked. <a href=\"#entity-audit-tool\">Open the builder</a>.";
+    } else if (access.signedIn) {
+      if (note) note.textContent = "No purchase is linked to " + (access.email || "your account") + " yet. If you just paid, refresh in a moment; purchases are matched to your verified account email.";
+    } else if (note) {
+      note.textContent = "Sign in before checkout so the purchase is linked to your account.";
+    }
+  }
+
+  function applyAccessUI() {
+    updateAccessStatus();
+    applyPlanLock();
+    updateCheckoutUI();
   }
 
   function $(id) {
@@ -512,7 +574,7 @@
     var anchorTone = data.hasSameAsAnchors ? "is-good" : "is-warn";
     var collisionTone = "is-neutral";
     var collisionValue = "Not enabled";
-    var collisionNote = "Included in the full setup";
+    var collisionNote = "Not available in this free check";
     if (data.knowledgeGraphEnabled) {
       collisionValue = matches.length ? matches.length + " match" + (matches.length === 1 ? "" : "es") : "No match";
       collisionNote = matches.length > 1 ? "Possible collision" : "Google Knowledge Graph";
@@ -558,11 +620,11 @@
       }
       html += '</div>';
     } else {
-      html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API. The done-for-you setup includes the full namesake and collision audit.</p></div>';
+      html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API, so it cannot test for namesake collisions. The paid DIY builder is a JSON-LD generator and does not run that audit for you.</p></div>';
     }
 
-    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">See the done-for-you setup</a></div>' +
-      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers. The paid setup includes before-and-after prompt testing across four AI engines.</p>';
+    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">See the DIY builder</a></div>' +
+      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers, and the paid DIY builder does not test AI answers for you.</p>';
 
     output.setAttribute("aria-busy", "false");
     output.innerHTML = html;
@@ -696,7 +758,12 @@
   }
 
   function domainOrigin(value) {
-    try { return new URL(String(value || "")).origin; } catch (error) { return ""; }
+    try {
+      var url = new URL(String(value || ""));
+      return /^https?:$/.test(url.protocol) ? url.origin : "";
+    } catch (error) {
+      return "";
+    }
   }
 
   function structureRows(input) {
@@ -735,9 +802,9 @@
     var output = $("ea-builder-output");
     output.setAttribute("aria-busy", "false");
     var accessNote = state.signedIn
-      ? '<p class="ea-access-note">Signed in as ' + esc(state.email || "your account") + '. No paid implementation is linked to this account yet.</p>' +
-        '<p class="ea-access-note">If you completed checkout, use the same email you entered at Stripe. <a href="' + esc(signInUrl()) + '">Sign in again</a> or <a href="/contact">contact us</a>.</p>'
-      : '<p class="ea-access-note">Already purchased? <a href="' + esc(signInUrl()) + '">Sign in</a> with the email you used at Stripe to unlock the complete builder.</p>';
+      ? '<p class="ea-access-note">Signed in as ' + esc(state.email || "your account") + '. No DIY builder purchase is linked to this account yet.</p>' +
+        '<p class="ea-access-note">If you just paid, refresh this page. Purchases are matched to your verified account email; if it still does not appear, <a href="/contact">contact us</a>.</p>'
+      : '<p class="ea-access-note">Already purchased? <a href="' + esc(signInUrl()) + '">Sign in</a> to check the purchase linked to your account.</p>';
     output.innerHTML = '' +
       '<div class="ea-result-head"><div><p class="ea-output-kicker">FREE STRUCTURE PREVIEW</p><h3>' + esc(input.brandName || "Your brand") + '</h3><p>' + esc(domainOrigin(input.domain)) + '</p></div><span class="ea-http">STRUCTURE ONLY</span></div>' +
       '<div class="ea-map-summary">' +
@@ -753,13 +820,13 @@
         '<p class="ea-fine">This preview shows the structure and stable identifiers only. It is not a JSON-LD implementation and cannot be copied into a site.</p>' +
       '</div>' +
       '<div class="ea-locked">' +
-        '<p class="ea-output-kicker">PAID IMPLEMENTATION</p>' +
-        '<h3>Build Your Complete Brand Entity Architecture</h3>' +
-        '<p>Your business deserves more than disconnected schema markup.</p>' +
-        '<p>Our complete implementation connects your brand identity, locations, services, leadership, and supporting authority signals into a structured entity architecture designed to help search systems better understand your business.</p>' +
-        '<p><strong>Unlock the complete implementation with AEOGEO Search.</strong></p>' +
-        '<a class="ea-button" href="#pricing">View Implementation Packages</a>' +
-        '<p class="ea-fine">The paid implementation includes the complete customized JSON-LD, copy and download tools, validation, implementation instructions, and the verification report for the plan you purchase.</p>' +
+        '<p class="ea-output-kicker">DIY JSON-LD BUILDER</p>' +
+        '<h3>Unlock the Complete JSON-LD Builder</h3>' +
+        '<p>This is a self-serve tool. You supply verified facts; it assembles the graph, validation, and implementation instructions.</p>' +
+        '<p>The complete builder connects your brand identity, locations, services, and leadership into one Schema.org @graph with stable IDs.</p>' +
+        '<p><strong>Unlock the DIY builder with AEOGEO Search.</strong></p>' +
+        '<a class="ea-button" href="#pricing">View DIY Builder Packages</a>' +
+        '<p class="ea-fine">The paid DIY builder includes the complete customized JSON-LD, copy and download tools, validation, and implementation instructions. It does not include a done-for-you build, third-party verification, or an AI testing report.</p>' +
         accessNote +
       '</div>';
     output.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -772,7 +839,7 @@
     var validation = Array.isArray(data.validation) ? data.validation : [];
     var instructions = Array.isArray(data.instructions) ? data.instructions : [];
     output.innerHTML = '' +
-      '<div class="ea-result-head"><div><p class="ea-output-kicker">PAID IMPLEMENTATION</p><h3>' + esc(input.brandName) + '</h3><p>' + esc(planName(data.plan)) + '</p></div><span class="ea-http">JSON-LD</span></div>' +
+      '<div class="ea-result-head"><div><p class="ea-output-kicker">DIY JSON-LD BUILDER</p><h3>' + esc(input.brandName) + '</h3><p>' + esc(planName(data.plan)) + '</p></div><span class="ea-http">JSON-LD</span></div>' +
       '<pre class="ea-json" id="ea-json-output">' + esc(json) + '</pre>' +
       '<div class="ea-output-actions"><button class="ea-copy" id="ea-copy-json" type="button">Copy JSON-LD</button><button class="ea-copy" id="ea-download-json" type="button">Download .json</button></div>' +
       '<div class="ea-block"><h4>Validation</h4>' +
@@ -803,8 +870,6 @@
       var container = $(id);
       if (container) container.innerHTML = "";
     });
-    var plan = $("ea-plan");
-    if (plan) plan.value = "single";
 
     setBrandField("domain", "https://examplebrand.com");
     setBrandField("brandName", "Example Client Brand");
@@ -853,6 +918,94 @@
     if (first) first.focus({ preventScroll: true });
   }
 
+  function validateBuilderInput(input) {
+    var errors = [];
+    var base = domainOrigin(input.domain);
+    if (!base) {
+      errors.push({
+        message: "Enter a full website URL, for example https://yourcompany.com.",
+        selector: '#ea-builder-form [data-field="domain"]'
+      });
+    }
+    if (!String(input.brandName || "").trim()) {
+      errors.push({
+        message: "Enter the brand name you want search systems to resolve.",
+        selector: '#ea-builder-form [data-field="brandName"]'
+      });
+    }
+    if (!String(input.description || "").trim()) {
+      errors.push({
+        message: "Add a short description of the business.",
+        selector: '#ea-builder-form [data-field="description"]'
+      });
+    }
+    if (!input.locations.length) {
+      errors.push({
+        message: "Add at least one location or service area before previewing the entity map.",
+        selector: '#ea-locations [data-field="name"]'
+      });
+    }
+    input.locations.forEach(function (location, index) {
+      if (!String(location.name || "").trim()) {
+        errors.push({
+          message: "Location " + (index + 1) + " needs a name.",
+          selector: '#ea-locations .ea-repeater:nth-child(' + (index + 1) + ') [data-field="name"]'
+        });
+      }
+    });
+    input.people.forEach(function (person, index) {
+      if (!String(person.name || "").trim()) {
+        errors.push({
+          message: "Person " + (index + 1) + " needs a name.",
+          selector: '#ea-people .ea-repeater:nth-child(' + (index + 1) + ') [data-field="name"]'
+        });
+      }
+    });
+    input.services.forEach(function (service, index) {
+      if (!String(service.name || "").trim()) {
+        errors.push({
+          message: "Service " + (index + 1) + " needs a name.",
+          selector: '#ea-services .ea-repeater:nth-child(' + (index + 1) + ') [data-field="name"]'
+        });
+      }
+    });
+    if (!base) return errors;
+
+    var seen = new Set();
+    function claimId(id, message, selector) {
+      if (seen.has(id)) {
+        errors.push({ message: message, selector: selector });
+        return;
+      }
+      seen.add(id);
+    }
+    input.locations.forEach(function (location, index) {
+      var id = base + "/locations/" + slugify(location.slug || location.name || ("location-" + (index + 1))) + "/#localbusiness";
+      claimId(
+        id,
+        "Duplicate entity ID: two or more locations use the same @id. Give each location a unique URL slug.",
+        '#ea-locations .ea-repeater:nth-child(' + (index + 1) + ') [data-field="slug"]'
+      );
+    });
+    input.people.forEach(function (person, index) {
+      var id = base + "/#person-" + slugify(person.slug || person.name || ("person-" + (index + 1)));
+      claimId(
+        id,
+        "Duplicate entity ID: two or more people use the same @id. Give each person a unique URL slug.",
+        '#ea-people .ea-repeater:nth-child(' + (index + 1) + ') [data-field="slug"]'
+      );
+    });
+    input.services.forEach(function (service, index) {
+      var id = base + "/services/" + slugify(service.slug || service.name || ("service-" + (index + 1))) + "/#service";
+      claimId(
+        id,
+        "Duplicate entity ID: two or more services use the same @id. Give each service a unique URL slug.",
+        '#ea-services .ea-repeater:nth-child(' + (index + 1) + ') [data-field="slug"]'
+      );
+    });
+    return errors;
+  }
+
   function initBuilder() {
     var form = $("ea-builder-form");
     if (!form) return;
@@ -863,17 +1016,18 @@
       event.preventDefault();
       setStatus("");
       var input = readBrand();
-      if (!input.locations.length) {
-        var message = "Add at least one location or service area before previewing the entity map.";
-        setStatus(message, true);
-        mapError(message);
-        var name = document.querySelector('#ea-locations [data-field="name"]');
-        if (name) name.focus();
+      var errors = validateBuilderInput(input);
+      if (errors.length) {
+        var firstError = errors[0];
+        setStatus(firstError.message, true);
+        mapError(firstError.message);
+        var target = firstError.selector ? document.querySelector(firstError.selector) : null;
+        if (target && target.focus) target.focus({ preventScroll: true });
         return;
       }
       mapLoading("Preparing your structure preview...");
       var state = await refreshAccess();
-      updateAccessStatus();
+      applyAccessUI();
       if (!state.active) {
         renderPreview(input, state);
         if (!state.signedIn) setStatus("Preview only. Sign in with a purchased account to generate the complete JSON-LD.");
@@ -883,25 +1037,25 @@
       var result = await authFetch("entity-implementation", { input: input });
       if (result.status === 200 && result.data && result.data.jsonLd) {
         renderPaidMap(result.data, input);
-        setStatus("Complete implementation generated for the " + planName(result.data.plan) + " plan.");
+        setStatus("Complete DIY JSON-LD generated for the " + planName(result.data.plan) + " plan.");
         return;
       }
       if (result.status === 401) {
         access.active = false;
         access.signedIn = false;
-        updateAccessStatus();
+        applyAccessUI();
         renderPreview(input, access);
-        setStatus("Sign in to generate the complete implementation.", true);
+        setStatus("Sign in to generate the complete JSON-LD.", true);
         return;
       }
       if (result.status === 403 && result.data && result.data.code === "PURCHASE_REQUIRED") {
         access.active = false;
-        updateAccessStatus();
+        applyAccessUI();
         renderPreview(input, access);
         setStatus(result.data.error, true);
         return;
       }
-      mapError(result.data && result.data.error ? result.data.error : "The complete implementation could not be generated. Try again.");
+      mapError(result.data && result.data.error ? result.data.error : "The complete JSON-LD could not be generated. Try again.");
     });
 
     document.querySelectorAll("[data-ea-add]").forEach(function (button) {
@@ -1004,9 +1158,9 @@
       access.plan = result.data.plan || null;
       access.limits = result.data.limits || null;
       try { sessionStorage.removeItem("ea-entity-session"); } catch (error) { }
-      updateAccessStatus();
-      checkoutMessage("<strong>Purchase verified.</strong> The " + esc(planName(access.plan)) + " implementation is now unlocked in the builder above. Add the verified brand details and generate the complete JSON-LD.", false);
-      setStatus("Purchase verified. " + planName(access.plan) + " implementation unlocked.");
+      applyAccessUI();
+      checkoutMessage("<strong>Purchase verified.</strong> The " + esc(planName(access.plan)) + " DIY builder is now unlocked above. Add the verified brand details and generate the complete JSON-LD.", false);
+      setStatus("Purchase verified. " + planName(access.plan) + " DIY builder unlocked.");
       showPanel("builder");
       scrollToolIntoView();
       return true;
@@ -1036,6 +1190,48 @@
     return claimSession(sessionId);
   }
 
+  async function startCheckout(plan, upgrade) {
+    var session = await currentSession();
+    if (!session) {
+      window.location.assign(checkoutSignInUrl());
+      return;
+    }
+    var response;
+    try {
+      response = await fetch(CHECKOUT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: "Bearer " + session.access_token
+        },
+        body: JSON.stringify({ plan: plan, upgrade: Boolean(upgrade) }),
+        cache: "no-store"
+      });
+    } catch (error) {
+      throw new Error("The checkout server could not be reached. Check your connection and try again.");
+    }
+    var data = null;
+    try { data = await response.json(); } catch (error) { data = null; }
+    if (response.status === 401) {
+      window.location.assign(checkoutSignInUrl());
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(data && data.error ? data.error : "Checkout could not be started. Please retry.");
+    }
+    var target;
+    try {
+      target = new URL(data && data.url || "");
+      if (target.protocol !== "https:" || target.hostname !== "checkout.stripe.com" || target.port) {
+        throw new Error("Unexpected checkout destination.");
+      }
+    } catch (error) {
+      throw new Error("The secure checkout address could not be verified. Please contact us.");
+    }
+    window.location.assign(target.href);
+  }
+
   async function initCheckout() {
     var params = new URLSearchParams(window.location.search);
     var state = params.get("checkout");
@@ -1057,15 +1253,23 @@
       await claimStoredSession();
     }
 
-    document.addEventListener("click", function (event) {
+    document.addEventListener("click", async function (event) {
       var trigger = event.target.closest("[data-ea-checkout]");
       if (!trigger) return;
-      if (trigger.getAttribute("aria-busy") === "true") {
-        event.preventDefault();
-        return;
-      }
+      event.preventDefault();
+      if (trigger.getAttribute("aria-busy") === "true") return;
+      var plan = trigger.getAttribute("data-ea-checkout");
+      var upgrade = trigger.getAttribute("data-ea-upgrade") === "1";
+      var original = trigger.textContent;
       trigger.setAttribute("aria-busy", "true");
-      trigger.textContent = "Opening secure checkout...";
+      trigger.textContent = upgrade ? "Opening upgrade..." : "Opening secure checkout...";
+      try {
+        await startCheckout(plan, upgrade);
+      } catch (error) {
+        trigger.removeAttribute("aria-busy");
+        trigger.textContent = original;
+        checkoutMessage("<strong>Checkout could not start.</strong> " + esc(error.message) + " You can also use the <a href=\"/contact\">contact form</a>.", true);
+      }
     });
   }
 
@@ -1086,7 +1290,7 @@
     initIntake();
     initCheckout();
     initPlans();
-    refreshAccess().then(updateAccessStatus);
+    refreshAccess().then(applyAccessUI);
   }
 
   init();

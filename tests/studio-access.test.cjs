@@ -35,14 +35,23 @@ test('the free page does not ship the JSON-LD compiler or a copy button', () => 
   assert.match(paid, /Implementation instructions/);
 });
 
-test('the paid path is explained and links to the existing packages', () => {
-  assert.match(page, /View Implementation Packages/);
-  assert.match(page, /href=(?:"#pricing"|#pricing)>View Implementation Packages/);
+test('the DIY paid path is explained and checkout requires an account', () => {
+  assert.match(page, /View DIY Builder Packages/);
+  assert.match(page, /href=(?:"#pricing"|#pricing)>View DIY Builder Packages/);
   assert.match(page, /\$799 one-time/);
   assert.match(page, /\$1,199 one-time/);
-  assert.match(page, /entity-authority-checkout\?plan=single/);
-  assert.match(page, /entity-authority-checkout\?plan=multi/);
+  assert.match(page, /data-ea-checkout="single"/);
+  assert.match(page, /data-ea-checkout="multi"/);
+  assert.doesNotMatch(page, /entity-authority-checkout\?plan=/);
   assert.match(page, /does not guarantee rankings, citations, or recommendations/);
+});
+
+test('the builder locks a purchased plan and validates the free preview client-side', () => {
+  assert.match(tool, /function validateBuilderInput/);
+  assert.match(tool, /function applyPlanLock/);
+  assert.match(tool, /select\.disabled = true/);
+  assert.match(tool, /function updateSubmitLabel/);
+  assert.match(tool, /Duplicate entity ID/);
 });
 
 test('the implementation endpoint checks entitlement before compiling', () => {

@@ -25,7 +25,14 @@ const LIMITS = Object.freeze({
   single: Object.freeze({ locations: 3, people: 2, services: 10 }),
   multi: Object.freeze({ locations: 10, people: 6, services: 10 })
 });
+const UPGRADE = Object.freeze({
+  from: 'single',
+  to: 'multi',
+  amount: 40000,
+  credit: 79900
+});
 const SESSION_ID = /^cs_(?:test|live)_[A-Za-z0-9_-]{8,}$/;
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_INPUT_BYTES = 200000;
 
 function statusError(status, message, code) {
@@ -53,8 +60,40 @@ function validEmail(value) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
 }
 
+// A checkout can be paid and recorded in Stripe while a webhook is delayed, or
+// an older purchase can be stored without a user_id. Once the buyer signs in,
+// match only unclaimed live purchases by the email they have confirmed on their
+// account. This is the durable fallback to the checkout's metadata user_id.
+async function claimUnclaimedByEmail(user) {
+  if (!user || !USER_ID.test(String(user.id || '')) || !user.email_confirmed_at) return 0;
+  const email = normalizedEmail(user.email);
+  if (!validEmail(email)) return 0;
+  const rows = await db(
+    'entity_purchases?email=eq.' + encodeURIComponent(email) +
+    '&status=eq.paid&livemode=eq.true&user_id=is.null&select=id',
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: { user_id: user.id, updated_at: new Date().toISOString() }
+    }
+  );
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
 function sessionEmail(session) {
   return normalizedEmail(session?.customer_details?.email || session?.customer_email || '');
+}
+
+function sessionIsUpgrade(session, offer) {
+  if (!session || typeof session !== 'object' || !offer) return false;
+  const metadata = session.metadata || {};
+  return (
+    offer.plan === UPGRADE.to &&
+    metadata.product === PRODUCT &&
+    metadata.plan === UPGRADE.to &&
+    metadata.upgrade === '1' &&
+    metadata.previous_plan === UPGRADE.from
+  );
 }
 
 function sessionIsPaid(session, offer) {
@@ -63,7 +102,8 @@ function sessionIsPaid(session, offer) {
   if (session.status !== 'complete' || session.payment_status !== 'paid') return false;
   if (session.livemode !== true) return false;
   if (String(session.currency || '').toLowerCase() !== 'usd') return false;
-  if (Number(session.amount_total) !== offer.amount) return false;
+  const expectedAmount = sessionIsUpgrade(session, offer) ? UPGRADE.amount : offer.amount;
+  if (Number(session.amount_total) !== expectedAmount) return false;
   const metadata = session.metadata || {};
   return metadata.product === PRODUCT && metadata.plan === offer.plan;
 }
@@ -84,7 +124,9 @@ async function recordSession(session, extra = {}) {
   };
   // Never send user_id: null from the webhook. PostgREST merge-duplicates
   // updates only supplied columns, so omitting it preserves a claimed purchase.
-  if (extra.user_id) row.user_id = extra.user_id;
+  const metadataUserId = session?.metadata?.user_id;
+  const userId = extra.user_id || (USER_ID.test(String(metadataUserId || '')) ? metadataUserId : null);
+  if (userId) row.user_id = userId;
   await db('entity_purchases?on_conflict=stripe_session_id', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
@@ -93,12 +135,22 @@ async function recordSession(session, extra = {}) {
   return true;
 }
 
-async function entitlementForUser(userId) {
+async function entitlementForUser(userId, user) {
   if (typeof userId !== 'string' || !userId) return null;
-  const rows = await db(
+  const read = () => db(
     'entity_purchases?user_id=eq.' + encodeURIComponent(userId) +
     '&status=eq.paid&select=plan,created_at&order=created_at.desc'
   );
+  let rows = await read();
+  if ((!Array.isArray(rows) || !rows.length) && user) {
+    try {
+      await claimUnclaimedByEmail(user);
+      rows = await read();
+    } catch {
+      // An account with an existing linked purchase must not be locked out by a
+      // failure in the optional email fallback.
+    }
+  }
   if (!Array.isArray(rows) || !rows.length) return null;
   const plans = new Set(rows.map(row => row.plan));
   const plan = plans.has('multi') ? 'multi' : 'single';
@@ -218,6 +270,8 @@ function validateGraph(payload) {
     if (!node['@type']) issues.push('An entity is missing its @type.');
     if (typeof node['@id'] !== 'string' || !node['@id']) {
       issues.push('An entity is missing its @id.');
+    } else if (ids.has(node['@id'])) {
+      issues.push('Duplicate @id: ' + node['@id']);
     } else {
       ids.add(node['@id']);
     }
@@ -314,11 +368,14 @@ module.exports = {
   PRODUCT,
   OFFERS,
   LIMITS,
+  UPGRADE,
+  sessionIsUpgrade,
   offerForPlan,
   limitsForPlan,
   sessionIsPaid,
   sessionEmail,
   validEmail,
+  claimUnclaimedByEmail,
   claimPurchase,
   entitlementForUser,
   validateImplementationInput,

@@ -38,6 +38,24 @@ test('accepts only a paid live session for the offered plan and amount', () => {
   assert.equal(purchases.sessionIsPaid({ ...paidSession, metadata: { product: 'entity-authority', plan: 'multi' } }, purchases.OFFERS.single), false);
 });
 
+test('accepts the $400 Single-Hub to Multi-Location upgrade session', () => {
+  const upgradeSession = {
+    ...paidSession,
+    id: 'cs_live_upgrade1234',
+    amount_total: 40000,
+    metadata: {
+      product: 'entity-authority',
+      plan: 'multi',
+      upgrade: '1',
+      previous_plan: 'single'
+    }
+  };
+  assert.equal(purchases.sessionIsPaid(upgradeSession, purchases.OFFERS.multi), true);
+  assert.equal(purchases.sessionIsUpgrade(upgradeSession, purchases.OFFERS.multi), true);
+  assert.equal(purchases.sessionIsPaid({ ...upgradeSession, amount_total: 119900 }, purchases.OFFERS.multi), false);
+  assert.equal(purchases.sessionIsPaid({ ...upgradeSession, metadata: { ...upgradeSession.metadata, previous_plan: 'multi' } }, purchases.OFFERS.multi), false);
+});
+
 test('keeps the plan limits aligned with the public packages', () => {
   assert.deepEqual(purchases.limitsForPlan('single'), { locations: 3, people: 2, services: 10 });
   assert.deepEqual(purchases.limitsForPlan('multi'), { locations: 10, people: 6, services: 10 });
@@ -82,6 +100,22 @@ test('validates the generated graph and catches missing identifiers and referenc
   const brokenReference = JSON.parse(JSON.stringify(payload));
   brokenReference['@graph'][1].employee = [{ '@id': 'https://examplebrand.com/#person-missing' }];
   assert.ok(purchases.validateGraph(brokenReference).some(issue => issue.includes('missing entity')));
+});
+
+test('rejects duplicate entity IDs instead of returning a passing graph', () => {
+  const duplicate = {
+    ...input,
+    locations: [
+      { name: 'Dallas Office', slug: 'dallas' },
+      { name: 'Dallas Second Office', slug: 'dallas' }
+    ]
+  };
+  assert.throws(() => graph.buildMasterKnowledgeGraphObject(duplicate), /Duplicate entity ID/);
+
+  const payload = graph.buildMasterKnowledgeGraphObject(input);
+  const duplicateId = JSON.parse(JSON.stringify(payload));
+  duplicateId['@graph'].push({ ...duplicateId['@graph'][2] });
+  assert.ok(purchases.validateGraph(duplicateId).some(issue => issue.startsWith('Duplicate @id:')));
 });
 
 test('paid instructions cover implementation and validation without guarantees', () => {

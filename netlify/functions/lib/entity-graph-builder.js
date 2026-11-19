@@ -73,6 +73,13 @@
     const orgId = `${base}/#organization`;
     const websiteId = `${base}/#website`;
     const logoId = `${base}/#logo`;
+    const seenIds = new Set();
+    const claimId = (id, label) => {
+      if (seenIds.has(id)) throw new Error(`Duplicate entity ID ${id}. Use a unique slug for ${label}.`);
+      seenIds.add(id);
+    };
+    claimId(orgId, 'the Organization');
+    claimId(websiteId, 'the WebSite');
     const logoUrl = absoluteUrl(input.logoUrl);
     const telephone = text(input.telephone, 80);
     const sameAs = uniqueUrls(input.sameAsUrls);
@@ -90,6 +97,7 @@
       const slug = slugify(location.slug, name);
       if (!slug) throw new Error(`Location ${index + 1} needs a URL slug.`);
       const id = `${base}/locations/${slug}/#localbusiness`;
+      claimId(id, `location ${index + 1}`);
       const node = {
         "@type": text(location.businessType, 80) || "LocalBusiness",
         "@id": id,
@@ -124,6 +132,7 @@
       const slug = slugify(person.slug, name);
       if (!slug) throw new Error(`Person ${index + 1} needs a URL slug.`);
       const id = `${base}/#person-${slug}`;
+      claimId(id, `person ${index + 1}`);
       const node = { "@type": "Person", "@id": id, name, worksFor: { "@id": orgId } };
       const jobTitle = text(person.jobTitle, 160);
       if (jobTitle) node.jobTitle = jobTitle;
@@ -144,9 +153,11 @@
       if (!name) throw new Error(`Service ${index + 1} needs a name.`);
       const slug = slugify(service.slug, name);
       if (!slug) throw new Error(`Service ${index + 1} needs a URL slug.`);
+      const serviceId = `${base}/services/${slug}/#service`;
+      claimId(serviceId, `service ${index + 1}`);
       const node = {
         "@type": "Service",
-        "@id": `${base}/services/${slug}/#service`,
+        "@id": serviceId,
         name,
         provider: { "@id": orgId }
       };

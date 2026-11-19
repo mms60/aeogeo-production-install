@@ -21,7 +21,7 @@ async function signOutAndReturn(button){
 
 function safeNextPath(value,fallback='/account/'){
  if(typeof value!=='string'||!value.startsWith('/')||value.startsWith('//')||/[\\\u0000-\u0020\u007f]/.test(value))return fallback;
- try{const decoded=decodeURIComponent(value);if(decoded.startsWith('//')||/[\\\u0000-\u0020\u007f]/.test(decoded))return fallback;const u=new URL(value,location.origin);if(u.origin!==location.origin||/^\/(?:login|auth\/callback)\/?$/.test(new URL(decoded,location.origin).pathname))return fallback;return u.pathname+u.search;}catch{return fallback;}
+ try{const decoded=decodeURIComponent(value);if(decoded.startsWith('//')||/[\\\u0000-\u0020\u007f]/.test(decoded))return fallback;const u=new URL(value,location.origin);if(u.origin!==location.origin||/^\/(?:login|auth\/callback)\/?$/.test(new URL(decoded,location.origin).pathname))return fallback;return u.pathname+u.search+u.hash;}catch{return fallback;}
 }
 const nextPath=()=>safeNextPath(new URLSearchParams(location.search).get('next'));
 function signInHref(){const next=safeNextPath(location.pathname+location.search);return '/login/?next='+encodeURIComponent(next)+(authRecovery==='expired'?'&reason=session-expired':'');}
