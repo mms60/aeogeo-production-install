@@ -2,8 +2,8 @@
   "version": 1,
   "pages": {
     "https://aeogeosearch.com/": {
-      "hash": "8cfdbbff11acbf218c8c196aabacff3b6ef2e0721766122c78f96d2768b87c67",
-      "lastmod": "2026-11-17"
+      "hash": "074ad0eba17d777194cd93db2478aaa94d56ca11fcea2b2bcd810c070b4399b3",
+      "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/about": {
       "hash": "c05f0d6c44187b1c7475c533b14e79022cad8971996bfb5b60ecbebcfff09c6a",
@@ -38,16 +38,16 @@
       "lastmod": "2026-11-17"
     },
     "https://aeogeosearch.com/tools": {
-      "hash": "fd84466bbb03edcef2f2d63f8ba14edfd86a637004f99e651d5e279bb69cbfc0",
-      "lastmod": "2026-11-17"
+      "hash": "1d3f57558bb00cde4255755743c4eb5e43e42851f9733d0cdbc6205387808b00",
+      "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/visibility-tool": {
       "hash": "0c69742180dba2d50a0e74730cf6f09f5af3a0bef8a7b22d7ac7f5b8613ccb12",
       "lastmod": "2026-11-18"
     },
     "https://aeogeosearch.com/quiz/": {
-      "hash": "f483b09b3e7d0fd12891a648b5dbd9786a9b45571e6948160923231601bc0a17",
-      "lastmod": "2026-11-18"
+      "hash": "06a5598c392456b2812c556ec275a33b773f2104301b37acc144bfb847de4d5f",
+      "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/contact": {
       "hash": "334d51ed49451c13e94a638434253d6c89b340332b8b36e23a67f29cdefaaba6",
@@ -110,8 +110,8 @@
       "lastmod": "2026-11-17"
     },
     "https://aeogeosearch.com/geo-audit/": {
-      "hash": "ed86d4ebf89269548c6664bede17320a3b4a89523342af24abf9185cdb6ce6b3",
-      "lastmod": "2026-11-17"
+      "hash": "9df27d11f3fcc3437baa337dc81832d6841963f12c69908a56b449eb44435465",
+      "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/ai-content-humanizer": {
       "hash": "f9aba84db8035f109c66cb8eb15ecafd9112d0f406bd5b5453830fbc042c9099",
@@ -126,8 +126,8 @@
       "lastmod": "2026-11-18"
     },
     "https://aeogeosearch.com/ai-visibility-schema-studio": {
-      "hash": "58d3561d879111cae469a306b785615489ad46e4b6d7196a4ece133fb72cb9db",
-      "lastmod": "2026-11-18"
+      "hash": "b31993b7adf4987f8e13b266a0134d9e210870578f42bab49c40acc1ba49c422",
+      "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/resources/schema-org-ai-search/": {
       "hash": "a025116180aeef48dc0e1f9e858ae3b292faeb01f6ee4e6e36a1cf77029445bf",
