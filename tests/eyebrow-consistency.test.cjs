@@ -36,6 +36,11 @@ const jsFiles = walk(SITE, file => file.endsWith('.js'));
 const cssFiles = walk(SITE, file => file.endsWith('.css'));
 const typographyCss = fs.readFileSync(TYPOGRAPHY_CSS, 'utf8');
 
+function attributeValue(tag, name) {
+  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
+  return match ? (match[1] ?? match[2] ?? match[3]) : '';
+}
+
 test('every HTML page loads the shared typography stylesheet', () => {
   assert.ok(htmlPages.length > 0, 'expected at least one HTML page');
 
@@ -43,10 +48,11 @@ test('every HTML page loads the shared typography stylesheet', () => {
     const relative = path.relative(ROOT, page);
     const html = fs.readFileSync(page, 'utf8');
     const links = html.match(/<link\b[^>]*>/gi) || [];
-    const loadsTypography = links.some(link =>
-      /\brel=["']stylesheet["']/i.test(link) &&
-      /\bhref=["'][^"']*typography-consistency\.css(?:\?[^"']*)?["']/i.test(link)
-    );
+    const loadsTypography = links.some(link => {
+      const rel = attributeValue(link, 'rel').trim().toLowerCase().split(/\s+/);
+      const href = attributeValue(link, 'href').trim();
+      return rel.includes('stylesheet') && /(?:^|\/)typography-consistency\.css(?:\?[^#]*)?$/.test(href);
+    });
 
     assert.ok(loadsTypography, `${relative} must load /assets/typography-consistency.css`);
   }
