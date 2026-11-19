@@ -616,7 +616,7 @@
       html += '<div class="ea-block"><h4>Google Knowledge Graph candidates</h4>';
       if (matches.length) {
         if (matches.length > 1) {
-          html += '<p class="ea-issue" style="margin-bottom:7px">More than one matching entity can split or blur the brand. The paid implementation adds disambiguating signals to the entity graph.</p>';
+          html += '<p class="ea-issue" style="margin-bottom:7px">More than one matching entity can split or blur the brand. The paid DIY builder lets you add disambiguating signals to the entity graph.</p>';
         }
         html += '<div class="ea-kg-list">' + matches.map(function (match) {
           return '<div class="ea-kg"><strong>' + esc(match.name || "Unnamed entity") + '</strong>' +
@@ -630,11 +630,11 @@
       }
       html += '</div>';
     } else {
-              html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API, so it cannot test for namesake collisions. The paid implementation connects the entity graph, but it does not query live AI answers.</p></div>';
+              html += '<div class="ea-block"><h4>Google Knowledge Graph collision check</h4><p class="ea-pass">This public checker is not connected to the Knowledge Graph API, so it cannot test for namesake collisions. The paid DIY builder generates the entity graph, but it does not query live AI answers.</p></div>';
     }
 
-    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">View Implementation Packages</a></div>' +
-      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers, and the paid implementation does not query live AI answers either.</p>';
+    html += '<div class="ea-result-actions"><button class="ea-button" id="ea-build-from-audit" type="button">Preview the entity map</button><a href="#pricing">View DIY Builder Packages</a></div>' +
+      '<p class="ea-fine">This check reads one public page. It does not query ChatGPT, Perplexity, or Google’s live answers, and the paid DIY builder does not query live AI answers either.</p>';
 
     output.setAttribute("aria-busy", "false");
     output.innerHTML = html;
@@ -830,13 +830,13 @@
         '<p class="ea-fine">This preview shows the structure and stable identifiers only. It is not a JSON-LD implementation and cannot be copied into a site.</p>' +
       '</div>' +
       '<div class="ea-locked">' +
-        '<p class="ea-output-kicker">PAID IMPLEMENTATION</p>' +
+        '<p class="ea-output-kicker">PAID DIY BUILDER</p>' +
         '<h3>Build Your Complete Brand Entity Architecture</h3>' +
         '<p>Your business deserves more than disconnected schema markup.</p>' +
-        '<p>Our complete implementation connects your brand identity, locations, services, leadership, and supporting authority signals into a structured entity architecture designed to help search systems better understand your business.</p>' +
-        '<p><strong>Unlock the complete implementation with AEOGEO Search.</strong></p>' +
-        '<a class="ea-button" href="#pricing">View Implementation Packages</a>' +
-        '<p class="ea-fine">The free preview shows structure only. The paid implementation includes the complete customized JSON-LD, copy and download tools, validation, and implementation instructions for the plan you choose. It does not include a done-for-you build or an AI testing report; full-service implementation is available from AEOGEO Search.</p>' +
+        '<p>The paid builder turns the verified facts you enter into the complete customized JSON-LD graph, connecting your brand identity, locations, services, leadership, and supporting authority signals so search systems can interpret your business.</p>' +
+        '<p><strong>Unlock the complete DIY builder with AEOGEO Search.</strong></p>' +
+        '<a class="ea-button" href="#pricing">View DIY Builder Packages</a>' +
+        '<p class="ea-fine">The free preview shows structure only. The paid plan unlocks the complete customized JSON-LD, copy and download tools, validation, and implementation instructions for the limits of the plan you choose. You review and publish the markup yourself; no done-for-you build or AI testing report is included. Full-service implementation is available separately from AEOGEO Search.</p>' +
         accessNote +
       '</div>';
     output.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -35,17 +35,28 @@ test('the free page does not ship the JSON-LD compiler or a copy button', () => 
   assert.match(paid, /Implementation instructions/);
 });
 
-test('the locked builder points to the implementation packages with accurate wording', () => {
+test('the locked builder points to the DIY packages with accurate wording', () => {
   assert.match(tool, /Build Your Complete Brand Entity Architecture/);
   assert.match(tool, /Your business deserves more than disconnected schema markup\./);
-  assert.match(tool, /Unlock the complete implementation with AEOGEO Search\./);
-  assert.match(tool, /View Implementation Packages/);
+  assert.match(tool, /Unlock the complete DIY builder with AEOGEO Search\./);
+  assert.match(tool, /View DIY Builder Packages/);
   assert.match(tool, /Recommended next steps/);
   assert.match(page, /Build the Architecture That Connects It All/);
-  assert.match(page, /The free check identifies problems\. The paid implementation delivers the customized solution, implementation, and verification\./);
-  assert.match(page, /View Implementation Packages/);
+  assert.match(page, /The free check identifies problems\. The paid plan gives you the builder that generates the complete customized JSON-LD, validates it, and tells you how to publish it\./);
+  assert.match(page, /View DIY Builder Packages/);
   assert.doesNotMatch(page, /zero ambiguity/);
   assert.doesNotMatch(tool, /zero ambiguity/);
+});
+
+test('the paid copy describes self-serve access, not done-for-you work', () => {
+  assert.match(page, /These plans are software access, not a done-for-you build\./);
+  assert.match(page, /You supply the facts and do the publishing\./);
+  assert.match(tool, /You review and publish the markup yourself; no done-for-you build or AI testing report is included\./);
+  assert.doesNotMatch(page, /We develop your customized brand entity architecture/);
+  assert.doesNotMatch(page, /What the paid implementation adds/);
+  assert.doesNotMatch(tool, /Our complete implementation connects/);
+  assert.doesNotMatch(page, /View Implementation Packages/);
+  assert.doesNotMatch(tool, /View Implementation Packages/);
 });
 
 test('the DIY paid path is explained and checkout requires an account', () => {
