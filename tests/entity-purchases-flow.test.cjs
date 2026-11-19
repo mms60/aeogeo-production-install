@@ -34,7 +34,7 @@ function paidSession(overrides = {}) {
     livemode: true,
     currency: 'usd',
     amount_total: purchases.OFFERS.single.amount,
-    metadata: { product: purchases.PRODUCT, plan: 'single' },
+    metadata: { product: purchases.PRODUCT, plan: 'single', price: purchases.OFFERS.single.priceId },
     customer_details: { email: buyer.email },
     payment_intent: PAYMENT_INTENT,
     ...overrides
@@ -84,7 +84,7 @@ function createBackend({ session = paidSession(), lineItems, user = buyer } = {}
       for (const item of Array.isArray(body) ? body : [body]) {
         const existing = rows.find(row => row.stripe_session_id === item.stripe_session_id);
         if (existing) Object.assign(existing, item);
-        else rows.push({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...item });
+        else rows.push({ id: crypto.randomUUID(), created_at: new Date().toISOString(), status: 'paid', ...item });
       }
       return new Response('', { status: 201 });
     }
@@ -112,7 +112,15 @@ function createBackend({ session = paidSession(), lineItems, user = buyer } = {}
         return Response.json(lineItems || {
           object: 'list',
           has_more: false,
-          data: [{ id: 'li_fixture', quantity: 1, price: { id: purchases.OFFERS[session.metadata.plan].priceId } }]
+          data: [{
+            id: 'li_fixture',
+            quantity: 1,
+            price: {
+              id: purchases.OFFERS[session.metadata.plan].priceId,
+              product: purchases.OFFERS[session.metadata.plan].productId,
+              unit_amount: purchases.OFFERS[session.metadata.plan].amount
+            }
+          }]
         });
       }
       throw new Error('Unexpected Stripe request: ' + method + ' ' + path);
@@ -149,6 +157,7 @@ function createBackend({ session = paidSession(), lineItems, user = buyer } = {}
 
 let claimEndpoint;
 let entitlementEndpoint;
+let implementationEndpoint;
 const envKeys = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -173,6 +182,7 @@ before(async () => {
   delete process.env.SUPABASE_ANON_KEY;
   claimEndpoint = (await import('../netlify/functions/entity-purchase-claim.mjs')).default;
   entitlementEndpoint = (await import('../netlify/functions/entity-entitlement.mjs')).default;
+  implementationEndpoint = (await import('../netlify/functions/entity-implementation.mjs')).default;
 });
 
 after(() => {
@@ -277,7 +287,7 @@ test('email recovery cannot take a linked purchase or bypass confirmation', asyn
 test('a paid webhook with metadata.user_id links the purchase directly without the email fallback', async () => {
   const stripePayerEmail = 'different-payer@example.com';
   const session = paidSession({
-    metadata: { product: purchases.PRODUCT, plan: 'single', user_id: buyer.id },
+    metadata: { product: purchases.PRODUCT, plan: 'single', price: purchases.OFFERS.single.priceId, user_id: buyer.id },
     customer_details: { email: stripePayerEmail }
   });
   const backend = createBackend({ session });
@@ -397,7 +407,15 @@ test('the claim refuses a different email, an unconfirmed account, wrong items, 
     lineItems: {
       object: 'list',
       has_more: false,
-      data: [{ id: 'li_fixture', quantity: 1, price: { id: 'price_not_the_offer' } }]
+      data: [{
+        id: 'li_fixture',
+        quantity: 1,
+        price: {
+          id: 'price_not_the_offer',
+          product: purchases.OFFERS.single.productId,
+          unit_amount: purchases.OFFERS.single.amount
+        }
+      }]
     }
   });
   try {
@@ -480,10 +498,10 @@ test('entitlement reports the strongest active plan and ignores revoked purchase
   const backend = createBackend();
   try {
     backend.rows.push(
-      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'single', status: 'paid', created_at: '2026-01-01T00:00:00.000Z' },
-      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'multi', status: 'paid', created_at: '2026-01-02T00:00:00.000Z' },
-      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'multi', status: 'revoked', created_at: '2026-01-03T00:00:00.000Z' },
-      { id: crypto.randomUUID(), user_id: '44444444-4444-4444-8444-444444444444', plan: 'multi', status: 'paid', created_at: '2026-01-04T00:00:00.000Z' }
+      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'single', status: 'paid', livemode: true, created_at: '2026-01-01T00:00:00.000Z' },
+      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'multi', status: 'paid', livemode: true, created_at: '2026-01-02T00:00:00.000Z' },
+      { id: crypto.randomUUID(), user_id: buyer.id, plan: 'multi', status: 'revoked', livemode: true, created_at: '2026-01-03T00:00:00.000Z' },
+      { id: crypto.randomUUID(), user_id: '44444444-4444-4444-8444-444444444444', plan: 'multi', status: 'paid', livemode: true, created_at: '2026-01-04T00:00:00.000Z' }
     );
 
     assert.deepEqual(await entitlement(backend), {
@@ -498,6 +516,96 @@ test('entitlement reports the strongest active plan and ignores revoked purchase
 
     const anonymous = await entitlementEndpoint(new Request('https://aeogeosearch.com/.netlify/functions/entity-entitlement'));
     assert.equal(anonymous.status, 401);
+  } finally {
+    backend.restore();
+  }
+});
+
+test('the claim refuses a checkout bound to a different account', async () => {
+  const otherId = '22222222-2222-4222-8222-222222222222';
+  const session = paidSession({
+    metadata: { ...paidSession().metadata, user_id: otherId }
+  });
+  const backend = createBackend({ session });
+  try {
+    await purchases.handleWebhook({
+      id: 'evt_fixture_bound_account',
+      type: 'checkout.session.completed',
+      data: { object: session }
+    });
+    assert.equal(backend.rows[0].user_id, otherId);
+
+    const result = await claim(backend, SESSION_ID, buyer);
+    assert.equal(result.status, 403);
+    assert.equal(result.body.code, 'ACCOUNT_MISMATCH');
+    assert.equal(backend.rows[0].user_id, otherId, 'a rejected claim must not relink the purchase');
+  } finally {
+    backend.restore();
+  }
+});
+
+test('redelivering checkout.session.completed cannot restore a refunded purchase', async () => {
+  const backend = createBackend();
+  try {
+    const completed = {
+      id: 'evt_fixture_replay_completed',
+      type: 'checkout.session.completed',
+      data: { object: paidSession() }
+    };
+    assert.equal((await stripeWebhook.handler(signedWebhook(completed))).statusCode, 200);
+    assert.equal((await claim(backend, SESSION_ID)).status, 200);
+    assert.equal(backend.rows[0].status, 'paid');
+
+    await purchases.handleWebhook({
+      id: 'evt_fixture_replay_refund',
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_fixture', refunded: true, payment_intent: PAYMENT_INTENT } }
+    });
+    assert.equal(backend.rows[0].status, 'revoked');
+
+    assert.equal((await stripeWebhook.handler(signedWebhook(completed))).statusCode, 200);
+    assert.equal(backend.rows[0].status, 'revoked', 'a replayed completion must not resurrect a revoked row');
+    assert.deepEqual((await entitlement(backend)).body, { active: false, plan: null, limits: null });
+  } finally {
+    backend.restore();
+  }
+});
+
+test('the claim and implementation endpoints preserve authentication statuses', async () => {
+  const backend = createBackend();
+  try {
+    backend.setAuth(503, { message: 'auth service unavailable' });
+    const unavailable = await claimEndpoint(new Request('https://aeogeosearch.com/.netlify/functions/entity-purchase-claim', {
+      method: 'POST',
+      headers: { authorization: 'Bearer fixture-token', 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID })
+    }));
+    assert.equal(unavailable.status, 503);
+    assert.equal((await unavailable.json()).code, 'AUTH_UNAVAILABLE');
+
+    const noToken = await claimEndpoint(new Request('https://aeogeosearch.com/.netlify/functions/entity-purchase-claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID })
+    }));
+    assert.equal(noToken.status, 401);
+
+    const implementation = await implementationEndpoint(new Request('https://aeogeosearch.com/.netlify/functions/entity-implementation', {
+      method: 'POST',
+      headers: { authorization: 'Bearer fixture-token', 'content-type': 'application/json' },
+      body: JSON.stringify({ input: {} })
+    }));
+    assert.equal(implementation.status, 503);
+    assert.equal((await implementation.json()).code, 'AUTH_UNAVAILABLE');
+
+    backend.setUser({ ...buyer, email_confirmed_at: null });
+    const unconfirmed = await implementationEndpoint(new Request('https://aeogeosearch.com/.netlify/functions/entity-implementation', {
+      method: 'POST',
+      headers: { authorization: 'Bearer fixture-token', 'content-type': 'application/json' },
+      body: JSON.stringify({ input: {} })
+    }));
+    assert.equal(unconfirmed.status, 403);
+    assert.equal((await unconfirmed.json()).code, 'EMAIL_CONFIRMATION_REQUIRED');
   } finally {
     backend.restore();
   }

@@ -110,9 +110,10 @@
       if (locationPhone) node.telephone = locationPhone;
       const address = locationAddress(location);
       if (address) node.address = address;
-      const latitude = Number(location.latitude);
-      const longitude = Number(location.longitude);
-      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      const hasCoordinate = value => value !== null && value !== undefined && String(value).trim() !== "";
+      const latitude = hasCoordinate(location.latitude) ? Number(location.latitude) : NaN;
+      const longitude = hasCoordinate(location.longitude) ? Number(location.longitude) : NaN;
+      if (Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
         node.geo = { "@type": "GeoCoordinates", latitude, longitude };
       }
       const maps = absoluteUrl(location.googleMapsUrl);

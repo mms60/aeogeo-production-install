@@ -14,7 +14,7 @@ const paidSession = {
   livemode: true,
   currency: 'usd',
   amount_total: 79900,
-  metadata: { product: 'entity-authority', plan: 'single' },
+  metadata: { product: 'entity-authority', plan: 'single', price: purchases.OFFERS.single.priceId },
   customer_details: { email: 'buyer@example.com' },
   payment_intent: 'pi_live_123'
 };
@@ -36,6 +36,7 @@ test('accepts only a paid live session for the offered plan and amount', () => {
   assert.equal(purchases.sessionIsPaid({ ...paidSession, status: 'open' }, purchases.OFFERS.single), false);
   assert.equal(purchases.sessionIsPaid({ ...paidSession, metadata: { product: 'other', plan: 'single' } }, purchases.OFFERS.single), false);
   assert.equal(purchases.sessionIsPaid({ ...paidSession, metadata: { product: 'entity-authority', plan: 'multi' } }, purchases.OFFERS.single), false);
+  assert.equal(purchases.sessionIsPaid({ ...paidSession, metadata: { ...paidSession.metadata, price: purchases.OFFERS.multi.priceId } }, purchases.OFFERS.single), false);
 });
 
 test('accepts the $400 Single-Hub to Multi-Location upgrade session', () => {
@@ -46,6 +47,7 @@ test('accepts the $400 Single-Hub to Multi-Location upgrade session', () => {
     metadata: {
       product: 'entity-authority',
       plan: 'multi',
+      price: purchases.OFFERS.multi.priceId,
       upgrade: '1',
       previous_plan: 'single'
     }
@@ -60,6 +62,108 @@ test('keeps the plan limits aligned with the public packages', () => {
   assert.deepEqual(purchases.limitsForPlan('single'), { locations: 3, people: 2, services: 10 });
   assert.deepEqual(purchases.limitsForPlan('multi'), { locations: 10, people: 6, services: 10 });
   assert.equal(purchases.limitsForPlan('unknown'), null);
+});
+
+test('validates required fields, field types, URLs, and coordinate ranges before generation', () => {
+  const valid = purchases.validateImplementationInput(input, 'single');
+  assert.equal(valid.ok, true, valid.error);
+
+  const reject = (patch, pattern) => {
+    const result = purchases.validateImplementationInput({ ...input, ...patch }, 'single');
+    assert.equal(result.ok, false, JSON.stringify(patch));
+    assert.equal(result.status, 400);
+    assert.equal(result.code, 'INVALID_INPUT');
+    assert.match(result.error, pattern);
+  };
+
+  reject({ domain: 'not-a-url' }, /domain/);
+  reject({ brandName: '   ' }, /brandName/);
+  reject({ description: '' }, /description/);
+  reject({ logoUrl: 'javascript:alert(1)' }, /logoUrl/);
+  reject({ foundingYear: 'not-a-year' }, /foundingYear/);
+  reject({ locations: 'Dallas' }, /locations must be a list/);
+  reject({ locations: [{ name: '', slug: 'empty' }] }, /locations\[0\]\.name/);
+  reject({ locations: [{ name: 'Dallas', slug: 'dallas', latitude: 32.7 }] }, /both latitude and longitude/);
+  reject({ locations: [{ name: 'Dallas', slug: 'dallas', latitude: '   ', longitude: 0 }] }, /both latitude and longitude/);
+  reject({ locations: [{ name: 'Dallas', slug: 'dallas', latitude: 91, longitude: 0 }] }, /latitude/);
+  reject({ sameAsUrls: ['not-a-url'] }, /sameAsUrls\[0\]/);
+  reject({ sameAsUrls: Array.from({ length: 26 }, (_, index) => 'https://example.com/' + index) }, /at most 25/);
+  reject({ people: [{ name: 'A', slug: 'a', knowsAbout: Array.from({ length: 21 }, (_, index) => 'Topic ' + index) }] }, /at most 20/);
+  reject({ people: [{ name: 'A', slug: 'a', sameAsUrls: ['ftp://example.com/profile'] }] }, /sameAsUrls\[0\]/);
+  reject({ services: [{ name: 'S', slug: 's', areaServedCities: Array.from({ length: 26 }, (_, index) => 'City ' + index) }] }, /at most 25/);
+
+  const full = purchases.validateImplementationInput({
+    ...input,
+    sameAsUrls: ['https://www.linkedin.com/company/example'],
+    locations: [{
+      ...input.locations[0],
+      country: 'US',
+      latitude: 0,
+      longitude: 0,
+      locationPageUrl: 'https://examplebrand.com/locations/dallas/'
+    }],
+    people: [{
+      ...input.people[0],
+      knowsAbout: ['AI search'],
+      sameAsUrls: ['https://www.linkedin.com/in/example']
+    }],
+    services: [{
+      ...input.services[0],
+      areaServedCities: [
+        { name: 'Dallas', wikidataUrl: 'https://www.wikidata.org/wiki/Q16557' },
+        'Plano'
+      ]
+    }]
+  }, 'single');
+  assert.equal(full.ok, true, full.error);
+
+  const emptyGeo = purchases.validateImplementationInput({
+    ...input,
+    locations: [{ name: 'No Geo', slug: 'no-geo', latitude: null, longitude: null }]
+  }, 'single');
+  assert.equal(emptyGeo.ok, true, emptyGeo.error);
+});
+
+test('the compiler omits empty geo coordinates and rejects out-of-range values', () => {
+  const nodeFor = (slug, payload) => payload['@graph'].find(node => String(node['@id']).includes('/locations/' + slug + '/'));
+
+  const noGeo = graph.buildMasterKnowledgeGraphObject({
+    ...input,
+    locations: [{ name: 'No Geo', slug: 'no-geo', latitude: null, longitude: null }]
+  });
+  assert.equal(nodeFor('no-geo', noGeo).geo, undefined, 'null coordinates must not become 0,0');
+
+  const zero = graph.buildMasterKnowledgeGraphObject({
+    ...input,
+    locations: [{ name: 'Zero', slug: 'zero', latitude: 0, longitude: 0 }]
+  });
+  assert.deepEqual(nodeFor('zero', zero).geo, { '@type': 'GeoCoordinates', latitude: 0, longitude: 0 });
+
+  const outOfRange = graph.buildMasterKnowledgeGraphObject({
+    ...input,
+    locations: [{ name: 'Out', slug: 'out', latitude: 999, longitude: 0 }]
+  });
+  assert.equal(nodeFor('out', outOfRange).geo, undefined, 'out-of-range coordinates must not be emitted');
+});
+
+test('enforces locations, people, and services inside validateImplementationInput', () => {
+  const rows = (count, prefix) => Array.from({ length: count }, (_, index) => ({ name: prefix + ' ' + index, slug: prefix + '-' + index }));
+  const at = (plan, counts) => purchases.validateImplementationInput({
+    ...input,
+    locations: rows(counts.locations, 'location'),
+    people: rows(counts.people, 'person'),
+    services: rows(counts.services, 'service')
+  }, plan);
+
+  assert.equal(at('single', { locations: 3, people: 2, services: 10 }).ok, true);
+  assert.equal(at('single', { locations: 4, people: 2, services: 10 }).ok, false);
+  assert.equal(at('single', { locations: 3, people: 3, services: 10 }).ok, false);
+  assert.equal(at('single', { locations: 3, people: 2, services: 11 }).ok, false);
+
+  assert.equal(at('multi', { locations: 10, people: 6, services: 10 }).ok, true);
+  assert.equal(at('multi', { locations: 11, people: 6, services: 10 }).ok, false);
+  assert.equal(at('multi', { locations: 10, people: 7, services: 10 }).ok, false);
+  assert.equal(at('multi', { locations: 10, people: 6, services: 11 }).ok, false);
 });
 
 test('refuses input beyond the purchased plan before generation', () => {

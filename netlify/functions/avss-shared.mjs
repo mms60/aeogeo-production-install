@@ -27,12 +27,25 @@ export function adminClient() {
 }
 export async function userFromEvent(event) {
   const token=headerValue(event?.headers,"authorization").replace(/^Bearer\s+/i,"");
-  if(!token) throw new Error("Sign in is required.");
+  if(!token) throw Object.assign(new Error("Sign in is required."),{status:401,code:"SIGN_IN_REQUIRED"});
   const anon=process.env.SUPABASE_ANON_KEY||process.env.SUPABASE_PUBLISHABLE_KEY;
-  if(!anon) throw new Error("The Supabase public key is missing.");
-  const client=createClient(process.env.SUPABASE_URL,anon,{auth:{persistSession:false}});
-  const {data,error}=await client.auth.getUser(token);
-  if(error||!data.user) throw new Error("Your session is invalid or expired. Please sign in again.");
+  if(!anon) throw Object.assign(new Error("The Supabase public key is missing."),{status:503,code:"AUTH_CONFIGURATION"});
+  let client;
+  try{
+    client=createClient(process.env.SUPABASE_URL,anon,{auth:{persistSession:false}});
+  }catch{
+    throw Object.assign(new Error("The sign-in service is not configured."),{status:503,code:"AUTH_CONFIGURATION"});
+  }
+  let data,error;
+  try{
+    ({data,error}=await client.auth.getUser(token));
+  }catch{
+    throw Object.assign(new Error("The sign-in service could not be reached. Please retry."),{status:503,code:"AUTH_UNAVAILABLE"});
+  }
+  if(error&&(error.name==="AuthRetryableFetchError"||error.status===0||error.status>=500)){
+    throw Object.assign(new Error("The sign-in service could not be reached. Please retry."),{status:503,code:"AUTH_UNAVAILABLE"});
+  }
+  if(error||!data?.user) throw Object.assign(new Error("Your session is invalid or expired. Please sign in again."),{status:401,code:"SESSION_INVALID"});
   return data.user;
 }
 async function paidRow(userId) {
@@ -72,23 +85,78 @@ export async function assertPublicHttpUrl(raw) {
   let u; try{u=new URL(raw);}catch{throw new Error("Enter a valid website URL.");}
   if(!["http:","https:"].includes(u.protocol)) throw new Error("Only HTTP and HTTPS websites are supported.");
   if(u.username||u.password) throw new Error("URLs containing credentials are not allowed.");
-  const host=u.hostname.toLowerCase();
-  if(host==="localhost"||host.endsWith(".localhost")||host.endsWith(".local")||host==="metadata.google.internal") throw new Error("Private and local hosts cannot be scanned.");
+  const host=u.hostname.toLowerCase().replace(/\.$/,"");
+  if(!host) throw new Error("Enter a valid website URL.");
+  if(host==="localhost"||host.endsWith(".localhost")||host.endsWith(".local")||host.endsWith(".internal")||host==="metadata.google.internal"||host==="metadata") throw new Error("Private and local hosts cannot be scanned.");
   const records=await dns.lookup(host,{all:true,verbatim:true}).catch(()=>[]);
   if(!records.length) throw new Error("The hostname could not be resolved.");
   for(const rec of records) if(isPrivateIp(rec.address)) throw new Error("Private, local, or reserved IP addresses cannot be scanned.");
+  u.hostname=host;
   return u;
 }
+function isPrivateIpv4(ip){
+  const parts=ip.split(".").map(Number);
+  if(parts.length!==4||parts.some(n=>!Number.isInteger(n)||n<0||n>255)) return true;
+  const [a,b,c]=parts;
+  return a===0||a===10||a===127||a>=224
+    ||(a===169&&b===254)
+    ||(a===172&&b>=16&&b<=31)
+    ||(a===192&&b===168)
+    ||(a===100&&b>=64&&b<=127)
+    ||(a===192&&b===0&&(c===0||c===2))
+    ||(a===198&&(b===18||b===19))
+    ||(a===198&&b===51&&c===100)
+    ||(a===203&&b===0&&c===113)
+    ||(a===192&&b===88&&c===99);
+}
+function isPrivateIpv6(ip){
+  const x=ip.toLowerCase();
+  if(x==="::"||x==="::1") return true;
+  if(x.startsWith("fc")||x.startsWith("fd")) return true;
+  if(/^fe[89ab]/.test(x)) return true;
+  if(x.startsWith("2001:db8")||x.startsWith("2002:")||x.startsWith("64:ff9b:")||x.startsWith("100:")||x.startsWith("2001:0:")) return true;
+  const mapped=x.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if(mapped) return isPrivateIpv4(mapped[1]);
+  const hexMapped=x.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if(hexMapped){
+    const hi=parseInt(hexMapped[1],16),lo=parseInt(hexMapped[2],16);
+    return isPrivateIpv4([hi>>8,hi&255,lo>>8,lo&255].join("."));
+  }
+  return false;
+}
 function isPrivateIp(ip){
-  if(net.isIPv4(ip)){
-    const [a,b]=ip.split(".").map(Number);
-    return a===0||a===10||a===127||a>=224||(a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||(a===100&&b>=64&&b<=127);
-  }
-  if(net.isIPv6(ip)){
-    const x=ip.toLowerCase();
-    return x==="::"||x==="::1"||x.startsWith("fc")||x.startsWith("fd")||x.startsWith("fe8")||x.startsWith("fe9")||x.startsWith("fea")||x.startsWith("feb")||x.startsWith("::ffff:127.")||x.startsWith("::ffff:10.");
-  }
+  if(net.isIPv4(ip)) return isPrivateIpv4(ip);
+  if(net.isIPv6(ip)) return isPrivateIpv6(ip);
   return true;
+}
+export async function readLimitedText(response, limit) {
+  const declared = Number(response.headers.get("content-length") || 0);
+  if (declared && declared > limit) throw Object.assign(new Error("The page is too large to audit."), { status: 413 });
+  if (!response.body) {
+    const text = await response.text();
+    if (Buffer.byteLength(text, "utf8") > limit) throw Object.assign(new Error("The page is too large to audit."), { status: 413 });
+    return text;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      try { await reader.cancel(); } catch {}
+      throw Object.assign(new Error("The page is too large to audit."), { status: 413 });
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(merged);
 }
 export async function safeFetch(url, options={}) {
   let current=await assertPublicHttpUrl(url);

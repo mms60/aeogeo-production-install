@@ -1,14 +1,15 @@
 import crypto from "node:crypto";
-import { json, readBody, assertPublicHttpUrl, safeFetch } from "./avss-shared.mjs";
+import { adminClient, json, readBody, assertPublicHttpUrl, readLimitedText, safeFetch } from "./avss-shared.mjs";
 import entityAudit from "./lib/entity-audit.js";
 
 const { inspectEntityHtml } = entityAudit;
 
-// Best-effort per-instance throttle. Netlify may run several instances, so this
-// reduces casual abuse but is not a substitute for a WAF or a durable limiter.
+// Shared limiter backed by the audit_rate_limits table and the
+// consume_audit_rate_limit() Postgres function. It fails closed: if the shared
+// store is unavailable the endpoint returns 503 instead of allowing uncounted
+// requests.
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 12;
-const hits = new Map();
 
 function headerValue(headers, name) {
   if (!headers) return "";
@@ -24,22 +25,21 @@ function throttleKey(headers) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex").slice(0, 16);
 }
 
-function isThrottled(headers) {
+async function consumeSharedLimit(headers) {
   const key = throttleKey(headers);
-  const now = Date.now();
-  const recent = (hits.get(key) || []).filter(time => now - time < WINDOW_MS);
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(key, recent);
-    return true;
+  try {
+    const { data, error } = await adminClient().rpc("consume_audit_rate_limit", {
+      p_key: key,
+      p_limit: MAX_PER_WINDOW,
+      p_window_seconds: Math.ceil(WINDOW_MS / 1000)
+    });
+    if (error) throw error;
+    if (typeof data !== "boolean") throw new Error("Unexpected rate limiter response.");
+    return data;
+  } catch (error) {
+    console.error("entity-audit rate limiter unavailable", error?.code || "unknown");
+    return null;
   }
-  recent.push(now);
-  hits.set(key, recent);
-  if (hits.size > 2000) {
-    for (const [entry, times] of hits) {
-      if (!times.some(time => now - time < WINDOW_MS)) hits.delete(entry);
-    }
-  }
-  return false;
 }
 
 function sameOrigin(headers) {
@@ -52,32 +52,6 @@ function sameOrigin(headers) {
   try { return supplied === new URL(expected).origin; } catch { return false; }
 }
 
-async function readLimitedText(response, limit) {
-  const declared = Number(response.headers.get("content-length") || 0);
-  if (declared && declared > limit) throw Object.assign(new Error("The page is too large to audit."), { status: 413 });
-  if (!response.body) return (await response.text()).slice(0, limit);
-  const reader = response.body.getReader();
-  const chunks = [];
-  let total = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > limit) {
-      try { await reader.cancel(); } catch {}
-      throw Object.assign(new Error("The page is too large to audit."), { status: 413 });
-    }
-    chunks.push(value);
-  }
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder("utf-8", { fatal: false }).decode(merged);
-}
-
 async function googleKnowledgeGraph(query, apiKey) {
   const endpoint = new URL("https://kgsearch.googleapis.com/v1/entities:search");
   endpoint.searchParams.set("query", query);
@@ -87,7 +61,7 @@ async function googleKnowledgeGraph(query, apiKey) {
   try {
     const response = await fetch(endpoint, { signal: AbortSignal.timeout(8000) });
     if (!response.ok) return [];
-    const data = await response.json();
+    const data = JSON.parse(await readLimitedText(response, 256_000));
     return (data.itemListElement || []).slice(0, 5).map(item => {
       const result = item.result || {};
       const detailUrl = result.detailedDescription?.url;
@@ -115,8 +89,12 @@ export default async request => {
   if (!sameOrigin(headers)) {
     return json(403, { error: "This endpoint only accepts requests from the AEOGEO Search site." });
   }
-  if (isThrottled(headers)) {
+  const limit = await consumeSharedLimit(headers);
+  if (limit === false) {
     return json(429, { error: "Too many checks from this connection. Wait a minute and try again." });
+  }
+  if (limit === null) {
+    return json(503, { error: "The free entity check is temporarily unavailable. Please retry in a minute.", code: "RATE_LIMIT_UNAVAILABLE" });
   }
 
   try {

@@ -10,7 +10,7 @@ export default async event => {
   try {
     user = await userFromEvent(event);
   } catch (error) {
-    return json(401, { error: error.message, code: "SIGN_IN_REQUIRED" });
+    return json(error.status || 401, { error: error.message, code: error.code || "SIGN_IN_REQUIRED" });
   }
 
   try {

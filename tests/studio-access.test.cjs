@@ -82,8 +82,10 @@ test('the implementation endpoint checks entitlement before compiling', () => {
   assert.match(implementation, /userFromEvent/);
   assert.match(implementation, /entitlementForUser/);
   assert.match(implementation, /PURCHASE_REQUIRED/);
-  assert.ok(implementation.indexOf('entitlementForUser') < implementation.indexOf('buildMasterKnowledgeGraphObject'));
-  assert.match(implementation, /validateImplementationInput/);
+  assert.ok(implementation.indexOf('entitlementForUser') < implementation.indexOf('validateImplementationInput'));
+  assert.ok(implementation.indexOf('validateImplementationInput') < implementation.indexOf('buildMasterKnowledgeGraphObject'));
+  assert.ok(implementation.indexOf('buildMasterKnowledgeGraphObject') < implementation.indexOf('validateGraph'));
+  assert.match(implementation, /validateImplementationInput\(input,\s*entitlement\.plan\)/);
   assert.match(implementation, /validateGraph/);
 });
 

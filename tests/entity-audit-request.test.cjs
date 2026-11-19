@@ -11,8 +11,12 @@ test('entity-audit accepts a Netlify Web Request and returns parsed JSON-LD', as
   const previousFetch = globalThis.fetch;
   const previousUrl = process.env.URL;
   const previousKgKey = process.env.GOOGLE_KG_API_KEY;
+  const previousSupabaseUrl = process.env.SUPABASE_URL;
+  const previousServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   process.env.URL = 'https://aeogeosearch.com';
+  process.env.SUPABASE_URL = 'https://fixture.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_fixture_only';
   delete process.env.GOOGLE_KG_API_KEY;
 
   const html = `<!doctype html><html><head>
@@ -32,6 +36,9 @@ test('entity-audit accepts a Netlify Web Request and returns parsed JSON-LD', as
   </head><body></body></html>`;
 
   globalThis.fetch = async (url) => {
+    if (String(url).startsWith('https://fixture.supabase.co/rest/v1/rpc/consume_audit_rate_limit')) {
+      return Response.json(true);
+    }
     assert.equal(String(url), 'https://93.184.216.34/');
     return new Response(html, {
       status: 200,
@@ -45,6 +52,10 @@ test('entity-audit accepts a Netlify Web Request and returns parsed JSON-LD', as
     else process.env.URL = previousUrl;
     if (previousKgKey === undefined) delete process.env.GOOGLE_KG_API_KEY;
     else process.env.GOOGLE_KG_API_KEY = previousKgKey;
+    if (previousSupabaseUrl === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = previousSupabaseUrl;
+    if (previousServiceKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = previousServiceKey;
   });
 
   const { default: handler } = await import(pathToFileURL(handlerPath).href);

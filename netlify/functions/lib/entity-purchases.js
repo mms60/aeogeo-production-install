@@ -12,12 +12,14 @@ const OFFERS = Object.freeze({
     plan: 'single',
     label: 'Single-Hub Brand',
     priceId: 'price_1Uc6kWBIJX5f6WmhvQeqzs7o',
+    productId: 'prod_VdNVizBmTfDoqH',
     amount: 79900
   }),
   multi: Object.freeze({
     plan: 'multi',
     label: 'Multi-Location Brand',
     priceId: 'price_1Uc6ksBIJX5f6WmhHI94dIms',
+    productId: 'prod_VdNVrX9bS9IVPF',
     amount: 119900
   })
 });
@@ -34,6 +36,12 @@ const UPGRADE = Object.freeze({
 const SESSION_ID = /^cs_(?:test|live)_[A-Za-z0-9_-]{8,}$/;
 const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_INPUT_BYTES = 200000;
+const INPUT_CAPS = Object.freeze({
+  sameAsUrls: 25,
+  personSameAsUrls: 10,
+  knowsAbout: 20,
+  areaServedCities: 25
+});
 
 function statusError(status, message, code) {
   return Object.assign(new Error(message), { status, code });
@@ -105,7 +113,7 @@ function sessionIsPaid(session, offer) {
   const expectedAmount = sessionIsUpgrade(session, offer) ? UPGRADE.amount : offer.amount;
   if (Number(session.amount_total) !== expectedAmount) return false;
   const metadata = session.metadata || {};
-  return metadata.product === PRODUCT && metadata.plan === offer.plan;
+  return metadata.product === PRODUCT && metadata.plan === offer.plan && metadata.price === offer.priceId;
 }
 
 async function recordSession(session, extra = {}) {
@@ -114,7 +122,6 @@ async function recordSession(session, extra = {}) {
   const row = {
     email: sessionEmail(session) || null,
     plan: offer.plan,
-    status: 'paid',
     stripe_session_id: session.id,
     stripe_payment_intent: idOf(session.payment_intent) || null,
     amount_total: Number(session.amount_total) || null,
@@ -124,6 +131,9 @@ async function recordSession(session, extra = {}) {
   };
   // Never send user_id: null from the webhook. PostgREST merge-duplicates
   // updates only supplied columns, so omitting it preserves a claimed purchase.
+  // status is omitted for the same reason: a replayed or out-of-order
+  // checkout.session.completed must not resurrect a refunded/revoked row. New
+  // rows get the table default ('paid'); only dispute.won explicitly restores it.
   const metadataUserId = session?.metadata?.user_id;
   const userId = extra.user_id || (USER_ID.test(String(metadataUserId || '')) ? metadataUserId : null);
   if (userId) row.user_id = userId;
@@ -139,7 +149,7 @@ async function entitlementForUser(userId, user) {
   if (typeof userId !== 'string' || !userId) return null;
   const read = () => db(
     'entity_purchases?user_id=eq.' + encodeURIComponent(userId) +
-    '&status=eq.paid&select=plan,created_at&order=created_at.desc'
+    '&status=eq.paid&livemode=eq.true&select=plan,created_at&order=created_at.desc'
   );
   let rows = await read();
   if ((!Array.isArray(rows) || !rows.length) && user) {
@@ -174,6 +184,11 @@ async function claimPurchase(user, sessionId) {
     throw statusError(403, 'That checkout could not be verified for this implementation.', 'CHECKOUT_NOT_VERIFIED');
   }
 
+  const boundUserId = String(session?.client_reference_id || session?.metadata?.user_id || '');
+  if (boundUserId && boundUserId !== user.id) {
+    throw statusError(403, 'This checkout belongs to a different account.', 'ACCOUNT_MISMATCH');
+  }
+
   const email = sessionEmail(session);
   const userEmail = normalizedEmail(user.email);
   if (!validEmail(email) || !userEmail || email !== userEmail) {
@@ -200,13 +215,141 @@ async function claimPurchase(user, sessionId) {
     lineItems?.has_more ||
     items.length !== 1 ||
     items[0]?.quantity !== 1 ||
-    items[0]?.price?.id !== offer.priceId
+    items[0]?.price?.id !== offer.priceId ||
+    idOf(items[0]?.price?.product) !== offer.productId ||
+    items[0]?.price?.unit_amount !== offer.amount
   ) {
     throw statusError(409, 'The checkout items could not be verified.', 'CHECKOUT_ITEMS_MISMATCH');
   }
 
   await recordSession(session, { user_id: user.id });
   return { plan: offer.plan, limits: LIMITS[offer.plan] };
+}
+
+function invalidInput(message) {
+  return statusError(400, message, 'INVALID_INPUT');
+}
+
+function plainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function inputString(value, path, max, required = false) {
+  if (value === undefined || value === null) value = '';
+  if (typeof value !== 'string') throw invalidInput(path + ' must be text.');
+  const text = value.trim();
+  if (required && !text) throw invalidInput(path + ' is required.');
+  if (text.length > max) throw invalidInput(path + ' must be ' + max + ' characters or fewer.');
+  return text;
+}
+
+function inputArray(value, path, max) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw invalidInput(path + ' must be a list.');
+  if (value.length > max) throw invalidInput(path + ' can contain at most ' + max + ' items.');
+  return value;
+}
+
+function inputUrl(value, path, required = false) {
+  const raw = inputString(value, path, 2048, required);
+  if (!raw) return '';
+  let url;
+  try { url = new URL(raw); } catch { throw invalidInput(path + ' must be a full URL starting with http:// or https://.'); }
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
+    throw invalidInput(path + ' must be a plain http:// or https:// URL without credentials.');
+  }
+  return url.href;
+}
+
+function inputUrls(value, path, max) {
+  return inputArray(value, path, max)
+    .map((item, index) => item === undefined || item === null || item === '' ? '' : inputUrl(item, path + '[' + index + ']'))
+    .filter(Boolean);
+}
+
+function inputStringList(value, path, maxItems, maxLength) {
+  return inputArray(value, path, maxItems)
+    .map((item, index) => inputString(item, path + '[' + index + ']', maxLength))
+    .filter(Boolean);
+}
+
+function inputCoordinate(value, path, min, max) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'number' && typeof value !== 'string') throw invalidInput(path + ' must be a number.');
+  if (typeof value === 'string' && value.trim() === '') return null;
+  const number = typeof value === 'number' ? value : Number(value.trim());
+  if (!Number.isFinite(number) || number < min || number > max) {
+    throw invalidInput(path + ' must be a number between ' + min + ' and ' + max + '.');
+  }
+  return number;
+}
+
+function validateLocation(location, index) {
+  const path = 'locations[' + index + ']';
+  if (!plainObject(location)) throw invalidInput(path + ' must be an object.');
+  inputString(location.name, path + '.name', 200, true);
+  inputString(location.slug, path + '.slug', 120);
+  inputString(location.businessType, path + '.businessType', 80);
+  inputUrl(location.locationPageUrl, path + '.locationPageUrl');
+  inputString(location.telephone, path + '.telephone', 80);
+  inputString(location.streetAddress, path + '.streetAddress', 240);
+  inputString(location.city, path + '.city', 120);
+  inputString(location.state, path + '.state', 120);
+  inputString(location.postalCode, path + '.postalCode', 40);
+  inputString(location.country, path + '.country', 80);
+  const latitude = inputCoordinate(location.latitude, path + '.latitude', -90, 90);
+  const longitude = inputCoordinate(location.longitude, path + '.longitude', -180, 180);
+  if ((latitude === null) !== (longitude === null)) {
+    throw invalidInput(path + ' must include both latitude and longitude, or neither.');
+  }
+  inputUrl(location.googleMapsUrl, path + '.googleMapsUrl');
+  inputUrl(location.gbpShareUrl, path + '.gbpShareUrl');
+}
+
+function validatePerson(person, index) {
+  const path = 'people[' + index + ']';
+  if (!plainObject(person)) throw invalidInput(path + ' must be an object.');
+  inputString(person.name, path + '.name', 200, true);
+  inputString(person.slug, path + '.slug', 120);
+  inputString(person.jobTitle, path + '.jobTitle', 160);
+  inputUrl(person.profilePageUrl, path + '.profilePageUrl');
+  inputStringList(person.knowsAbout, path + '.knowsAbout', INPUT_CAPS.knowsAbout, 120);
+  inputUrls(person.sameAsUrls, path + '.sameAsUrls', INPUT_CAPS.personSameAsUrls);
+}
+
+function validateService(service, index) {
+  const path = 'services[' + index + ']';
+  if (!plainObject(service)) throw invalidInput(path + ' must be an object.');
+  inputString(service.name, path + '.name', 200, true);
+  inputString(service.slug, path + '.slug', 120);
+  inputUrl(service.serviceUrl, path + '.serviceUrl');
+  inputString(service.description, path + '.description', 1200);
+  const cities = inputArray(service.areaServedCities, path + '.areaServedCities', INPUT_CAPS.areaServedCities);
+  cities.forEach((city, cityIndex) => {
+    const cityPath = path + '.areaServedCities[' + cityIndex + ']';
+    if (typeof city === 'string') {
+      inputString(city, cityPath, 120, true);
+      return;
+    }
+    if (!plainObject(city)) throw invalidInput(cityPath + ' must be a city name or an object.');
+    inputString(city.name, cityPath + '.name', 120, true);
+    inputUrl(city.wikidataUrl, cityPath + '.wikidataUrl');
+  });
+}
+
+function validateInputFields(input) {
+  inputUrl(input.domain, 'domain', true);
+  inputString(input.brandName, 'brandName', 200, true);
+  inputString(input.description, 'description', 2000, true);
+  inputString(input.legalName, 'legalName', 200);
+  inputString(input.disambiguatingDescription, 'disambiguatingDescription', 600);
+  inputString(input.telephone, 'telephone', 80);
+  inputUrl(input.logoUrl, 'logoUrl');
+  const foundingYear = inputString(input.foundingYear, 'foundingYear', 20);
+  if (foundingYear && !/^\d{4}(?:-\d{2}-\d{2})?$/.test(foundingYear)) {
+    throw invalidInput('foundingYear must be a four-digit year such as 2014, or a date such as 2014-05-01.');
+  }
+  inputUrls(input.sameAsUrls, 'sameAsUrls', INPUT_CAPS.sameAsUrls);
 }
 
 function validateImplementationInput(input, plan) {
@@ -222,9 +365,14 @@ function validateImplementationInput(input, plan) {
   if (size > MAX_INPUT_BYTES) {
     return { ok: false, status: 413, error: 'The submitted details are too large. Shorten the descriptions and try again.' };
   }
-  const locations = Array.isArray(input.locations) ? input.locations : [];
-  const people = Array.isArray(input.people) ? input.people : [];
-  const services = Array.isArray(input.services) ? input.services : [];
+  let locations, people, services;
+  try {
+    locations = inputArray(input.locations, 'locations', Number.MAX_SAFE_INTEGER);
+    people = inputArray(input.people, 'people', Number.MAX_SAFE_INTEGER);
+    services = inputArray(input.services, 'services', Number.MAX_SAFE_INTEGER);
+  } catch (error) {
+    return { ok: false, status: 400, error: error.message, code: 'INVALID_INPUT' };
+  }
   if (locations.length > limits.locations) {
     return {
       ok: false,
@@ -248,6 +396,17 @@ function validateImplementationInput(input, plan) {
       error: `The ${OFFERS[plan].label} plan covers up to ${limits.services} services. Remove the extra services or contact us.`,
       code: 'PLAN_SERVICE_LIMIT'
     };
+  }
+  try {
+    validateInputFields(input);
+    locations.forEach(validateLocation);
+    people.forEach(validatePerson);
+    services.forEach(validateService);
+  } catch (error) {
+    if (error.code === 'INVALID_INPUT') {
+      return { ok: false, status: 400, error: error.message, code: 'INVALID_INPUT' };
+    }
+    throw error;
   }
   return { ok: true };
 }

@@ -201,3 +201,22 @@ test('a billing reconciliation failure cannot reserve or consume an audit',async
 test('background worker rejects non-hex signatures safely instead of throwing a length error',()=>{
  const {verifySignature}=require('../netlify/functions/lib/db');assert.equal(verifySignature(crypto.randomUUID(),String(Date.now()),'z'.repeat(64)),false);
 });
+
+test('dispatch signatures use ENTITY_SIGNING_SECRET instead of the database service-role key',()=>{
+ const {signature,verifySignature}=require('../netlify/functions/lib/db');
+ const keys=['ENTITY_SIGNING_SECRET','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY'];
+ const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
+ try{
+  Object.assign(process.env,{ENTITY_SIGNING_SECRET:'unit-signing-secret-0123456789abcdef',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'unit-only-not-a-key'});
+  const id=crypto.randomUUID(),t=String(Date.now());
+  const sig=signature(id,t);
+  assert.equal(verifySignature(id,t,sig),true);
+  const legacy=crypto.createHmac('sha256','unit-only-not-a-key').update(id+':'+t).digest('hex');
+  assert.equal(verifySignature(id,t,legacy),false,'the database key must not verify a dispatch signature');
+  delete process.env.ENTITY_SIGNING_SECRET;
+  assert.throws(()=>signature(id,t),/signing secret/i);
+  assert.equal(verifySignature(id,t,sig),false,'verification must fail closed when the secret is missing');
+ }finally{
+  for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}
+ }
+});

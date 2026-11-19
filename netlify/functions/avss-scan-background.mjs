@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { adminClient, safeFetch, assertPublicHttpUrl, saveFailure } from "./avss-shared.mjs";
+import { adminClient, safeFetch, assertPublicHttpUrl, readLimitedText, saveFailure } from "./avss-shared.mjs";
 export const config = { type:"background" };
 const BOTS=[
   {name:"OAI-SearchBot",ua:"OAI-SearchBot"},
@@ -26,7 +26,7 @@ function parseRobots(text,token){
 async function fetchText(url,ua){
   const r=await safeFetch(url,{userAgent:ua,timeout:12000});
   const ct=r.headers.get("content-type")||"";
-  const body=(await r.text()).slice(0,2_000_000);
+  const body=await readLimitedText(r,2_000_000);
   return {status:r.status,headers:r.headers,body,contentType:ct};
 }
 function scoreFindings(findings){let score=100;for(const f of findings){score-=({critical:20,high:12,medium:6,low:2}[f.severity]||0);}return Math.max(0,Math.min(100,score));}
@@ -77,7 +77,7 @@ export default async event=>{
     if(process.env.GROQ_API_KEY && findings.length){
       try{
         const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${process.env.GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.GROQ_MODEL||"llama-3.3-70b-versatile",temperature:0.2,messages:[{role:"system",content:"Explain website crawler audit findings using only the evidence supplied. Do not claim real crawler IP verification. Return a concise executive summary and top three priorities."},{role:"user",content:JSON.stringify({url:root.href,pagesTested:pageRows.length,findings})}]})});
-        const payload=await ai.json(); if(ai.ok) aiSummary=payload.choices?.[0]?.message?.content||"";
+        const payload=JSON.parse(await readLimitedText(ai,512_000)); if(ai.ok) aiSummary=payload.choices?.[0]?.message?.content||"";
       }catch{}
     }
     const score=scoreFindings(findings);

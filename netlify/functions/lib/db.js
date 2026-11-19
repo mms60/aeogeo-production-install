@@ -42,6 +42,19 @@ async function user(event) {
  return u;
 }
 function reply(status,body){return{statusCode:status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'},body:JSON.stringify(body)};}
-function signature(id,time){return crypto.createHmac('sha256',config().key).update(id+':'+time).digest('hex');}
-function verifySignature(id,time,sig){if(!UUID.test(id||'')||!/^\d+$/.test(time||'')||Math.abs(Date.now()-Number(time))>300000||!/^[0-9a-f]{64}$/i.test(sig||''))return false; return crypto.timingSafeEqual(Buffer.from(signature(id,time),'hex'),Buffer.from(sig,'hex'));}
+// Background job dispatch uses a dedicated HMAC secret, never the Supabase
+// service-role key. The two trust domains stay separate if one is rotated.
+function signingSecret(){
+ const secret=process.env.ENTITY_SIGNING_SECRET?.trim();
+ if(!secret||secret.length<32) throw Object.assign(new Error('The background job signing secret is not configured. Contact the website owner. Reference: ENTITY_SIGNING.'),{status:503,code:'signing_configuration'});
+ return secret;
+}
+function signature(id,time){return crypto.createHmac('sha256',signingSecret()).update(id+':'+time).digest('hex');}
+function verifySignature(id,time,sig){
+ if(!UUID.test(id||'')||!/^\d+$/.test(time||'')||Math.abs(Date.now()-Number(time))>300000||!/^[0-9a-f]{64}$/i.test(sig||''))return false;
+ try{
+  const expected=Buffer.from(signature(id,time),'hex'),supplied=Buffer.from(sig,'hex');
+  return expected.length===supplied.length&&crypto.timingSafeEqual(expected,supplied);
+ }catch{return false;}
+}
 module.exports={db,user,reply,signature,verifySignature,UUID};
