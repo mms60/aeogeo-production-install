@@ -40,6 +40,18 @@
 [functions."avss-scan-background"]
   timeout = 900
 
+# Content Decay Predictor: crawler scans run as a background function.
+[functions."content-decay-scan-background"]
+  timeout = 900
+
+# The paid report page is private: never cached, never indexed.
+[[headers]]
+  for = "/content-decay/report/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
 [functions."content-notifications"]
   schedule = "@hourly"
 [[headers]]

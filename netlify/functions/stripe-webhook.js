@@ -23,6 +23,21 @@ exports.handler = async event => {
   if (entityPurchaseResult) return reply(200, {received: true, entityPurchase: true});
   const studioResult = await require("./lib/studio-link").handleStudioWebhook(e);
   if (studioResult) return reply(200, {received: true, studio: true});
+  // Content Decay shares this live endpoint. Stripe signs each endpoint
+  // separately, and this is the endpoint already configured for checkout,
+  // refund and dispute events. handleWebhook returns false for another
+  // product's records, so the remaining handlers still run.
+  if (e.livemode === true && process.env.STRIPE_SECRET_KEY) {
+    const isContentDecay = ((e.type === 'checkout.session.completed'
+      || e.type === 'checkout.session.async_payment_succeeded')
+      && e.data?.object?.metadata?.product === 'content_decay')
+      || e.type === 'charge.refunded'
+      || e.type === 'charge.dispute.created';
+    if (isContentDecay) {
+      const contentDecayResult = await require("./lib/content-decay-purchases").handleWebhook(e);
+      if (contentDecayResult) return reply(200, {received: true, contentDecay: true});
+    }
+  }
   const result = await configuredBillingSync().event(e);
   return reply(200, {received: true, ignored: !!result.ignored});
  } catch (err) {

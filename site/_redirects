@@ -123,6 +123,9 @@
 /ai-visibility-schema-studio        /ai-visibility-schema-studio.html          200
 /ai-visibility-schema-studio/app    /ai-visibility-schema-studio/app/index.html 200
 /ai-visibility-schema-studio/app/   /ai-visibility-schema-studio/app/index.html 200
+# Content Decay Predictor free scan.
+/content-decay        /content-decay/index.html  200
+/content-decay/       /content-decay/index.html  200
 # Private content receipt/review pages. Native directory rewrites, no forced slash redirects.
 /content-order/  /content-order/index.html  200
 /content-review/ /content-review/index.html 200

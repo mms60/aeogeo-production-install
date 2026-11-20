@@ -44,18 +44,25 @@ function wrapText(text, maxChars) {
   return lines;
 }
 
-function buildCompetitorPdf(report, meta = {}) {
+// Shared page engine for the hand-written PDFs in this project. Callers own the
+// content; this keeps the layout primitives, page limit handling and PDF object
+// assembly in one place.
+function createPdfWriter({
+  maxPages = MAX_PAGES,
+  headerLeft = 'AEOGEO Search',
+  headerRight = '',
+  footerLeft = 'AEOGEO Search',
+  capNote = ' (Capped at the page limit)',
+  documentTitle = 'Report',
+  creator = 'AEOGEO Search'
+} = {}) {
   const pages = [];
   let ops = [];
   let y = 0;
   let capped = false;
 
-  const domain = cleanText(report?.target?.domain || meta.domain || 'website');
-  const created = cleanText((report?.generatedAt || meta.createdAt || new Date().toISOString()).slice(0, 10));
-  const planLabel = report?.plan === 'monthly' ? 'Competitive Monitor (Monthly)' : 'Single Competitor Report';
-
   function startPage() {
-    if (pages.length >= MAX_PAGES) {
+    if (pages.length >= maxPages) {
       capped = true;
       return false;
     }
@@ -64,9 +71,9 @@ function buildCompetitorPdf(report, meta = {}) {
     ops.push('0.03 0.06 0.16 rg');
     ops.push(`0 ${PAGE_H - 44} ${PAGE_W} 44 re f`);
     ops.push('1 1 1 rg');
-    ops.push(`BT /F2 10 Tf ${MARGIN_X} ${PAGE_H - 27} Td (AEOGEO Search | Competitive Intelligence Report) Tj ET`);
+    ops.push(`BT /F2 10 Tf ${MARGIN_X} ${PAGE_H - 27} Td (${pdfEscape(headerLeft)}) Tj ET`);
     ops.push('0.68 0.78 1 rg');
-    ops.push(`BT /F1 9 Tf ${PAGE_W - MARGIN_X - 155} ${PAGE_H - 27} Td (${pdfEscape(domain)} | ${pdfEscape(created)}) Tj ET`);
+    ops.push(`BT /F1 9 Tf ${PAGE_W - MARGIN_X - 155} ${PAGE_H - 27} Td (${pdfEscape(headerRight)}) Tj ET`);
     y = PAGE_H - 68;
     pages.push(ops);
     return true;
@@ -165,71 +172,151 @@ function buildCompetitorPdf(report, meta = {}) {
     y -= 56;
   }
 
-  startPage();
-  drawTitleBlock(
+  function finish() {
+    const totalPages = pages.length;
+    pages.forEach((pOps, idx) => {
+      pOps.push('0.82 0.87 0.94 RG 0.5 w');
+      pOps.push(`${MARGIN_X} 42 ${PAGE_W - MARGIN_X} 42 m S`);
+      pOps.push('0.38 0.45 0.55 rg');
+      const cap = capped && idx === totalPages - 1 ? capNote : '';
+      pOps.push(`BT /F3 8 Tf ${MARGIN_X} 28 Td (${pdfEscape(footerLeft + cap)}) Tj ET`);
+      pOps.push(`BT /F1 8 Tf ${PAGE_W - MARGIN_X - 62} 28 Td (Page ${idx + 1} of ${totalPages}) Tj ET`);
+    });
+
+    // Assemble PDF 1.4 object table
+    const objects = [];
+    const addObj = body => {
+      objects.push(body);
+      return objects.length;
+    };
+
+    const fontRegular = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    const fontBold = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    const fontItalic = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>');
+    const pagesObjNum = addObj(''); // placeholder
+
+    const pageNums = pages.map(pOps => {
+      const stream = pOps.join('\n');
+      const contentNum = addObj(`<< /Length ${Buffer.byteLength(stream, 'ascii')} >>\nstream\n${stream}\nendstream`);
+      return addObj(
+        `<< /Type /Page /Parent ${pagesObjNum} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] ` +
+        `/Resources << /Font << /F1 ${fontRegular} 0 R /F2 ${fontBold} 0 R /F3 ${fontItalic} 0 R >> >> ` +
+        `/Contents ${contentNum} 0 R >>`
+      );
+    });
+
+    objects[pagesObjNum - 1] = `<< /Type /Pages /Count ${pageNums.length} /Kids [${pageNums.map(n => `${n} 0 R`).join(' ')}] >>`;
+    const catalogNum = addObj(`<< /Type /Catalog /Pages ${pagesObjNum} 0 R >>`);
+    const infoNum = addObj(`<< /Title (${pdfEscape(documentTitle)}) /Creator (${pdfEscape(creator)}) >>`);
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+    objects.forEach((body, idx) => {
+      offsets.push(Buffer.byteLength(pdf, 'ascii'));
+      pdf += `${idx + 1} 0 obj\n${body}\nendobj\n`;
+    });
+    const xrefStart = Buffer.byteLength(pdf, 'ascii');
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    for (let i = 1; i <= objects.length; i++) {
+      pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+    }
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogNum} 0 R /Info ${infoNum} 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
+
+    return { bytes: Buffer.from(pdf, 'ascii'), pageCount: pageNums.length, capped };
+  }
+
+  return {
+    startPage,
+    ensureSpace,
+    drawTitleBlock,
+    drawSectionHeading,
+    drawSubheading,
+    drawParagraph,
+    drawBullet,
+    drawMetricsRow,
+    finish
+  };
+}
+
+function buildCompetitorPdf(report, meta = {}) {
+  const domain = cleanText(report?.target?.domain || meta.domain || 'website');
+  const created = cleanText((report?.generatedAt || meta.createdAt || new Date().toISOString()).slice(0, 10));
+  const planLabel = report?.plan === 'monthly' ? 'Competitive Monitor (Monthly)' : 'Single Competitor Report';
+
+  const pdf = createPdfWriter({
+    maxPages: MAX_PAGES,
+    headerLeft: 'AEOGEO Search | Competitive Intelligence Report',
+    headerRight: `${domain} | ${created}`,
+    footerLeft: 'AEOGEO Search Competitive Intelligence - Directional public-web signals',
+    capNote: ' (Capped at 25 pages per package specification)',
+    documentTitle: 'Competitive Intelligence Report - ' + domain
+  });
+
+  pdf.startPage();
+  pdf.drawTitleBlock(
     planLabel,
     `Competitive Intelligence Report: ${domain}`,
     `Prepared for ${report?.target?.url || domain} on ${created}. Directional public-web comparative analysis capped at 25 pages.`
   );
 
   const snap = report?.executiveSnapshot || {};
-  drawMetricsRow([
+  pdf.drawMetricsRow([
     { label: 'Your Readiness Index', value: `${snap.yourScore ?? 0}/100`, note: 'Public HTML & AI signals' },
     { label: 'Competitors Mapped', value: String(snap.competitorsMapped ?? 0), note: `${snap.directCount ?? 0} direct, ${snap.adjacentCount ?? 0} adjacent` },
     { label: 'Search Topic Gaps', value: String(snap.topicGapCount ?? 0), note: 'Uncovered topic clusters' },
     { label: 'Positioning Overlap', value: `${snap.positioningOverlap ?? 0}%`, note: `${snap.quickWinCount ?? 0} prioritized quick wins` }
   ]);
 
-  drawSectionHeading('1. Executive Snapshot');
-  drawParagraph(snap.summary || 'Comparative analysis of your public website and selected competitors across positioning, audience signals, the 4 Ps, search/AI readiness, and content coverage.');
+  pdf.drawSectionHeading('1. Executive Snapshot');
+  pdf.drawParagraph(snap.summary || 'Comparative analysis of your public website and selected competitors across positioning, audience signals, the 4 Ps, search/AI readiness, and content coverage.');
 
   if (report?.comparisonDelta) {
     const d = report.comparisonDelta;
-    drawSubheading(`Month-to-Month Comparison (vs. ${cleanText((d.previousDate || '').slice(0, 10))})`);
-    drawBullet(`Readiness index change: ${d.scoreDelta >= 0 ? '+' : ''}${d.scoreDelta} points (previous: ${d.previousScore}/100, current: ${d.currentScore}/100).`);
-    drawBullet(`Structured data pages delta: ${d.schemaPagesDelta >= 0 ? '+' : ''}${d.schemaPagesDelta}; uncovered competitor topic gaps: ${d.previousTopicGaps} -> ${d.currentTopicGaps}.`);
+    pdf.drawSubheading(`Month-to-Month Comparison (vs. ${cleanText((d.previousDate || '').slice(0, 10))})`);
+    pdf.drawBullet(`Readiness index change: ${d.scoreDelta >= 0 ? '+' : ''}${d.scoreDelta} points (previous: ${d.previousScore}/100, current: ${d.currentScore}/100).`);
+    pdf.drawBullet(`Structured data pages delta: ${d.schemaPagesDelta >= 0 ? '+' : ''}${d.schemaPagesDelta}; uncovered competitor topic gaps: ${d.previousTopicGaps} -> ${d.currentTopicGaps}.`);
   }
 
-  drawSectionHeading('2. Competitive Positioning Matrix');
+  pdf.drawSectionHeading('2. Competitive Positioning Matrix');
   const allSites = [report?.target, ...(report?.competitors || [])].filter(Boolean);
   for (const site of allSites) {
     const tag = site.isTarget ? '[YOUR SITE]' : `[${(site.relationship || 'Competitor').toUpperCase()}]`;
-    drawSubheading(`${tag} ${site.domain} - Readiness Index: ${site.score}/100`);
-    drawBullet(`Audience signal: ${site.audienceSignal || 'General market'} | Offer: ${site.offerSummary || 'Website services'}`);
-    drawBullet(`Price visibility: ${site.priceVisibility || 'Quote-led'} | Search readiness: ${site.searchStrength || 'Moderate'} | Content angle: ${site.contentAngle || 'Informational'}`);
+    pdf.drawSubheading(`${tag} ${site.domain} - Readiness Index: ${site.score}/100`);
+    pdf.drawBullet(`Audience signal: ${site.audienceSignal || 'General market'} | Offer: ${site.offerSummary || 'Website services'}`);
+    pdf.drawBullet(`Price visibility: ${site.priceVisibility || 'Quote-led'} | Search readiness: ${site.searchStrength || 'Moderate'} | Content angle: ${site.contentAngle || 'Informational'}`);
   }
 
-  drawSectionHeading('3. Competitor-by-Competitor Insights (Audience & 4 Ps)');
+  pdf.drawSectionHeading('3. Competitor-by-Competitor Insights (Audience & 4 Ps)');
   for (const comp of report?.competitors || []) {
-    drawSubheading(`${comp.domain} (${comp.relationship || 'Direct rival'} - Index ${comp.score}/100)`);
-    drawBullet(`Headline positioning: ${comp.headline || comp.title || comp.domain}`);
-    drawBullet(`Product / Offer: ${comp.fourPs?.product || comp.offerSummary}`);
-    drawBullet(`Price transparency: ${comp.fourPs?.price || comp.priceVisibility}`);
-    drawBullet(`Place / Channels: ${comp.fourPs?.place || 'Online website presence'}`);
-    drawBullet(`Promotion & CTAs: ${comp.fourPs?.promotion || 'Standard contact pathways'}`);
-    drawBullet(`Top observed topics: ${(comp.topTopics || []).slice(0, 6).join(', ') || 'General brand terms'}`);
+    pdf.drawSubheading(`${comp.domain} (${comp.relationship || 'Direct rival'} - Index ${comp.score}/100)`);
+    pdf.drawBullet(`Headline positioning: ${comp.headline || comp.title || comp.domain}`);
+    pdf.drawBullet(`Product / Offer: ${comp.fourPs?.product || comp.offerSummary}`);
+    pdf.drawBullet(`Price transparency: ${comp.fourPs?.price || comp.priceVisibility}`);
+    pdf.drawBullet(`Place / Channels: ${comp.fourPs?.place || 'Online website presence'}`);
+    pdf.drawBullet(`Promotion & CTAs: ${comp.fourPs?.promotion || 'Standard contact pathways'}`);
+    pdf.drawBullet(`Top observed topics: ${(comp.topTopics || []).slice(0, 6).join(', ') || 'General brand terms'}`);
   }
 
-  drawSectionHeading('4. Your 4 Ps vs. Market Landscape');
+  pdf.drawSectionHeading('4. Your 4 Ps vs. Market Landscape');
   const own4p = report?.target?.fourPs || {};
-  drawBullet(`Your Product / Offer signals: ${own4p.product || report?.target?.offerSummary || 'Core website pages analyzed'}`);
-  drawBullet(`Your Price visibility: ${own4p.price || report?.target?.priceVisibility || 'Not prominently published on crawled pages'}`);
-  drawBullet(`Your Place / Distribution signals: ${own4p.place || 'Website conversion flow'}`);
-  drawBullet(`Your Promotion / CTA signals: ${own4p.promotion || 'Primary navigation CTAs'}`);
+  pdf.drawBullet(`Your Product / Offer signals: ${own4p.product || report?.target?.offerSummary || 'Core website pages analyzed'}`);
+  pdf.drawBullet(`Your Price visibility: ${own4p.price || report?.target?.priceVisibility || 'Not prominently published on crawled pages'}`);
+  pdf.drawBullet(`Your Place / Distribution signals: ${own4p.place || 'Website conversion flow'}`);
+  pdf.drawBullet(`Your Promotion / CTA signals: ${own4p.promotion || 'Primary navigation CTAs'}`);
 
-  drawSectionHeading('5. Search Visibility & Content Topic Gaps');
-  drawParagraph('Directional readiness reflects public HTML structure, robots.txt AI crawler permissions, sitemap discovery, JSON-LD schema, headings, and answer-ready FAQ/list formatting. It is not measured market share or third-party traffic.');
+  pdf.drawSectionHeading('5. Search Visibility & Content Topic Gaps');
+  pdf.drawParagraph('Directional readiness reflects public HTML structure, robots.txt AI crawler permissions, sitemap discovery, JSON-LD schema, headings, and answer-ready FAQ/list formatting. It is not measured market share or third-party traffic.');
   const gaps = report?.topicGaps || [];
   if (gaps.length) {
-    drawSubheading('Uncovered Competitor Topic Clusters to Evaluate');
+    pdf.drawSubheading('Uncovered Competitor Topic Clusters to Evaluate');
     for (const g of gaps.slice(0, 18)) {
-      drawBullet(`${g.topic} (covered by ${(g.competitors || []).join(', ')})`);
+      pdf.drawBullet(`${g.topic} (covered by ${(g.competitors || []).join(', ')})`);
     }
   } else {
-    drawBullet('Your crawled pages already cover the primary multi-competitor topic clusters detected in this run.');
+    pdf.drawBullet('Your crawled pages already cover the primary multi-competitor topic clusters detected in this run.');
   }
 
-  drawSectionHeading('6. SWOT Analysis');
+  pdf.drawSectionHeading('6. SWOT Analysis');
   const swot = report?.swot || {};
   for (const [label, list] of [
     ['Strengths', swot.strengths],
@@ -237,72 +324,23 @@ function buildCompetitorPdf(report, meta = {}) {
     ['Opportunities', swot.opportunities],
     ['Threats', swot.threats]
   ]) {
-    drawSubheading(label);
-    for (const item of (list || []).slice(0, 5)) drawBullet(item);
+    pdf.drawSubheading(label);
+    for (const item of (list || []).slice(0, 5)) pdf.drawBullet(item);
   }
 
-  drawSectionHeading('7. Prioritized Action Plan');
+  pdf.drawSectionHeading('7. Prioritized Action Plan');
   (report?.recommendations || []).slice(0, 8).forEach((rec, i) => {
-    drawSubheading(`Step ${i + 1}: ${rec.title || 'Priority action'}`);
-    drawBullet(rec.detail || '');
+    pdf.drawSubheading(`Step ${i + 1}: ${rec.title || 'Priority action'}`);
+    pdf.drawBullet(rec.detail || '');
   });
 
-  drawSectionHeading('8. Source Notes & Data Caveats');
-  drawParagraph(report?.caveats || 'All findings come from live HTTPS fetches of publicly accessible HTML pages, robots.txt, and sitemaps at report runtime. Scores represent technical and content readiness signals, not proprietary traffic, revenue, or live AI-answer share.');
+  pdf.drawSectionHeading('8. Source Notes & Data Caveats');
+  pdf.drawParagraph(report?.caveats || 'All findings come from live HTTPS fetches of publicly accessible HTML pages, robots.txt, and sitemaps at report runtime. Scores represent technical and content readiness signals, not proprietary traffic, revenue, or live AI-answer share.');
   for (const src of (report?.sources || []).slice(0, 24)) {
-    drawBullet(`${src.domain}: ${src.pagesAnalyzed} public page(s) analyzed (${(src.urls || []).slice(0, 3).join(', ')})`);
+    pdf.drawBullet(`${src.domain}: ${src.pagesAnalyzed} public page(s) analyzed (${(src.urls || []).slice(0, 3).join(', ')})`);
   }
 
-  const totalPages = pages.length;
-  pages.forEach((pOps, idx) => {
-    pOps.push('0.82 0.87 0.94 RG 0.5 w');
-    pOps.push(`${MARGIN_X} 42 ${PAGE_W - MARGIN_X} 42 m S`);
-    pOps.push('0.38 0.45 0.55 rg');
-    const capNote = capped && idx === totalPages - 1 ? ' (Capped at 25 pages per package specification)' : '';
-    pOps.push(`BT /F3 8 Tf ${MARGIN_X} 28 Td (AEOGEO Search Competitive Intelligence - Directional public-web signals${pdfEscape(capNote)}) Tj ET`);
-    pOps.push(`BT /F1 8 Tf ${PAGE_W - MARGIN_X - 62} 28 Td (Page ${idx + 1} of ${totalPages}) Tj ET`);
-  });
-
-  // Assemble PDF 1.4 object table
-  const objects = [];
-  const addObj = body => {
-    objects.push(body);
-    return objects.length;
-  };
-
-  const fontRegular = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
-  const fontBold = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
-  const fontItalic = addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>');
-  const pagesObjNum = addObj(''); // placeholder
-
-  const pageNums = pages.map(pOps => {
-    const stream = pOps.join('\n');
-    const contentNum = addObj(`<< /Length ${Buffer.byteLength(stream, 'ascii')} >>\nstream\n${stream}\nendstream`);
-    return addObj(
-      `<< /Type /Page /Parent ${pagesObjNum} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] ` +
-      `/Resources << /Font << /F1 ${fontRegular} 0 R /F2 ${fontBold} 0 R /F3 ${fontItalic} 0 R >> >> ` +
-      `/Contents ${contentNum} 0 R >>`
-    );
-  });
-
-  objects[pagesObjNum - 1] = `<< /Type /Pages /Count ${pageNums.length} /Kids [${pageNums.map(n => `${n} 0 R`).join(' ')}] >>`;
-  const catalogNum = addObj(`<< /Type /Catalog /Pages ${pagesObjNum} 0 R >>`);
-  const infoNum = addObj(`<< /Title (${pdfEscape('Competitive Intelligence Report - ' + domain)}) /Creator (AEOGEO Search) >>`);
-
-  let pdf = '%PDF-1.4\n';
-  const offsets = [0];
-  objects.forEach((body, idx) => {
-    offsets.push(Buffer.byteLength(pdf, 'ascii'));
-    pdf += `${idx + 1} 0 obj\n${body}\nendobj\n`;
-  });
-  const xrefStart = Buffer.byteLength(pdf, 'ascii');
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  for (let i = 1; i <= objects.length; i++) {
-    pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
-  }
-  pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogNum} 0 R /Info ${infoNum} 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
-
-  return { bytes: Buffer.from(pdf, 'ascii'), pageCount: pageNums.length };
+  return pdf.finish();
 }
 
-module.exports = { buildCompetitorPdf, MAX_PAGES };
+module.exports = { buildCompetitorPdf, createPdfWriter, MAX_PAGES };
