@@ -63,11 +63,34 @@ function sitemapEntries(xml) {
   return {urls, children};
 }
 
+const MONTH_INDEX = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+};
+
+// A date without a time is a calendar date, not local midnight. Parsing it in
+// the server's timezone would move it to the previous or next UTC day, so the
+// components are read explicitly and built in UTC.
+function utcDateOnly(text) {
+  const build = (year, month, day) => {
+    if (month === undefined || day < 1 || day > 31) return null;
+    const date = new Date(Date.UTC(Number(year), month, day));
+    return date.getUTCMonth() === month && date.getUTCDate() === day ? date : null;
+  };
+  let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (match) return build(match[1], Number(match[2]) - 1, Number(match[3]));
+  match = /^([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})$/.exec(text);
+  if (match) return build(match[3], MONTH_INDEX[match[1].slice(0, 3).toLowerCase()], Number(match[2]));
+  match = /^(\d{1,2})\s+([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(text);
+  if (match) return build(match[3], MONTH_INDEX[match[2].slice(0, 3).toLowerCase()], Number(match[1]));
+  return null;
+}
+
 function isoDate(value) {
   if (value === undefined || value === null) return null;
   const text = String(value).trim();
   if (!text) return null;
-  const parsed = new Date(text);
+  const parsed = utcDateOnly(text) || new Date(text);
   if (Number.isNaN(parsed.getTime())) return null;
   const year = parsed.getUTCFullYear();
   const current = new Date().getUTCFullYear();
@@ -478,4 +501,4 @@ function summarise(pages, today = new Date(), meta = {}) {
   };
 }
 
-module.exports = {crawlSite, analysePage, summarise, candidateQueue, MAX_PAGES};
+module.exports = {crawlSite, analysePage, summarise, candidateQueue, normalURL, MAX_PAGES};
