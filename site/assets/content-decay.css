@@ -34,7 +34,29 @@ body {
   padding: 132px 20px 96px;
 }
 
-.cd-hero { padding: 0 0 34px; }
+.cd-hero {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 34px;
+}
+
+/* Desktop reading order stays as approved. */
+.cd-hero .cd-kicker { order: 1; }
+.cd-hero h1 { order: 2; }
+.cd-hero .cd-lede,
+.cd-hero .cd-hero-copy,
+.cd-hero .cd-hero-claim { order: 3; }
+.cd-hero .cd-hero-actions { order: 4; }
+.cd-hero .cd-secondary { order: 5; }
+
+@media (max-width: 640px) {
+  /* On phones the primary action and its supporting line come before the copy. */
+  .cd-hero .cd-hero-actions { order: 3; }
+  .cd-hero .cd-secondary { order: 4; }
+  .cd-hero .cd-lede,
+  .cd-hero .cd-hero-copy,
+  .cd-hero .cd-hero-claim { order: 5; }
+}
 
 .cd-kicker {
   margin: 0 0 12px;
