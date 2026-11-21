@@ -2,8 +2,8 @@
   "version": 1,
   "pages": {
     "https://aeogeosearch.com/": {
-      "hash": "074ad0eba17d777194cd93db2478aaa94d56ca11fcea2b2bcd810c070b4399b3",
-      "lastmod": "2026-11-19"
+      "hash": "4ae6d07782ef94710b0fe272a7234b0955c9b9400d701808a4c6731190da5472",
+      "lastmod": "2026-11-21"
     },
     "https://aeogeosearch.com/about": {
       "hash": "c05f0d6c44187b1c7475c533b14e79022cad8971996bfb5b60ecbebcfff09c6a",
@@ -152,6 +152,10 @@
     "https://aeogeosearch.com/resources/meta-tags-ai-answers/": {
       "hash": "908428cfbd8f3f195519ee33ec0a020d884c3f03112487d40ba092dd90395f05",
       "lastmod": "2026-11-18"
+    },
+    "https://aeogeosearch.com/content-decay/": {
+      "hash": "b68517a542b4747dc268dbb088ba7ead4533f2b1972ca48de9e072df8b296eeb",
+      "lastmod": "2026-11-21"
     }
   }
 }
