@@ -4,9 +4,9 @@ const $=id=>document.getElementById(id),button=$('service-purchase'),message=$('
 const params=new URLSearchParams(location.search),sid=params.get('session_id'),service=params.get('service')||'knowledge-base';
 let pending=false,ready=false,checkoutOpen=false,csrf=null,canCheck=false,billingLoginUrl=null,switchPlan=false;
 const monthly={
- 'ai-visibility-starter':{name:'AI Visibility Starter',price:'$349 per month',features:['Review selected AI search prompts and brand mentions','Optimize up to 2 existing website pages per month','Create 4 social media posts per month','Receive a monthly progress summary and next step recommendations']},
- 'ai-search-growth':{name:'AI Search Growth',price:'$649 per month',features:['Everything included in Starter, plus:','Optimize up to 4 existing website pages per month','Create 1 new article per month, 700 to 1,000 words','Create 8 social media posts per month','Research customer questions and content opportunities','Receive monthly AI visibility and content reporting']},
- 'ai-search-authority':{name:'AI Search Authority',price:'$999 per month',features:['Everything included in Growth, plus:','Optimize up to 4 existing website pages per month','Create 2 new articles per month, 700 to 1,200 words each','Create 12 social media posts per month','Review competitor visibility and content gaps','Receive a content calendar and expanded monthly reporting']}
+ 'ai-visibility-starter':{name:'AI Visibility Starter',price:'$349 per month',features:['Review selected AI search prompts and brand mentions','Optimize up to 2 existing website pages per month','Create 4 social media posts per month','Receive a monthly progress summary and next-step recommendations']},
+ 'ai-search-growth':{name:'AI Search Growth',price:'$649 per month',features:['Everything in Starter, plus:','Optimize up to 4 existing website pages per month','Create 1 new article per month (700–1,000 words)','Create 8 social media posts per month','Research customer questions and content opportunities','Receive monthly AI visibility and content reporting']},
+ 'ai-search-authority':{name:'AI Search Authority',price:'$999 per month',features:['Everything in Growth, plus:','Optimize up to 4 existing website pages per month','Create 2 new articles per month (700–1,200 words each)','Create 12 social media posts per month','Review competitor visibility and content gaps','Receive a content calendar and expanded monthly reporting']}
 };
 
 const recurring=Object.hasOwn(monthly,service),selected=monthly[service];

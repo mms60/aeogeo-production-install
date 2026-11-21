@@ -1,5 +1,5 @@
 {
-  "status": "Owner decisions recorded; implementation and end-to-end verification incomplete; not live subscription terms",
+  "status": "Owner decisions recorded; implementation and end-to-end verification incomplete; production billing gates are closed; not live subscription terms",
   "cancellation": {
     "timing": "end_of_paid_period",
     "access": "Retain already-paid access until the period ends",
@@ -20,5 +20,12 @@
     "ownerApproved": true
   },
   "savedReports": "Retained; no report deletion from cancellation, refund or dispute",
+  "productionGates": {
+    "BILLING_REVIEW_COMPLETE": false,
+    "LIVE_PAYMENTS_ENABLED": false,
+    "decision": "Closed on 2026-11-20 because material approvals remain open: tax and jurisdiction, paid-feature readiness, and live end-to-end billing. No live subscription has completed a billing cycle, and checkout does not currently calculate tax despite the active Texas registration.",
+    "coverageNote": "These flags gate the GEO plan checkout and the service, content, competitor, and monthly-service paths that consult them. Studio, Directory Listing Kit, and Entity Authority checkout endpoints do not consult LIVE_PAYMENTS_ENABLED, so closing it does not by itself stop those live purchases.",
+    "note": "Set in the Netlify production environment on 2026-11-20. A production deploy is required for the values to take effect."
+  },
   "remainingApprovals": ["Written customer-facing refund eligibility/terms", "Tax and jurisdiction requirements", "Paid feature delivery/readiness", "Live end-to-end billing approval"]
 }

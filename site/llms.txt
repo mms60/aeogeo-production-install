@@ -47,5 +47,4 @@ Our pricing page is the source of truth: 12 service options in six categories. C
 - [Why are zero-click searches rising  -  and what can businesses do about it?](https://aeogeosearch.com/resources/zero-click-search/)
 - [How do you get cited in AI answers from Google Gemini, Claude, Perplexity, and ChatGPT?](https://aeogeosearch.com/resources/get-cited-ai-answers/)
 - [Which AI search platforms should your business optimize for in 2026?](https://aeogeosearch.com/resources/which-ai-platforms/)
-- [What is AEOM  -  the AI Engine Optimization Method?](https://aeogeosearch.com/resources/what-is-aeom/)
 - [How do you measure AI search visibility and GEO performance?](https://aeogeosearch.com/resources/measure-ai-visibility/)

@@ -180,7 +180,7 @@ test('renderer returns nothing for an anchor that is not in the bundle', () => {
 });
 
 test('every bundle article renders its own title, answer, paragraphs and takeaways', () => {
-  assert.ok(ARTICLES.length >= 16, `expected the full article library, found ${ARTICLES.length}`);
+  assert.ok(ARTICLES.length >= 15, `expected the full article library, found ${ARTICLES.length}`);
 
   for (const article of ARTICLES) {
     const tree = render(article);
