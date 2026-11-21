@@ -7,6 +7,8 @@ import studioPrice from "./lib/studio-price.js";
 const { stripeKeyMode } = stripeCredential;
 // Match the Stripe client's own normalisation, including restricted live keys.
 const liveMode = () => stripeKeyMode() === "live";
+// Netlify provides the canonical origin as PUBLIC_SITE_URL; URL is the built-in fallback.
+const baseUrl = () => (process.env.PUBLIC_SITE_URL || process.env.URL || "https://aeogeosearch.com").replace(/\/$/, "");
 
 export default async event => {
   try{
@@ -31,8 +33,8 @@ export default async event => {
       customer_email:profile?.stripe_customer_id?undefined:user.email,
       client_reference_id:user.id,metadata:{supabase_user_id:user.id},
       subscription_data:{metadata:{supabase_user_id:user.id}},
-      success_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/app/?checkout=success`,
-      cancel_url:`${process.env.SITE_URL}/ai-visibility-schema-studio/app/?checkout=cancelled`
+      success_url:`${baseUrl()}/ai-visibility-schema-studio/app/?checkout=success`,
+      cancel_url:`${baseUrl()}/ai-visibility-schema-studio/app/?checkout=cancelled`
     });
     return json(200,{url:session.url});
   }catch(e){return json(e.status||400,{error:e.message});}
