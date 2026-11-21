@@ -110,6 +110,8 @@
 /resources/get-cited-ai-answers/ /resources/get-cited-ai-answers/index.html 200
 /resources/which-ai-platforms /resources/which-ai-platforms/ 301
 /resources/which-ai-platforms/ /resources/which-ai-platforms/index.html 200
+/resources/what-is-aeom /what-is-aeom 301
+/resources/what-is-aeom/ /what-is-aeom 301
 /resources/measure-ai-visibility /resources/measure-ai-visibility/ 301
 /resources/measure-ai-visibility/ /resources/measure-ai-visibility/index.html 200
 # END individual-resource-articles-v1
