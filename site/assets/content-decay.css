@@ -468,6 +468,208 @@ body {
 .cd-table a { color: #a9c5ff; overflow-wrap: anywhere; }
 .cd-table .cd-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+/* ---- Campaign sections ------------------------------------------------ */
+
+#cd-form { scroll-margin-top: 116px; }
+
+.cd-hero-copy {
+  margin: 14px 0 0;
+  max-width: 760px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: #c7d6ed;
+}
+
+.cd-hero-claim {
+  margin: 20px 0 0;
+  max-width: 760px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #fff;
+}
+
+.cd-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 26px 0 0;
+}
+
+.cd-cta-lg {
+  padding: 16px 30px;
+  font-size: 15px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.cd-secondary {
+  margin: 18px 0 0;
+  max-width: 760px;
+  padding: 14px 18px;
+  border-left: 4px solid var(--cd-accent);
+  border-radius: 0 12px 12px 0;
+  background: #0c1c38;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #e6eeff;
+}
+
+.cd-section {
+  margin: 0 0 26px;
+  padding: clamp(22px, 3.4vw, 34px);
+  border: 1px solid var(--cd-line);
+  border-radius: 20px;
+  background: linear-gradient(145deg, var(--cd-panel-2), var(--cd-panel));
+}
+
+.cd-section h2,
+.cd-final h2 {
+  margin: 0 0 16px;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: clamp(22px, 2.9vw, 30px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.cd-subhead,
+.cd-final-subhead {
+  margin: 26px 0 10px;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.cd-section p,
+.cd-final p {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: #d4e0f4;
+}
+
+.cd-section .cd-strong,
+.cd-final .cd-strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+.cd-section ul,
+.cd-section ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.cd-section li {
+  margin: 8px 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #d4e0f4;
+}
+
+.cd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 0;
+}
+
+.cd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.cd-card,
+.cd-step {
+  padding: 18px 20px;
+  border: 1px solid #23385a;
+  border-radius: 14px;
+  background: #0a1730;
+}
+
+.cd-card h3,
+.cd-step h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.cd-card p,
+.cd-step p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.cd-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.cd-final {
+  margin: 0 0 26px;
+  padding: clamp(26px, 4vw, 42px);
+  border: 1px solid rgba(79, 139, 255, .55);
+  border-radius: 22px;
+  background: linear-gradient(150deg, #173a74, #0d1d3a 62%);
+  box-shadow: 0 24px 60px rgba(18, 40, 90, .45);
+}
+
+.cd-final p.cd-closing {
+  margin: 22px 0 0;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: clamp(22px, 3vw, 30px) !important;
+  font-weight: 800;
+  line-height: 1.3 !important;
+  color: #fff;
+}
+
+.cd-faq {
+  display: grid;
+  gap: 10px;
+}
+
+.cd-faq details {
+  border: 1px solid #23385a;
+  border-radius: 12px;
+  background: #0a1730;
+  overflow: hidden;
+}
+
+.cd-faq summary {
+  padding: 14px 18px;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #fff;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.cd-faq summary:focus-visible {
+  outline: 3px solid #c1d8ff;
+  outline-offset: 2px;
+}
+
+.cd-faq details > div { padding: 0 18px 14px; }
+
+.cd-faq p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 @media (max-width: 560px) {
   .cd-shell { padding-top: 116px; }
   .cd-field button { flex: 1 1 100%; }
@@ -476,4 +678,6 @@ body {
   .cd-score strong { font-size: 44px; }
   .cd-table th:nth-child(2),
   .cd-table td:nth-child(2) { display: none; }
+  .cd-cta-lg { width: 100%; padding: 15px 20px; font-size: 14px; }
+  .cd-cards { grid-template-columns: 1fr; }
 }
