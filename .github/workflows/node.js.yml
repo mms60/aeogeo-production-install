@@ -31,3 +31,5 @@ jobs:
     - run: npm test
     - name: Verify sitemap lastmod dates
       run: npm run sitemap:check
+    - name: Verify navigation is generated from templates/site-header.html
+      run: npm run nav:check
