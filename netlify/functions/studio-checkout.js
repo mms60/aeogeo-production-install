@@ -4,8 +4,12 @@
 // the sellable Studio price on every request instead.
 const { stripe, origin } = require('./lib/stripe');
 const { resolveStudioPriceId } = require('./lib/studio-price');
+const { stripeKeyMode } = require('./lib/stripe-credential');
 
-const live = () => String(process.env.STRIPE_SECRET_KEY || '').startsWith('sk_live');
+// Read the mode the same way the Stripe client reads the key: quoted values and
+// restricted live keys are normalised first, so a live key is not mistaken for
+// a test one just because its prefix is rk_live instead of sk_live.
+const live = () => stripeKeyMode() === 'live';
 
 exports.handler = async event => {
   const method = (event.httpMethod || 'GET').toUpperCase();

@@ -1,9 +1,12 @@
 import Stripe from "stripe";
 import { json, readBody, userFromEvent, adminClient } from "./avss-shared.mjs";
 import stripeLib from "./lib/stripe.js";
+import stripeCredential from "./lib/stripe-credential.js";
 import studioPrice from "./lib/studio-price.js";
 
-const liveMode = () => String(process.env.STRIPE_SECRET_KEY || "").startsWith("sk_live");
+const { stripeKeyMode } = stripeCredential;
+// Match the Stripe client's own normalisation, including restricted live keys.
+const liveMode = () => stripeKeyMode() === "live";
 
 export default async event => {
   try{
