@@ -52,6 +52,8 @@
 /knowledge-library/how-to-get-your-website-on-bing-search  /knowledge-library/how-to-get-your-website-on-bing-search.html 200
 /knowledge-library/how-to-get-your-website-cited-by-chatgpt/ /knowledge-library/how-to-get-your-website-cited-by-chatgpt 301
 /knowledge-library/how-to-get-your-website-cited-by-chatgpt  /knowledge-library/how-to-get-your-website-cited-by-chatgpt.html 200
+/knowledge-library/how-to-track-ai-search-visibility/ /knowledge-library/how-to-track-ai-search-visibility 301
+/knowledge-library/how-to-track-ai-search-visibility  /knowledge-library/how-to-track-ai-search-visibility.html 200
 
 # --- 2. Normalise the homepage ------------------------------------------------
 # "!" is required because /index.html is a real deployed file; without force,
