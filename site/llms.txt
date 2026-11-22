@@ -22,7 +22,7 @@ Our pricing page is the source of truth: 12 service options in six categories. C
 - [Contact](https://aeogeosearch.com/contact): Discuss your business and an agreed scope.
 
 ## Free offer
-- [Free AI Visibility Snapshot](https://aeogeosearch.com/visibility-tool): A self-reported website-readiness checklist, not an automated scan, competitor comparison or measured AI visibility score.
+- [Free AI Visibility Snapshot](https://aeogeosearch.com/visibility-tool): A self-reported website-readiness checklist with a readiness percentage based only on the visitor's four answers, not an automated scan, competitor comparison or measured AI visibility score.
 
 ## Resources
 - [Resources](https://aeogeosearch.com/resources): AIO, GEO, AEO, and SEO guides.
