@@ -1,0 +1,34 @@
+[
+  {
+    "route": "/",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/\nCall log:\n  - navigating to \"https://aegeosearch.com/\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/about",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/about\nCall log:\n  - navigating to \"https://aegeosearch.com/about\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/accessibility",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/accessibility\nCall log:\n  - navigating to \"https://aegeosearch.com/accessibility\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/ai-content-humanizer",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/ai-content-humanizer\nCall log:\n  - navigating to \"https://aegeosearch.com/ai-content-humanizer\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/ai-visibility-schema-studio",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/ai-visibility-schema-studio\nCall log:\n  - navigating to \"https://aegeosearch.com/ai-visibility-schema-studio\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/competitor-intelligence",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/competitor-intelligence\nCall log:\n  - navigating to \"https://aegeosearch.com/competitor-intelligence\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/contact",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/contact\nCall log:\n  - navigating to \"https://aegeosearch.com/contact\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+    "route": "/geo-audit/",
+    "error": "Error: page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://aegeosearch.com/geo-audit/\nCall log:\n  - navigating to \"https://aegeosearch.com/geo-audit/\", waiting until \"domcontentloaded\"\n"
+  }
+]

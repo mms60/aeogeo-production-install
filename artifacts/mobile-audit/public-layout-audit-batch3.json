@@ -1,0 +1,623 @@
+[
+  {
+    "route": "/resources/which-ai-platforms/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "AI SEARCH PLATFORM LANDSCAPE, 2026 PLATFORM AUDIENCE SCALE (",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "AI SEARCH PLATFORM LANDSCAPE, 2026",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "PLATFORM AUDIENCE SCALE (2026) SHARE OF AI REFERRAL TRAFFIC ",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "PLATFORM AUDIENCE SCALE (2026) SHARE OF AI REFERRAL TRAFFIC ",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "PRIORITY",
+          "left": 488,
+          "right": 610,
+          "width": 122,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Google AI Overviews / AI Mode 2.5B+ monthly users; AI Mode 1",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "AI Search Platforms for Businesses in 2026 | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "AI SEARCH PLATFORM LANDSCAPE, 2026 PLATFORM AUDIENCE SCALE (",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "AI SEARCH PLATFORM LANDSCAPE, 2026",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "PLATFORM AUDIENCE SCALE (2026) SHARE OF AI REFERRAL TRAFFIC ",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "PLATFORM AUDIENCE SCALE (2026) SHARE OF AI REFERRAL TRAFFIC ",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "PRIORITY",
+          "left": 488,
+          "right": 610,
+          "width": 122,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Google AI Overviews / AI Mode 2.5B+ monthly users; AI Mode 1",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/zero-click-search/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE ZERO-CLICK LANDSCAPE IN 2026 METRIC VALUE SOURCE US Goog",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE ZERO-CLICK LANDSCAPE IN 2026",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "METRIC VALUE SOURCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "METRIC VALUE SOURCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "SOURCE",
+          "left": 419,
+          "right": 610,
+          "width": 191,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "US Google searches ending without a click 68.01% (vs. 60.45%",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "Zero-Click Search: How Businesses Can Adapt | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE ZERO-CLICK LANDSCAPE IN 2026 METRIC VALUE SOURCE US Goog",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE ZERO-CLICK LANDSCAPE IN 2026",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "METRIC VALUE SOURCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "METRIC VALUE SOURCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "SOURCE",
+          "left": 419,
+          "right": 610,
+          "width": 191,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "US Google searches ending without a click 68.01% (vs. 60.45%",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/services",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [
+        {
+          "el": "article.group.glass.relative",
+          "text": "01 Monthly AI Search Optimization Plans Starter is $349/month, Growth ",
+          "clientWidth": 268,
+          "scrollWidth": 308
+        },
+        {
+          "el": "article.group.glass.relative",
+          "text": "02 Workflow Automation Setup and Support Automation Quick Start: $499 ",
+          "clientWidth": 268,
+          "scrollWidth": 308
+        },
+        {
+          "el": "article.group.glass.relative",
+          "text": "03 Content Support Services Page optimization runs $150 to $250 per pa",
+          "clientWidth": 268,
+          "scrollWidth": 308
+        }
+      ],
+      "overlaps": [],
+      "title": "AI Search & GEO Services | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [
+        {
+          "el": "article.group.glass.relative",
+          "text": "01 Monthly AI Search Optimization Plans Starter is $349/month, Growth ",
+          "clientWidth": 338,
+          "scrollWidth": 378
+        },
+        {
+          "el": "article.group.glass.relative",
+          "text": "02 Workflow Automation Setup and Support Automation Quick Start: $499 ",
+          "clientWidth": 338,
+          "scrollWidth": 378
+        },
+        {
+          "el": "article.group.glass.relative",
+          "text": "03 Content Support Services Page optimization runs $150 to $250 per pa",
+          "clientWidth": 338,
+          "scrollWidth": 378
+        }
+      ],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/terms-of-service",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "Terms of Service | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/tools",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "1 # ========================================================",
+          "left": 21,
+          "right": 590,
+          "width": 569,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.whitespace-pre.pr-4.text-ice-300/45",
+          "text": "# ==========================================================",
+          "left": 65,
+          "right": 574,
+          "width": 509,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "7 # robots.txt is a crawl directive, not an access-control m",
+          "left": 21,
+          "right": 521,
+          "width": 500,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.whitespace-pre.pr-4.text-ice-300/45",
+          "text": "# robots.txt is a crawl directive, not an access-control mec",
+          "left": 65,
+          "right": 505,
+          "width": 440,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "3 # Generated by AEOGEO Search robots.txt generator",
+          "left": 21,
+          "right": 407,
+          "width": 386,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "9 # Listed crawlers blocked by this configuration",
+          "left": 21,
+          "right": 394,
+          "width": 373,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [
+        {
+          "el": "h3.font-display.text-sm.font-bold",
+          "text": "robots.txt",
+          "width": 73,
+          "height": 22,
+          "lines": 1
+        },
+        {
+          "el": "#content-waste-quiz-titleh2.mt-2.font-display.text-2xl",
+          "text": "How Much Content Are You Wasting?",
+          "width": 156,
+          "height": 125,
+          "lines": 4
+        }
+      ],
+      "narrowParagraphs": [],
+      "clipped": [
+        {
+          "el": "section.glass.overflow-hidden.rounded-3xl",
+          "text": "Configure crawler access Choose which bots may fetch your public pages",
+          "clientWidth": 280,
+          "scrollWidth": 318
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "OpenAI crawler for ChatGPT Search discovery",
+          "clientWidth": 108,
+          "scrollWidth": 197
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Fetches a page when a user asks ChatGPT to visit it",
+          "clientWidth": 108,
+          "scrollWidth": 220
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Perplexity crawler for search and answer citations",
+          "clientWidth": 108,
+          "scrollWidth": 213
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Anthropic crawler for Claude search features",
+          "clientWidth": 125,
+          "scrollWidth": 191
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "User-requested page fetching for Claude",
+          "clientWidth": 125,
+          "scrollWidth": 175
+        }
+      ],
+      "overlaps": [],
+      "title": "Robots Text Generator | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "1 # ========================================================",
+          "left": 21,
+          "right": 590,
+          "width": 569,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.whitespace-pre.pr-4.text-ice-300/45",
+          "text": "# ==========================================================",
+          "left": 65,
+          "right": 574,
+          "width": 509,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "7 # robots.txt is a crawl directive, not an access-control m",
+          "left": 21,
+          "right": 521,
+          "width": 500,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.whitespace-pre.pr-4.text-ice-300/45",
+          "text": "# robots.txt is a crawl directive, not an access-control mec",
+          "left": 65,
+          "right": 505,
+          "width": 440,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "3 # Generated by AEOGEO Search robots.txt generator",
+          "left": 21,
+          "right": 407,
+          "width": 386,
+          "clip": "scroll"
+        },
+        {
+          "el": "span.flex.min-w-max.pr-4",
+          "text": "9 # Listed crawlers blocked by this configuration",
+          "left": 21,
+          "right": 394,
+          "width": 373,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [
+        {
+          "el": "h3.font-display.text-sm.font-bold",
+          "text": "robots.txt",
+          "width": 73,
+          "height": 22,
+          "lines": 1
+        }
+      ],
+      "narrowParagraphs": [],
+      "clipped": [
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "OpenAI crawler for ChatGPT Search discovery",
+          "clientWidth": 165,
+          "scrollWidth": 197
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Fetches a page when a user asks ChatGPT to visit it",
+          "clientWidth": 165,
+          "scrollWidth": 220
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Perplexity crawler for search and answer citations",
+          "clientWidth": 165,
+          "scrollWidth": 213
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "Anthropic crawler for Claude search features",
+          "clientWidth": 183,
+          "scrollWidth": 191
+        },
+        {
+          "el": "span.block.truncate.text-[9px]",
+          "text": "You.com search and answer engine crawler",
+          "clientWidth": 169,
+          "scrollWidth": 186
+        }
+      ],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/tools/geo-content-checker/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "GEO Content Checker | AEOGEOSearch",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/visibility-tool",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "Free AI Visibility Snapshot | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/what-is-aeom",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "AEOM: The AI Engine Optimization Method | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/quiz/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "How Much Are You Throwing Away? | Free Content Waste Quiz | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  }
+]

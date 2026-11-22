@@ -1,0 +1,1006 @@
+[
+  {
+    "route": "/privacy-policy",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "Privacy Policy | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "AI Search Resources: GEO, AEO, AIO & SEO Guides | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/ai-overviews-changing-search/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "WHAT THE RESEARCH SHOWS ABOUT AI OVERVIEWS AND CLICKS FINDIN",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "WHAT THE RESEARCH SHOWS ABOUT AI OVERVIEWS AND CLICKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "FINDING NUMBER SOURCE (DATE)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "FINDING NUMBER SOURCE (DATE)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "SOURCE (DATE)",
+          "left": 436,
+          "right": 610,
+          "width": 174,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Position-1 CTR drop with AI Overview −58% Ahrefs, Feb 2026 (",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "Google AI Overviews and Search in 2026 | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "WHAT THE RESEARCH SHOWS ABOUT AI OVERVIEWS AND CLICKS FINDIN",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "WHAT THE RESEARCH SHOWS ABOUT AI OVERVIEWS AND CLICKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "FINDING NUMBER SOURCE (DATE)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "FINDING NUMBER SOURCE (DATE)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "SOURCE (DATE)",
+          "left": 436,
+          "right": 610,
+          "width": 174,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Position-1 CTR drop with AI Overview −58% Ahrefs, Feb 2026 (",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/get-cited-ai-answers/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "SEVEN CITATION TACTICS, RANKED BY EVIDENCE # TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "SEVEN CITATION TACTICS, RANKED BY EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "# TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "# TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "EVIDENCE",
+          "left": 317,
+          "right": 610,
+          "width": 293,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "1 Add specific statistics with named sources and dates +31–4",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "How to Get Cited in AI Answers | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "SEVEN CITATION TACTICS, RANKED BY EVIDENCE # TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "SEVEN CITATION TACTICS, RANKED BY EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "# TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "# TACTIC EVIDENCE",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "EVIDENCE",
+          "left": 317,
+          "right": 610,
+          "width": 293,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "1 Add specific statistics with named sources and dates +31–4",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/measure-ai-visibility/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE AI VISIBILITY KPI FRAMEWORK KPI WHAT IT TELLS YOU HOW TO",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE AI VISIBILITY KPI FRAMEWORK",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "KPI WHAT IT TELLS YOU HOW TO TRACK IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "KPI WHAT IT TELLS YOU HOW TO TRACK IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "HOW TO TRACK IT",
+          "left": 431,
+          "right": 610,
+          "width": 180,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Citation rate % of your prompt panel where your brand is nam",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "How to Measure AI Search Visibility | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE AI VISIBILITY KPI FRAMEWORK KPI WHAT IT TELLS YOU HOW TO",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE AI VISIBILITY KPI FRAMEWORK",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "KPI WHAT IT TELLS YOU HOW TO TRACK IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "KPI WHAT IT TELLS YOU HOW TO TRACK IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "HOW TO TRACK IT",
+          "left": 431,
+          "right": 610,
+          "width": 180,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Citation rate % of your prompt panel where your brand is nam",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/seo-aeo-geo-aio-difference/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "SEO VS. AEO VS. GEO VS. AIO AT A GLANCE SEO AEO GEO AIO Opti",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "SEO VS. AEO VS. GEO VS. AIO AT A GLANCE",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "SEO AEO GEO AIO",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "SEO AEO GEO AIO",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "AIO",
+          "left": 523,
+          "right": 671,
+          "width": 148,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Optimizes for Search engine rankings Direct-answer features ",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "SEO, AEO, GEO and AIO: Key Differences | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "SEO VS. AEO VS. GEO VS. AIO AT A GLANCE SEO AEO GEO AIO Opti",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "SEO VS. AEO VS. GEO VS. AIO AT A GLANCE",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "SEO AEO GEO AIO",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "SEO AEO GEO AIO",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "AIO",
+          "left": 523,
+          "right": 671,
+          "width": 148,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Optimizes for Search engine rankings Direct-answer features ",
+          "left": 50,
+          "right": 671,
+          "width": 621,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/what-is-aeo/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "AEO FORMATTING CHECKLIST ELEMENT AEO BEST PRACTICE WHY IT WO",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "AEO FORMATTING CHECKLIST",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "ELEMENT AEO BEST PRACTICE WHY IT WORKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "ELEMENT AEO BEST PRACTICE WHY IT WORKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "WHY IT WORKS",
+          "left": 404,
+          "right": 610,
+          "width": 206,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Headings Write them as real questions users ask Matches prom",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "What Is AEO? Answer Engine Optimization | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "AEO FORMATTING CHECKLIST ELEMENT AEO BEST PRACTICE WHY IT WO",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "AEO FORMATTING CHECKLIST",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "ELEMENT AEO BEST PRACTICE WHY IT WORKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "ELEMENT AEO BEST PRACTICE WHY IT WORKS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "WHY IT WORKS",
+          "left": 404,
+          "right": 610,
+          "width": 206,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Headings Write them as real questions users ask Matches prom",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/what-is-aeom/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE FOUR STEPS OF AEOM STEP WHAT HAPPENS OUTCOME 01 · Discov",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE FOUR STEPS OF AEOM",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "STEP WHAT HAPPENS OUTCOME",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "STEP WHAT HAPPENS OUTCOME",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "OUTCOME",
+          "left": 417,
+          "right": 610,
+          "width": 193,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "01 · Discover Audit how AI platforms currently describe your",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "What Is AEOM? AI Engine Optimization Method | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE FOUR STEPS OF AEOM STEP WHAT HAPPENS OUTCOME 01 · Discov",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE FOUR STEPS OF AEOM",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "STEP WHAT HAPPENS OUTCOME",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "STEP WHAT HAPPENS OUTCOME",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "OUTCOME",
+          "left": 417,
+          "right": 610,
+          "width": 193,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "01 · Discover Audit how AI platforms currently describe your",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/what-is-ai-search-optimization/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE FOUR PILLARS OF AI SEARCH OPTIMIZATION DISCIPLINE FULL N",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE FOUR PILLARS OF AI SEARCH OPTIMIZATION",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "DISCIPLINE FULL NAME PRIMARY GOAL WHERE IT WINS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "DISCIPLINE FULL NAME PRIMARY GOAL WHERE IT WINS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "WHERE IT WINS",
+          "left": 482,
+          "right": 610,
+          "width": 128,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "AIO AI Optimization Make your business understandable and re",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "AI Search Optimization: What It Is | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "THE FOUR PILLARS OF AI SEARCH OPTIMIZATION DISCIPLINE FULL N",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "THE FOUR PILLARS OF AI SEARCH OPTIMIZATION",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "DISCIPLINE FULL NAME PRIMARY GOAL WHERE IT WINS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "DISCIPLINE FULL NAME PRIMARY GOAL WHERE IT WINS",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "WHERE IT WINS",
+          "left": 482,
+          "right": 610,
+          "width": 128,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "AIO AI Optimization Make your business understandable and re",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  },
+  {
+    "route": "/resources/what-is-geo/",
+    "status": 200,
+    "at320": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "GEO TACTICS EXAMINED BY AGGARWAL ET AL. (ACM KDD 2024) GEO T",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "GEO TACTICS EXAMINED BY AGGARWAL ET AL. (ACM KDD 2024)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "GEO TACTIC MEASURED VISIBILITY LIFT HOW TO APPLY IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "GEO TACTIC MEASURED VISIBILITY LIFT HOW TO APPLY IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "HOW TO APPLY IT",
+          "left": 386,
+          "right": 610,
+          "width": 224,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Quotation addition Up to +41% Include relevant quotes from c",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": [],
+      "title": "What Is GEO? Generative Engine Optimization | AEOGEO Search",
+      "fontOk": false
+    },
+    "at390": {
+      "docOverflow": 0,
+      "offenders": [
+        {
+          "el": "table.w-full.min-w-[560px].border-collapse",
+          "text": "GEO TACTICS EXAMINED BY AGGARWAL ET AL. (ACM KDD 2024) GEO T",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "caption.px-4.pt-4.pb-2",
+          "text": "GEO TACTICS EXAMINED BY AGGARWAL ET AL. (ACM KDD 2024)",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "thead",
+          "text": "GEO TACTIC MEASURED VISIBILITY LIFT HOW TO APPLY IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "tr",
+          "text": "GEO TACTIC MEASURED VISIBILITY LIFT HOW TO APPLY IT",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        },
+        {
+          "el": "th.border-b.border-navy-800.bg-navy-900/70",
+          "text": "HOW TO APPLY IT",
+          "left": 386,
+          "right": 610,
+          "width": 224,
+          "clip": "scroll"
+        },
+        {
+          "el": "tbody",
+          "text": "Quotation addition Up to +41% Include relevant quotes from c",
+          "left": 50,
+          "right": 610,
+          "width": 560,
+          "clip": "scroll"
+        }
+      ],
+      "narrowHeadings": [],
+      "narrowParagraphs": [],
+      "clipped": [],
+      "overlaps": []
+    }
+  }
+]

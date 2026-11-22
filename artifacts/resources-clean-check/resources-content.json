@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "title": "AI Search Optimization Resources & Guides | AEOGEO Search",
+    "description": "Explore practical guides to AI search optimization, answer engine optimization (AEO), generative engine optimization (GEO), and online visibility.",
+    "eyebrow": "Resources",
+    "h1": "AI Search Optimization Resources",
+    "intro": [
+      "AI-powered search is changing how people discover businesses, evaluate products, and find answers online. Traditional search engine rankings still matter, but they are no longer the only way potential customers find information.",
+      "AEOGEO Search brings together practical resources to help you understand this changing search landscape. Explore our guides to AI search optimization, answer engine optimization, generative engine optimization, and the strategies that help make your business easier for search engines and AI systems to understand.",
+      "Whether you're building your first AI search strategy or refining an established SEO programme, start with the resources below."
+    ]
+  },
+  "sections": [
+    {
+      "id": "fundamentals",
+      "title": "Start with the fundamentals",
+      "desc": "Understand the technologies, terminology, and strategies behind the shift from traditional search to AI-powered discovery.",
+      "cards": [
+        {
+          "title": "What Is AI Search Optimization?",
+          "desc": "Learn what AI search optimization means, how AI-powered search experiences work, and why businesses are adapting their digital strategies to reach audiences beyond traditional search results.",
+          "href": "/resources/what-is-ai-search-optimization/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "What Is Answer Engine Optimization (AEO)?",
+          "desc": "Discover how answer engine optimization helps structure and present information so that search engines and answer platforms can identify useful, relevant answers to user questions.",
+          "href": "/resources/what-is-aeo/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "What Is Generative Engine Optimization (GEO)?",
+          "desc": "Understand generative engine optimization and how businesses can improve the clarity, relevance, and accessibility of their content for AI-powered discovery experiences.",
+          "href": "/resources/what-is-geo/",
+          "cta": "Explore this guide"
+        }
+      ]
+    },
+    {
+      "id": "visibility",
+      "title": "Improve your visibility in AI search",
+      "desc": "Learn how to assess your current visibility, identify opportunities, and build a more effective approach to being discovered through AI-powered platforms.",
+      "cards": [
+        {
+          "title": "How to Improve Your Visibility in ChatGPT",
+          "desc": "Explore the factors that can influence whether a business is referenced in AI-generated answers, including content quality, brand information, topical relevance, and the wider online presence of your business.",
+          "href": "/resources/which-ai-platforms/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "How to Track AI Search Visibility",
+          "desc": "Learn what AI search visibility means, which signals are worth monitoring, and how to build a consistent process for understanding how your brand appears across AI-powered search experiences.",
+          "href": "/resources/measure-ai-visibility/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "How to Get Your Business Mentioned in AI Search Results",
+          "desc": "A practical introduction to building a stronger digital presence for AI discovery. Learn why clear business information, useful content, credible references, and consistent brand details matter.",
+          "href": "/resources/get-cited-ai-answers/",
+          "cta": "Explore this guide"
+        }
+      ]
+    },
+    {
+      "id": "strategy",
+      "title": "Build a stronger AEO and GEO strategy",
+      "desc": "Move from understanding the concepts to applying them across your website and content.",
+      "cards": [
+        {
+          "title": "AEO vs. GEO: What's the Difference?",
+          "desc": "AEO and GEO are closely related, but they are not interchangeable. Learn how the two approaches differ, where they overlap, and how they can work together within a broader search strategy.",
+          "href": "/resources/seo-aeo-geo-aio-difference/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "Traditional SEO vs. AI Search Optimization",
+          "desc": "Understand how traditional search engine optimization relates to AI search optimization, which established SEO practices remain important, and where additional considerations may be needed.",
+          "href": "/resources/what-is-ai-search-optimization/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "How to Create Content for AI Search",
+          "desc": "Learn how to create useful, well-organized content that answers real questions, demonstrates subject knowledge, and makes important information easier to interpret.",
+          "href": "/resources/get-cited-ai-answers/",
+          "cta": "Explore this guide"
+        },
+        {
+          "title": "Technical SEO for AI Search",
+          "desc": "Explore the technical foundations that support discoverability, including crawlability, indexability, site structure, structured data, and accessible page content.",
+          "href": "/resources/schema-org-ai-search/",
+          "cta": "Explore this guide"
+        }
+      ]
+    },
+    {
+      "id": "business",
+      "title": "Practical guides for businesses",
+      "desc": "AI search optimization is not a one-size-fits-all process. These resources explore how businesses can approach visibility, content, and search strategy in practical terms.",
+      "cards": [
+        {
+          "title": "AI Search Optimization for Local Businesses",
+          "desc": "Learn how local businesses can strengthen their online presence through accurate business information, locally relevant content, and consistent details across the web.",
+          "href": "/services",
+          "cta": "Explore services"
+        },
+        {
+          "title": "AI Search Optimization for SaaS Companies",
+          "desc": "Discover how software businesses can explain their products clearly, build topical authority, answer buyer questions, and improve their visibility across search experiences.",
+          "href": "/services",
+          "cta": "Explore services"
+        },
+        {
+          "title": "AI Search Optimization for Professional Services",
+          "desc": "Explore how consultants, agencies, and professional service providers can communicate their expertise and make their services easier for prospective customers to understand and discover.",
+          "href": "/services",
+          "cta": "Explore services"
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "heading": "Not sure where to start?",
+    "paragraphs": [
+      "Start by understanding the difference between AEO, GEO, and traditional SEO. Then review your website's content, technical foundations, and brand information to identify the areas that need attention.",
+      "AEOGEO Search helps businesses understand the changing search landscape and develop a clearer approach to AI search visibility."
+    ],
+    "subheading": "Want to discuss your AI search strategy?",
+    "subtext": "Get in touch with AEOGEO Search to discuss your website, your visibility goals, and the opportunities available to your business.",
+    "button": "Contact AEOGEO Search"
+  },
+  "faqs": [
+    {
+      "question": "What is AI search optimization?",
+      "answer": "AI search optimization is the process of improving a website and its wider digital presence so that information about a business is easier for AI-powered search and answer systems to discover, interpret, and potentially reference."
+    },
+    {
+      "question": "What is the difference between AEO and GEO?",
+      "answer": "Answer engine optimization focuses on making content useful and accessible for systems that provide direct answers. Generative engine optimization focuses on visibility within AI-generated responses. The approaches overlap and can form part of the same broader strategy."
+    },
+    {
+      "question": "Does traditional SEO still matter for AI search?",
+      "answer": "Yes. Technical accessibility, useful content, clear site structure, and a credible online presence remain important foundations. AI search optimization builds on many established SEO principles while addressing additional discovery experiences."
+    },
+    {
+      "question": "How can I improve my business's visibility in ChatGPT?",
+      "answer": "There is no guaranteed method of securing a mention in ChatGPT. Businesses can work on making their information accurate, useful, clearly structured, and consistently represented across their website and wider online presence."
+    },
+    {
+      "question": "How do I know whether my AI search strategy is working?",
+      "answer": "Monitor relevant AI search experiences, track brand mentions and referral activity where measurable, and review changes in organic visibility and engagement. Use consistent prompts and measurement methods so that comparisons are meaningful."
+    }
+  ],
+  "learn": {
+    "lead": "Explore more:",
+    "link": "Browse the Learn centre",
+    "href": "/learn",
+    "trail": "for concise explanations of AEO, GEO, AI search, and related concepts."
+  }
+}

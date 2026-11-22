@@ -1,0 +1,21 @@
+diff --git a/site/services.html b/site/services.html
+--- a/site/services.html
++++ b/site/services.html
+@@ -93,1 +93,1 @@
+-l media so your brand feels the same everywhere a customer meets it.</p></div><div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"><div style="opacity: 1; transform: none;">
++l media so your brand feels the same everywhere a customer meets it.</p></div><div class="tablet-2up mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"><div style="opacity: 1; transform: none;">
+  [rest of this minified line unchanged]
+diff --git a/site/tools.html b/site/tools.html
+--- a/site/tools.html
++++ b/site/tools.html
+@@ -99,1 +99,1 @@
+-rder-royal-400/40 hover:bg-royal-500/10 hover:text-white">Reset</button></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><button class="relative flex min-h-[150px] flex-
++rder-royal-400/40 hover:bg-royal-500/10 hover:text-white">Reset</button></div><div class="tablet-2up grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><button class="relative flex min-h-[150px] flex-
+  [rest of this minified line unchanged]
+diff --git a/site/geo-audit/index.html b/site/geo-audit/index.html
+--- a/site/geo-audit/index.html
++++ b/site/geo-audit/index.html
+@@ -34,1 +34,2 @@
+-</style></head><body data-page="landing"><header class="site-nav website-header" data-header-revision="site-header-v1">
++</style><style>@media screen and (min-width:781px) and (max-width:1199px){.section-band .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
++</head><body data-page="landing"><header class="site-nav website-header" data-header-revision="site-header-v1">

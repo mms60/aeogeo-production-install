@@ -1,0 +1,99 @@
+[build]
+  publish = "site"
+  functions = "netlify/functions"
+  # Block publishing if the shared eyebrow styling regresses.
+  command = "node --test tests/eyebrow-consistency.test.cjs"
+[build.environment]
+  NODE_VERSION = "22"
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["cheerio", "ipaddr.js"]
+[[headers]]
+  for = "/account/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+[[headers]]
+  for = "/auth/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+[[headers]]
+  for = "/geo-audit/run/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+
+# Routing is defined in site/_redirects, preserving production's real 404 rule.
+# Do not add a catch-all rewrite to /index.html.
+
+# Private one-time service checkout
+[[headers]]
+  for = "/service-checkout/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# Isolated content-service private pages and owner-notice retries.
+# AI Visibility & Schema Studio: crawler scans run as a background function.
+[functions."avss-scan-background"]
+  timeout = 900
+
+[functions."content-notifications"]
+  schedule = "@hourly"
+[[headers]]
+  for = "/content-order/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/content-review/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# Owner-only Stripe test and billing diagnostics
+[[headers]]
+  for = "/owner-billing-check/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/owner-monthly-test/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# Demo and post-purchase pages that should never be indexed
+[[headers]]
+  for = "/competitor-intelligence/sample-preview*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+[[headers]]
+  for = "/directory-listing-kit/thanks/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[functions."kit-download"]
+  included_files = ["netlify/functions/assets/AEOGEO-Search-Directory-Listing-Kit.docx"]
+
+# Checklinks follows same-origin checkout links into the functions namespace,
+# where they are not static files. It also flags pretty-URL fragments and font
+# preconnects; keep the useful checks while excluding only these known cases.
+[[plugins]]
+  package = "netlify-plugin-checklinks"
+
+  [plugins.inputs]
+    # tap-spot crashes on Checklinks failures under Netlify Build; raw TAP
+    # output keeps the same checks without the formatter bug.
+    pretty = false
+    todoPatterns = [""]
+    skipPatterns = [
+      ".netlify/functions/",
+      "/tools#robots-txt-generator",
+      "fragment",
+      "preconnect",
+      "fonts.gstatic.com",
+      "fonts.googleapis.com"
+    ]

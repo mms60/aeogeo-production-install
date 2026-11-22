@@ -1,0 +1,24 @@
+{
+  "status": "Owner decisions recorded; implementation and end-to-end verification incomplete; not live subscription terms",
+  "cancellation": {
+    "timing": "end_of_paid_period",
+    "access": "Retain already-paid access until the period ends",
+    "automaticRefund": false,
+    "ownerApproved": true
+  },
+  "refund": {
+    "accessAndRenewal": "manual_review",
+    "automaticAccessRevocation": false,
+    "automaticRenewalCancellation": false,
+    "requiredWorkflow": "Private owner billing-review queue and explicit decisions; do not silently drop refund events",
+    "ownerApproved": true
+  },
+  "bankDispute": {
+    "whileOpen": "Pause new paid audits and stop renewal",
+    "ifWon": "Restore any remaining paid time; do not automatically re-enable renewal",
+    "ifLost": "Do not restore the disputed paid time automatically",
+    "ownerApproved": true
+  },
+  "savedReports": "Retained; no report deletion from cancellation, refund or dispute",
+  "remainingApprovals": ["Written customer-facing refund eligibility/terms", "Tax and jurisdiction requirements", "Paid feature delivery/readiness", "Live end-to-end billing approval"]
+}

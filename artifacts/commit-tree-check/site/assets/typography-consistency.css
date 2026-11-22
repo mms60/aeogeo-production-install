@@ -1,0 +1,159 @@
+/* One type system for the whole site.
+   Every page loads this last, so per-page utility classes cannot make the
+   reading text, the h1, the h2 or the h3 differ from one page to the next.
+   Scoped to the content root only: the shared nav and the footer keep their
+   own compact styling. */
+:root{
+  --type-display:'Sora',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --type-body:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+
+/* H1: one size, one family, every page */
+:is(main,.card,.wrap,.page-wrap) h1,
+:is(main,.card,.wrap,.page-wrap) h1 *{
+  font-family:var(--type-display)!important;
+  font-size:clamp(2rem,4vw,2.75rem)!important;
+  line-height:1.12!important;
+  font-weight:800!important;
+  letter-spacing:-0.01em!important;
+}
+
+/* H2 */
+:is(main,.card,.wrap,.page-wrap) h2,
+:is(main,.card,.wrap,.page-wrap) h2 *{
+  font-family:var(--type-display)!important;
+  font-size:clamp(1.625rem,2.8vw,2rem)!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+  letter-spacing:-0.005em!important;
+}
+
+/* H3 */
+:is(main,.card,.wrap,.page-wrap) h3,
+:is(main,.card,.wrap,.page-wrap) h3 *{
+  font-family:var(--type-display)!important;
+  font-size:1.375rem!important;
+  line-height:1.3!important;
+  font-weight:700!important;
+  letter-spacing:normal!important;
+}
+
+/* Body copy */
+:is(main,.card,.wrap,.page-wrap) p,
+:is(main,.card,.wrap,.page-wrap) li,
+:is(main,.card,.wrap,.page-wrap) dt,
+:is(main,.card,.wrap,.page-wrap) dd,
+:is(main,.card,.wrap,.page-wrap) blockquote,
+:is(main,.card,.wrap,.page-wrap) figcaption,
+:is(main,.card,.wrap,.page-wrap) td,
+:is(main,.card,.wrap,.page-wrap) th,
+:is(main,.card,.wrap,.page-wrap) summary,
+:is(main,.card,.wrap,.page-wrap) legend{
+  font-family:var(--type-body)!important;
+  font-size:1.0625rem!important;
+  line-height:1.7!important;
+  letter-spacing:normal!important;
+}
+
+/* Small print stays small, but at the same two steps everywhere */
+:is(main,.card,.wrap,.page-wrap) p small,
+:is(main,.card,.wrap,.page-wrap) li small,
+:is(main,.card,.wrap,.page-wrap) .text-xs{
+  font-size:.75rem!important;
+  line-height:1.55!important;
+}
+:is(main,.card,.wrap,.page-wrap) .text-sm,
+:is(main,.card,.wrap,.page-wrap) p.text-sm,
+:is(main,.card,.wrap,.page-wrap) li.text-sm{
+  font-size:.875rem!important;
+  line-height:1.6!important;
+}
+
+/* Opt-in: render a paragraph at the standard h2 size and weight. */
+p.type-h2,h2.type-h2{
+  font-family:var(--type-display)!important;
+  font-size:clamp(1.625rem,2.8vw,2rem)!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+  letter-spacing:-0.005em!important;
+}
+
+/* Mobile tap targets: FAQ rows and service-category jump pills. */
+@media (max-width:700px){
+  summary{min-height:44px}
+  nav[aria-label="Service categories"] a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+  }
+
+  /* Robots generator: compact text controls grow to 44px. */
+  #root:has(#robots-txt-generator) button[class*="text-[9px]"],
+  #root:has(#robots-txt-generator) button[class*="text-[10px]"],
+  #root:has(#robots-txt-generator) button[class*="text-[11px]"],
+  #root:has(#robots-txt-generator) button[class*="text-xs"]{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  /* Switches and icon-only controls keep their visual size, with a 44px hit area. */
+  #root:has(#robots-txt-generator) button[class*="h-6 w-11"],
+  #root:has(#robots-txt-generator) button[class*="size-7"]{position:relative}
+  #root:has(#robots-txt-generator) button[class*="h-6 w-11"]::after{content:"";position:absolute;inset:-11px 0}
+  #root:has(#robots-txt-generator) button[class*="size-7"]::after{content:"";position:absolute;inset:-8px}
+}
+
+/* Eyebrow labels: one color and one size on every page. */
+html body :is(
+  .eyebrow,.hr-eyebrow,.st-eyebrow,.cc-eyebrow,.route-eyebrow,.hz-eyebrow,.ea-card-eyebrow,
+  .ea-output-kicker,.kicker,.route-role,.kit-hero-card-label,.hr-card-number,.tag,
+  p[class~="uppercase"][class~="text-royal-400"],
+  p[class~="uppercase"][class~="text-royal-300"],
+  :is(h1,h2,h3,h4,h5,h6)[class~="uppercase"]:is([class~="text-royal-400"],[class~="text-royal-300"]),
+  span[class~="uppercase"][class~="text-royal-400"]:not([class*="rounded-full"])
+){
+  color:#50c878!important;
+  -webkit-text-fill-color:#50c878!important;
+  font-size:12px!important;
+  line-height:16px!important;
+  font-weight:700!important;
+  letter-spacing:.12em!important;
+  margin:0 0 12px!important;
+}
+
+/* Pricing cards: use the same 18px title and 30px amount scale across tools and services. */
+#plans .price-card h3,
+#geo-pricing-rewrite article > h3{
+  font-size:18px!important;
+  line-height:1.35!important;
+}
+
+/* Card-level h2s use the same 22px scale as the Directory Listing Kit card h3s. */
+#geo-pricing-rewrite article.glass h2,
+body.services-page .route-details section.glass h2,
+#kg-title{
+  font-size:1.375rem!important;
+  line-height:1.3!important;
+  letter-spacing:normal!important;
+}
+#plans .price-card .price,
+.pricing-grid .price-card .price,
+#geo-pricing-rewrite article > p[class*="text-3xl"],
+#geo-pricing-rewrite article > p[class*="text-2xl"][class*="text-royal-400"],
+main section.max-w-5xl .glass p[class*="text-6xl"]{
+  font-size:30px!important;
+  line-height:1.15!important;
+}
+
+/* Footer legal links: keep Accessibility, Privacy Policy and Terms on one row. */
+html body .geo-legal-links .geo-footer-legal-actions{
+  display:grid!important;
+  grid-template-columns:max-content max-content minmax(0,1fr)!important;
+  align-items:center!important;
+  column-gap:8px!important;
+  row-gap:12px!important;
+}
+html body .geo-legal-links .aeogeo-footer-terms-row{display:contents!important}
+html body .geo-legal-links .aeogeo-footer-social{grid-column:1/-1!important;justify-self:start}

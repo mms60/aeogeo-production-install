@@ -1,0 +1,282 @@
+{
+  "readability": {
+    "owner": "Website owner or content editor",
+    "where": "This page's main text in your website editor.",
+    "when": "After any confirmed access problems; review one important page at a time.",
+    "steps": [
+      "Open this page in the website editor. Find its main paragraphs, not the navigation or footer.",
+      "Read the paragraphs aloud. Find a sentence that is hard to follow; the current audit may not identify the exact sentence for you.",
+      "If it helps, divide that sentence into two shorter sentences or replace an unfamiliar phrase with a clear one. Keep the original meaning, important facts, and necessary detail.",
+      "Preview and publish the change. Ask someone unfamiliar with the subject to read it."
+    ],
+    "verify": "Check that the published paragraph is accurate and easier to understand. A readability number is only a review cue, not proof of quality or AI citations.",
+    "caution": "Do not rewrite a privacy policy, terms, or other legal wording without the appropriate review."
+  },
+  "comprehensiveness": {
+    "owner": "Content editor and someone who knows the subject",
+    "where": "The main content of this specific page.",
+    "when": "After checking important technical issues; start with pages customers use to make decisions.",
+    "steps": [
+      "Write down what a visitor came to this page to do or learn.",
+      "Read the page and note any essential question a visitor would reasonably expect it to answer.",
+      "If something important is missing, edit the page and add a short, accurate answer or a link to a relevant existing page. Use facts your business can verify.",
+      "Preview and publish. Check that the added information helps the visitor complete the page's purpose."
+    ],
+    "verify": "Have a knowledgeable person check that the key questions are answered accurately.",
+    "caution": "A low word count does not prove content is weak. Do not pad contact, utility, privacy, or legal pages to raise a score."
+  },
+  "flow": {
+    "owner": "Content editor",
+    "where": "The paragraphs in this page's main content.",
+    "when": "During the next editorial review, after more important issues.",
+    "steps": [
+      "Open the page editor and read the main paragraphs in order.",
+      "If the subject changes abruptly, move related paragraphs together or add a short sentence that explains the connection.",
+      "Remove any added transition that sounds forced or repeats information, then preview and publish."
+    ],
+    "verify": "Ask a reader whether the explanation is easy to follow from one idea to the next.",
+    "caution": "A transition-word count does not prove that a page has poor flow. Do not add phrases just to satisfy a score."
+  },
+  "lsi_keywords": {
+    "owner": "Content strategist or subject-matter expert",
+    "where": "The page and a separately collected set of real customer questions.",
+    "when": "Only as an optional manual review; this audit did not measure related-topic coverage.",
+    "steps": [
+      "List genuine questions your intended readers ask about this page's subject.",
+      "Compare those questions with the information actually on the page.",
+      "Add or link to an accurate answer only when it is useful and appropriate to the page."
+    ],
+    "verify": "Ask a subject-matter expert to review the answers. This is not an automated keyword-gap or ranking test.",
+    "caution": "The audit did not measure a semantic or competitor gap."
+  },
+  "answer_completeness": {
+    "owner": "Content editor or subject-matter expert",
+    "where": "A relevant question or explanatory section on this page.",
+    "when": "When updating content on an important customer-facing page.",
+    "steps": [
+      "Choose a real question that visitors ask and that fits this page's purpose.",
+      "In the page editor, place the question in a meaningful heading and answer it directly underneath using accurate, specific information.",
+      "Include the essential context a reader needs; link to a supporting page if more detail would help.",
+      "Preview and publish the answer after the business owner or subject expert approves it."
+    ],
+    "verify": "Read the answer without the rest of the page. Check that it is accurate, understandable, and actually answers the question.",
+    "caution": "There is no proven universal answer length. Do not add an FAQ to a page where it does not belong."
+  },
+  "factual_density": {
+    "owner": "Content editor and business owner",
+    "where": "Claims, numbers, and examples in this page's main text.",
+    "when": "During content review; prioritize claims customers use to make decisions.",
+    "steps": [
+      "Read the page and identify a factual claim or statistic that would benefit from support.",
+      "Find a reliable original source, or confirm the fact with the person responsible for it. Check the date and whether it applies to the claim.",
+      "Edit the sentence to match the evidence and link to the source when appropriate. Remove or qualify a claim you cannot support.",
+      "Preview and publish only after the facts have been approved."
+    ],
+    "verify": "Follow the source link and confirm it supports the published statement.",
+    "caution": "Do not invent statistics or add numbers solely to improve a score. Some pages need no statistics."
+  },
+  "citability": {
+    "owner": "Content editor and business owner",
+    "where": "Promotional or factual claims in this page's text.",
+    "when": "During the next review of customer-facing copy.",
+    "steps": [
+      "Open the page and look for claims such as 'best', 'guaranteed', or other statements that promise a result.",
+      "Confirm whether each claim is supportable. Replace an unsupported claim with a specific, accurate description of what the business actually offers.",
+      "Keep genuine calls to action and the business's voice; the aim is accuracy and clarity, not removing all marketing.",
+      "Have the business owner approve the wording before publishing."
+    ],
+    "verify": "A reviewer can explain or substantiate the published claims.",
+    "caution": "A promotional-word count is a heuristic. Neutral wording does not guarantee AI citations."
+  },
+  "structure": {
+    "owner": "Website editor; ask a developer if headings are controlled by a template",
+    "where": "The headings on this page, in the page editor or page template.",
+    "when": "Review important shared templates and customer-facing pages first.",
+    "steps": [
+      "Open the page in your website editor and identify its main title and section headings. If needed, a developer can inspect the page's heading tags.",
+      "Make sure the main title describes the page. Use Heading 2 for main sections and Heading 3 for subsections when that reflects the actual content.",
+      "Use the editor's heading-level control rather than simply making text larger. Keep the current visual design where possible.",
+      "Preview the page, check that headings describe the sections in a sensible order, and publish."
+    ],
+    "verify": "Inspect the published heading outline or ask a developer to check it. This audit may not say which individual heading needs changing.",
+    "caution": "Do not add or change headings mechanically just to raise a score; use a structure that makes sense for the page."
+  },
+  "ai_optimization": {
+    "owner": "Content editor or business owner",
+    "where": "An appropriate service, product, or educational section on this page.",
+    "when": "During content improvements for important pages.",
+    "steps": [
+      "Choose a real question that customers ask and that belongs on this page.",
+      "In the page editor, add the question as a clear heading and write an accurate answer directly underneath.",
+      "Include relevant details your business can verify and link to a related page if it helps the reader.",
+      "Preview, get the answer approved, and publish."
+    ],
+    "verify": "Ask a reader whether the question is answered clearly without needing to search elsewhere on the page.",
+    "caution": "A page does not need a FAQ just for a score. Avoid adding one to legal, privacy, or utility pages unless it genuinely belongs."
+  },
+  "image_alt": {
+    "owner": "Website editor or developer",
+    "where": "The image settings for this page's images.",
+    "when": "When the audit identifies images to review; begin with images that convey information.",
+    "steps": [
+      "Open this page in the website editor and inspect its images and their alternative-text settings.",
+      "For each meaningful image, write a short description of the information it conveys in this page's context.",
+      "For an image that is purely decorative, an empty alt value can be appropriate; ask a developer if the editor does not offer that choice.",
+      "Save and publish, then inspect the image properties or ask an accessibility reviewer to check them."
+    ],
+    "verify": "Meaningful images have useful descriptions, decorative images do not create unnecessary announcements, and the page still looks correct.",
+    "caution": "The audit may only detect the presence of an alt attribute, not whether its wording is helpful."
+  },
+  "platform_specificity": {
+    "owner": "Marketing or research specialist",
+    "where": "A separately configured AI-answer monitoring process, not this page's HTML alone.",
+    "when": "Optional; this audit did not run live platform tests.",
+    "steps": [
+      "Choose a small set of real customer questions and the AI products you are authorized to test.",
+      "Run the same questions consistently and record the platform, date, response, and any cited URLs.",
+      "Repeat later under comparable conditions and review the results as a limited sample."
+    ],
+    "verify": "Confirm each recorded citation against the actual response. Results can vary and are not a guarantee.",
+    "caution": "This audit did not measure live AI answers, rankings, or citations."
+  },
+  "content_type": {
+    "owner": "Content editor",
+    "where": "Sections of this page that explain items, steps, or comparisons.",
+    "when": "When revising the page for clarity.",
+    "steps": [
+      "Read the page and identify information that is genuinely a sequence, a set of items, or a comparison.",
+      "In the page editor, use a numbered list for real steps, a bulleted list for related items, or a table for a comparison when it makes the information easier to use.",
+      "Keep the underlying facts accurate and preview the layout on a phone before publishing."
+    ],
+    "verify": "The format helps a visitor understand the information and works on small screens.",
+    "caution": "Do not add a list or table solely to satisfy a check."
+  },
+  "semantic_clarity": {
+    "owner": "Content editor",
+    "where": "The main paragraphs on this page.",
+    "when": "During the next content review.",
+    "steps": [
+      "Read the page and look for long sentences or words such as 'it' and 'they' whose meaning is unclear.",
+      "Name the person, product, or topic directly where doing so removes ambiguity.",
+      "Split a difficult sentence only if the meaning stays accurate. Preview and publish the approved text."
+    ],
+    "verify": "Ask someone unfamiliar with the page to explain the sentence back to you.",
+    "caution": "A sentence-length heuristic does not establish voice, meaning, or AI performance."
+  },
+  "ai_bot_access": {
+    "owner": "Website developer or technical SEO specialist, with the site owner's approval",
+    "where": "The site's robots.txt and the affected page path.",
+    "when": "Before content work if an intended search crawler is actually blocked.",
+    "steps": [
+      "Open the site's robots.txt file and find the rule that applies to the named crawler and this page's path.",
+      "Decide with the owner whether that specific crawler should access that specific public page. Search crawlers and training crawlers can serve different purposes.",
+      "If the block is unintended, have the developer adjust only the relevant rule, keeping private and sensitive paths protected.",
+      "Publish robots.txt and test the affected path against the intended crawler's rules."
+    ],
+    "verify": "The intended public path has the intended rule, and private paths remain protected.",
+    "caution": "Never replace the whole robots.txt file or allow every bot blindly. Robots rules are not access control for private information."
+  },
+  "schema_validator": {
+    "owner": "Website developer or person managing structured data; the owner confirms business facts",
+    "where": "The existing structured-data code for this page or the site's schema/SEO settings.",
+    "when": "Review after confirming whether the page's existing markup is missing, invalid, or simply not observed.",
+    "steps": [
+      "Open the page source or your schema settings and look for existing structured data, especially a script marked application/ld+json. The audit may not identify the exact error or code location.",
+      "Test the full page URL or complete code with the Schema Markup Validator at https://validator.schema.org/; note the specific error and affected object.",
+      "If code is invalid, correct that existing code. If appropriate markup is genuinely absent, choose a type that describes the actual page and use only accurate information visible to visitors. Do not add duplicate business objects.",
+      "Save a backup, make the change in the correct page template or SEO settings, and test the complete code again before publishing.",
+      "After publishing, test the live URL. For Google-supported rich-result types, also use https://search.google.com/test/rich-results."
+    ],
+    "verify": "The intended page's complete markup parses and the relevant validator reports no errors for the object you changed. A test result is not a promise of a rich result or AI citation.",
+    "caution": "Valid JSON alone does not establish correct schema or truthful content. Some markup may be rendered by JavaScript, which this audit did not inspect."
+  },
+  "sitemap_depth": {
+    "owner": "Website developer or person managing the site's SEO settings",
+    "where": "The website's XML sitemap and the page's canonical URL.",
+    "when": "After confirming the page should be public and indexed.",
+    "steps": [
+      "Confirm that this page is meant to be public and identify its preferred, canonical URL.",
+      "Find the site's sitemap, often linked from robots.txt or generated by the website platform; do not assume its address.",
+      "If the correct public URL is genuinely absent, use the platform's sitemap settings or ask the developer to add it. Do not add private or duplicate URLs.",
+      "Publish the sitemap and open it to confirm the URL is present. Submit or inspect it in the verified Google Search Console property if available."
+    ],
+    "verify": "The current sitemap contains the intended canonical URL. Sitemap inclusion alone does not prove indexing.",
+    "caution": "A limited or failed sitemap fetch cannot prove that a URL is absent."
+  },
+  "page_speed": {
+    "owner": "Website developer",
+    "where": "This page's initial HTML and, separately, a performance testing tool.",
+    "when": "Before content work if essential page content is not available in the HTML returned to crawlers.",
+    "steps": [
+      "Open the live page and note a short piece of its important visible text.",
+      "View the page source and search for that text. If it is absent, ask the developer whether important content is inserted only after JavaScript runs.",
+      "If appropriate, have the developer provide the important content in the initial HTML or another supported rendering approach, then test again.",
+      "To assess loading speed, run a separate PageSpeed Insights or comparable performance test; this audit's HTML check is not a speed test."
+    ],
+    "verify": "The relevant content is available to the intended crawler, and any separate performance result is reviewed on its own terms.",
+    "caution": "Do not assume a page is slow or blank for users just because initial HTML was limited."
+  },
+  "freshness": {
+    "owner": "Content editor and subject-matter expert",
+    "where": "An article or other page where an update date helps visitors.",
+    "when": "When a substantive update is actually made.",
+    "steps": [
+      "Decide whether an update date is relevant for this type of page; many utility and evergreen pages do not need one.",
+      "Review the content and make any necessary factual or substantive corrections.",
+      "Use the website's article settings or an appropriate date element to display the true revision date.",
+      "Preview and publish, checking that any structured-data date matches the real update."
+    ],
+    "verify": "The date is visible or properly declared where appropriate and reflects a genuine revision.",
+    "caution": "Do not change dates without substantive updates simply to raise a score."
+  },
+  "citations": {
+    "owner": "Content editor or subject-matter expert",
+    "where": "Specific claims on this page that need supporting evidence.",
+    "when": "When reviewing factual claims on important content pages.",
+    "steps": [
+      "Find a claim or statistic that needs support; not every page needs an external citation.",
+      "Find the original, relevant source and check that it actually supports the claim and is current enough for the context.",
+      "In the page editor, link the supporting phrase or name the source next to the claim. Correct or remove the claim if it cannot be supported.",
+      "Publish and test the link."
+    ],
+    "verify": "A reader can follow the link to evidence that supports the specific claim.",
+    "caution": "An external link count does not prove authority, factual accuracy, or AI citations."
+  },
+  "eeat_signals": {
+    "owner": "Business owner and content editor",
+    "where": "Author or business details on relevant articles and business pages.",
+    "when": "During content review where authorship or business identity helps the reader.",
+    "steps": [
+      "Identify who is genuinely responsible for the article or page: a real person or the organization.",
+      "Add an accurate byline or business description where useful. For an article, link to a real author or organization page if one exists.",
+      "Include only qualifications and responsibilities the business can verify. Preview and publish after approval."
+    ],
+    "verify": "The published attribution matches the responsible person or organization and its information is truthful.",
+    "caution": "Do not invent credentials or add a personal author to every page just for a score."
+  },
+  "knowledge_graph": {
+    "owner": "Website developer; the business owner confirms official profiles",
+    "where": "The existing Organization or business structured-data object, where relevant.",
+    "when": "After confirming the real official profiles and locating the current schema.",
+    "steps": [
+      "Ask the business owner which external profiles genuinely belong to the business. Do not guess or create profiles for a score.",
+      "Find the existing Organization, LocalBusiness, or other appropriate business object in the site's structured-data settings or application/ld+json code.",
+      "Add the verified profile URLs to that object's sameAs array, using correct JSON punctuation. Edit the existing object rather than adding a duplicate.",
+      "Test the complete code with https://validator.schema.org/, publish the change, and test the intended live page."
+    ],
+    "verify": "The intended business object contains only verified profile URLs and the complete markup validates.",
+    "caution": "sameAs is not universally required on every page. A page count does not prove that 25 separate edits are needed."
+  },
+  "topical_authority": {
+    "owner": "Content editor",
+    "where": "Relevant sentences in this page's main text.",
+    "when": "While updating useful content and related pages.",
+    "steps": [
+      "Identify one or two genuinely related pages on your own website that would help a reader of this page.",
+      "In the page editor, link a descriptive phrase to the relevant existing page. For example, use the page topic rather than 'click here'.",
+      "Preview and publish, then follow each new link to confirm it works."
+    ],
+    "verify": "Each link leads to the correct public page and is useful in context.",
+    "caution": "A link count alone does not establish topical authority. Do not add unnecessary links for a score."
+  }
+}

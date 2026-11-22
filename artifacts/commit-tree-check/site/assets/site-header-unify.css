@@ -1,0 +1,4 @@
+/* Single navigation bar for the whole site.
+   Pages that were built with their own header now use the shared site header instead.
+   The per-page header is hidden rather than removed because React re-renders some of them. */
+.marketing-header{display:none!important}

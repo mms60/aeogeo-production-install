@@ -1,0 +1,13 @@
+site/about.html
+site/index.html
+site/pricing.html
+site/quiz/index.html
+site/resources.html
+site/resources/page-speed-ai-crawlers/index.html
+site/resources/robots-txt-ai-bots/index.html
+site/resources/schema-org-ai-search/index.html
+site/resources/xml-sitemaps-ai-crawlers/index.html
+site/services.html
+site/terms-of-service.html
+site/tools.html
+site/tools/geo-content-checker/index.html
