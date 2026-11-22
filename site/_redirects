@@ -65,6 +65,8 @@
 /resources             /resources.html        200
 /learn                 /learn.html            200
 /tools                 /tools.html            200
+/free-tools            /free-tools/index.html  200
+/free-tools/           /free-tools/index.html  200
 /visibility-tool       /visibility-tool.html  200
 /terms-of-service      /terms-of-service.html 200
 /privacy-policy        /privacy-policy.html   200
