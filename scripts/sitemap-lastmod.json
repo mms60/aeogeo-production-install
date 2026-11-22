@@ -2,12 +2,12 @@
   "version": 1,
   "pages": {
     "https://aeogeosearch.com/": {
-      "hash": "2bbc5d97d8980a2ad02a12c86b4cf486346340a61bd558adeb67d42f12cd8000",
-      "lastmod": "2026-11-21"
+      "hash": "9c9f07b8e421b6ddd9493245b7bb5f3d455ac2ea18d054a6bf074f1e646c0c79",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/about": {
-      "hash": "c38c9a56d00d9d1314a946d974e7f3394fca39a807c18b58aec4a5566bd6124d",
-      "lastmod": "2026-11-19"
+      "hash": "70c1bf028a1cf34fb586235942883e164e734c7a44719f47ada27fae8b383c53",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/services": {
       "hash": "f05cfcf405c94dd71fef89234b6c0d132cc56e14964a7e3ff5648290f7c910db",
@@ -22,8 +22,8 @@
       "lastmod": "2026-11-18"
     },
     "https://aeogeosearch.com/resources": {
-      "hash": "fd0b69f045cfdaab58e774cf446882bb7c799996343521287097f734618f76f5",
-      "lastmod": "2026-11-19"
+      "hash": "c9abe6411eddc9f655d515e692205d5d72fa0a35a62ff8a84c99aa798daf7516",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/learn": {
       "hash": "4548ba17ef86742b69bcaeabb8d31f4dd0cd71f39f03639863979855db6c0807",
@@ -78,20 +78,20 @@
       "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/what-is-ai-search-optimization/": {
-      "hash": "97c418e0ac24e28efa67373542825eb34997bee1103146265349835f0fd370df",
-      "lastmod": "2026-11-21"
+      "hash": "50ceb781b30b6b9e89e67e3ece951c87a55dcd856ffb8fcab1ec56b4942bce73",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/what-is-geo/": {
-      "hash": "a74b56f4141de44d38201d51ffc6243d19f845bcfb8219dad3e1bd7fa6968a32",
-      "lastmod": "2026-11-21"
+      "hash": "ee818f5fec1e09c39a6f9da4a6650c2a68316a8f1205c5bfdaa4e0a5a1996d00",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/what-is-aeo/": {
-      "hash": "0283abfa2e54fd8abc18d8ea14deb2aa1a6cf341c96a9cb2f2f505ec62b1741d",
-      "lastmod": "2026-11-21"
+      "hash": "b4ce32ae18b8f5fe13bb435859f96f3ff2a4a8ed1be8ab7735cacf26214e97e0",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/": {
-      "hash": "cf8cd6347f5922cf575ce5bfd8006f2d32255cfdd34b5c09ac4ed20050f5aa78",
-      "lastmod": "2026-11-21"
+      "hash": "494436fa9df38a6f93aaebbc04affcd7f465c5ae84e0c523b8fc678f7ef7a351",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/ai-overviews-changing-search/": {
       "hash": "4c41e57b29c9f34af616df8d5e65d4f2a017c0bc060b18637a17d43485ca11ab",
@@ -102,16 +102,16 @@
       "lastmod": "2026-11-21"
     },
     "https://aeogeosearch.com/resources/get-cited-ai-answers/": {
-      "hash": "f4282cae338103cd3b2a7b3059036294691b6bcf080805f9fc6a679a23a490cc",
-      "lastmod": "2026-11-21"
+      "hash": "71d58010f1f42f5ddd6c8dc0af2823786b14aa85e4d993639d2e91d3f0e934b4",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/which-ai-platforms/": {
-      "hash": "5f196743f75256a2298bc16974851eebf9ef30e6ebcbb4fa20a4adfa25d8006f",
-      "lastmod": "2026-11-21"
+      "hash": "ddc45abe40365b1bffeac52ceb659089b2dc87277fff55a0cee90fc71ce0e72c",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/measure-ai-visibility/": {
-      "hash": "57f2e91719ca6e9b5318f23cd94f95b19d74fd2f7cbdf1f5130c235e2e7c1160",
-      "lastmod": "2026-11-21"
+      "hash": "f87f2d5cf9616ca6113a069404f8eb9ce3c0feed07aee598d395010c8cedf6d7",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/tools/geo-content-checker/": {
       "hash": "a9179df9427fe9bb73bd598f3cdada3e6fc02748906d63aab05b824f347e17af",
@@ -138,16 +138,16 @@
       "lastmod": "2026-11-19"
     },
     "https://aeogeosearch.com/resources/schema-org-ai-search/": {
-      "hash": "fc377f4117275b6e26153f2a2ceea0ecff191b1df66145306606c56cbf54c2d0",
-      "lastmod": "2026-11-19"
+      "hash": "e06d8e1573c25a905415d0448d213683954a75f3498fde6b1b9fb8e4db4d928d",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/robots-txt-ai-bots/": {
-      "hash": "d976559772b1dc00ba02822c7aa411a110cef509782df87e2a5f5ce011d1ed10",
-      "lastmod": "2026-11-19"
+      "hash": "aa60384a325a1108b21c1576ecd53465e2a18442e7d7909728eec8be224a7de9",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/llms-txt/": {
-      "hash": "d5e17f84321936e6a728b987ec0830de4d7ea83b88f153143d66c7973fdb6d16",
-      "lastmod": "2026-11-18"
+      "hash": "26b42eb82f1840f4a3d8c97d382f2c4ad003ad310acab9c0019ad99c05235e94",
+      "lastmod": "2026-11-22"
     },
     "https://aeogeosearch.com/resources/xml-sitemaps-ai-crawlers/": {
       "hash": "0672a3a40d8aafd83494e3487b8829efa7ded8d32870e375ec084f1d3f62467b",
