@@ -4,6 +4,8 @@ const crypto = require('node:crypto');
 const {requireStripeCredential} = require('./stripe-credential');
 const {validatePortalConfiguration} = require('./portal-policy');
 const KIND = 'aeogeo_guest_service_v1';
+// Stripe requires expires_at to be at least 30 minutes after session creation.
+const CHECKOUT_SECONDS = 3600;
 const COOKIE = '__Host-aeogeo-service-v1';
 // Extra per-instance abuse throttle. Not a claim of distributed platform rate limiting.
 const attempts = new Map();
@@ -145,11 +147,15 @@ function createGuestServiceCheckout({stripe,env=process.env,now=()=>Date.now(),u
    if(prior){if(prior.service!==name)throw fail(409,'There is already a monthly service checkout in this browser. Finish or manage it before choosing another plan. Contact us if you need a different plan.');if(prior.c.status==='open')return reply(200,{url:destination(prior.c.url,'checkout.stripe.com')},state);return reply(200,{...prior.result,existingPurchase:true},state);}
    await price(name);const service=selected(name);if(service.monthly)await portalConfiguration();
    let s=slot(state,name);if(!s.session&&s.expires<=now()/1000+60){state.slots[group(name)]={attempt:uuid(),service:name,expires:Math.floor(now()/1000)+1800};s=slot(state,name);}
-   const metadataFields=meta(state,s,name),data={mode:service.monthly?'subscription':'payment','line_items[0][price]':priceFor(name),'line_items[0][quantity]':1,success_url:site()+'/service-checkout/?service='+encoded(name)+'&session_id={CHECKOUT_SESSION_ID}',cancel_url:site()+'/service-checkout/?service='+encoded(name)+'&canceled=1',billing_address_collection:'auto','payment_method_types[0]':'card',expires_at:s.expires};
+   // The slot was created when the page loaded, so its expiry is already less
+   // than 30 minutes away by the time a visitor clicks. Give Stripe a full
+   // window measured from this request instead.
+   const expires=Math.floor(now()/1000)+CHECKOUT_SECONDS;s.expires=expires;
+   const metadataFields=meta(state,s,name),data={mode:service.monthly?'subscription':'payment','line_items[0][price]':priceFor(name),'line_items[0][quantity]':1,success_url:site()+'/service-checkout/?service='+encoded(name)+'&session_id={CHECKOUT_SESSION_ID}',cancel_url:site()+'/service-checkout/?service='+encoded(name)+'&canceled=1',billing_address_collection:'auto','payment_method_types[0]':'card',expires_at:expires};
    if(!service.monthly)data.customer_creation='always';
    if(!live())data.customer_email=String(body.testEmail).trim().toLowerCase();
    for(const [k,v]of Object.entries(metadataFields)){data['metadata['+k+']']=v;data[(service.monthly?'subscription_data':'payment_intent_data')+'[metadata]['+k+']']=v;}
-   const c=await stripe('checkout/sessions',{method:'POST',data,idempotency:'guest-services-v1:'+credential().mode+':'+state.guest+':'+group(name)+':'+s.attempt});
+   const c=await stripe('checkout/sessions',{method:'POST',data,idempotency:'guest-services-v2:'+credential().mode+':'+state.guest+':'+group(name)+':'+s.attempt});
    if(!identifier(c.id,'cs_')||!metadata(c,metadataFields)||c.livemode!==live()||c.mode!==data.mode||!['open','complete','expired'].includes(c.status)||c.amount_total!==service.amount||c.currency!=='usd')throw fail(503,'The checkout response requires review. No payment has been authorized by this website.');
    s.service=name;s.session=c.id;
    if(c.status!=='open'){const checked=await session(state,name,c.id);return reply(200,{...(await paid(checked,state,name)),existingPurchase:true},state);}
