@@ -101,8 +101,8 @@ async function getSite() {
   if (live.state !== 'ready' || !live.published_at) {
     throw new Error(`Published deploy ${live.id || '(unknown)'} is not ready/published.`);
   }
-  if (live.locked !== false) {
-    throw new Error(`Auto publishing is not confirmed enabled: published deploy locked=${String(live.locked)}.`);
+  if (live.locked === true) {
+    throw new Error('Production deploy is locked, so auto publishing is off.');
   }
   if (!live.commit_ref) {
     throw new Error('Published deploy has no commit_ref; cannot verify Git provenance.');

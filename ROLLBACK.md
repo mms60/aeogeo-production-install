@@ -194,7 +194,7 @@ A deploy can be `ready` without being published. Do not assume a successful buil
 
 ### Auto publishing
 
-Auto publishing is enabled for production. The published deploy's `locked` flag must be `false`; if it is `true`, Netlify will keep production on the old commit even after a new build succeeds. Unlock the published deploy in Netlify (Deploys → deploy menu → Unlock auto publishing) before merging a release. This is a site setting, not a one-time publish.
+Auto publishing is enabled for production. The published deploy's `locked` flag must not be `true` (Netlify may return `null` when unlocked); if it is `true`, Netlify will keep production on the old commit even after a new build succeeds. Unlock the published deploy in Netlify (Deploys → deploy menu → Unlock auto publishing) before merging a release. This is a site setting, not a one-time publish.
 
 Run the release check after every production deploy:
 
@@ -221,6 +221,10 @@ Run the same checks locally:
 npm run release:check -- --expected "$(git rev-parse origin/main)"
 npm run smoke:postdeploy
 ```
+
+### Form notifications
+
+Netlify Forms notification recipients are configured in the Netlify UI under Forms → Submission notifications. The public API can list/delete forms and submissions but cannot manage notifications. A stored submission does not prove an email was sent; confirm a recipient exists and, after a labeled test submission, confirm receipt before relying on lead capture.
 
 ## Post-rollback verification
 
