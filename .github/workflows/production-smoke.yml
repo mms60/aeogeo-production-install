@@ -38,5 +38,5 @@ jobs:
             exit 1
           fi
           node scripts/check-published-deploy.cjs --expected "$(git rev-parse origin/main)"
-      - name: Smoke live pages and OG image
+      - name: Smoke live pages and social preview
         run: node scripts/postdeploy-smoke.cjs

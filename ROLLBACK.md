@@ -213,7 +213,7 @@ Check `state`, `published_at`, and `error_message`. Auto publishing should publi
 
 ## Post-deploy smoke
 
-The `Production smoke` workflow (`.github/workflows/production-smoke.yml`) runs after a successful production deployment status, on manual dispatch, and every six hours. It requires the repository secret `NETLIFY_AUTH_TOKEN` with access to the site. It checks that the published commit matches `origin/main`, then checks the Bing tag, the free-tools title, and the OG image.
+The `Production smoke` workflow (`.github/workflows/production-smoke.yml`) runs after a successful production deployment status, on manual dispatch, and every six hours. It requires the repository secret `NETLIFY_AUTH_TOKEN` with access to the site. It checks that the published commit matches `origin/main`, then checks the Bing tag, the free-tools title, and the full OG/Twitter card, including a live 1200×630 JPEG check.
 
 Run the same checks locally:
 
