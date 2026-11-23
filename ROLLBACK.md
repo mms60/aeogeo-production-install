@@ -29,6 +29,15 @@ Rules:
 
 `release-2026-11-23` is an annotated tag on `a9ccb21`. It is the rollback baseline that includes the free-tools rewrite and the Bing verification tag. The pre-tag deploy `6b048bdd4d85b74f7fc35d86` predates that tag and must not be left published if Bing verification matters.
 
+## Release hygiene for homepage changes
+
+- Keep each homepage change in its own commit. Do not bundle homepage copy, schema, documentation, or unrelated page edits into one release commit.
+- Make homepage changes on a branch named `homepage/<change>` and open a pull request. Use the Netlify deploy preview for that PR and verify the preview URL before merging or publishing.
+- Run `npm run bing:check` and the relevant page checks against the preview branch before production.
+- Tag production only after it is verified: `release-YYYY-MM-DD` at the verified commit.
+- Put local browser-check screenshots under `artifacts/local/` (ignored). Do not add loose PNGs at the repository root.
+- Do not use a production deploy as the first look at a homepage change.
+
 ## Preflight checks
 
 Run these before choosing a rollback path:
