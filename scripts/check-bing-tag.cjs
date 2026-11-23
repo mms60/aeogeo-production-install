@@ -8,6 +8,7 @@ const SITE_URL = 'https://aeogeosearch.com/';
 const EXPECTED = '2E167DAFE14DBC1C787CCF4F3D1D6ED9';
 const TAG = `<meta name="msvalidate.01" content="${EXPECTED}" />`;
 const HOMEPAGE = path.join(__dirname, '..', 'site', 'index.html');
+const BING_XML = path.join(__dirname, '..', 'site', 'BingSiteAuth.xml');
 
 function inspect(html, label) {
   const headMatch = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
@@ -43,6 +44,12 @@ function inspect(html, label) {
   return tags[0];
 }
 
+function inspectXml(xml, label) {
+  if (!/<users\b[^>]*>[\s\S]*<\/users>/i.test(xml)) throw new Error(`${label}: no <users> root found`);
+  if (!new RegExp(`<user>${EXPECTED}</user>`).test(xml)) throw new Error(`${label}: XML does not contain ${EXPECTED}`);
+  if ((xml.match(/<user\b/gi) || []).length !== 1) throw new Error(`${label}: expected exactly 1 <user> entry`);
+}
+
 function addTag(html) {
   if (/msvalidate\.01/i.test(html)) return html;
 
@@ -69,6 +76,16 @@ async function inspectProduction() {
 
   const tag = inspect(await response.text(), SITE_URL);
   console.log(`Production OK: ${response.url} -> ${tag}`);
+
+  const xmlUrl = new URL('/BingSiteAuth.xml', SITE_URL);
+  const xmlResponse = await fetch(xmlUrl, {
+    cache: 'no-store',
+    redirect: 'follow',
+    headers: { 'user-agent': 'AEOGEO rollback verification check' }
+  });
+  if (!xmlResponse.ok) throw new Error(`${xmlUrl}: HTTP ${xmlResponse.status}`);
+  inspectXml(await xmlResponse.text(), String(xmlUrl));
+  console.log(`Production XML OK: ${xmlUrl}`);
 }
 
 (async () => {
@@ -85,7 +102,9 @@ async function inspectProduction() {
   }
 
   const tag = inspect(html, HOMEPAGE);
+  inspectXml(fs.readFileSync(BING_XML, 'utf8'), BING_XML);
   console.log(`Local OK: ${HOMEPAGE} -> ${tag}`);
+  console.log(`Local XML OK: ${BING_XML}`);
 
   if (process.argv.includes('--production')) await inspectProduction();
 })().catch(error => {

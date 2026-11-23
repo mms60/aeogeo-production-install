@@ -4,6 +4,7 @@
 const assert = require('node:assert/strict');
 
 const HOME = 'https://aeogeosearch.com/';
+const BING_XML = 'https://aeogeosearch.com/BingSiteAuth.xml';
 const FREE_TOOLS = 'https://aeogeosearch.com/free-tools/';
 const EXPECTED_BING = '2E167DAFE14DBC1C787CCF4F3D1D6ED9';
 const EXPECTED_FREE_TOOLS_TITLE = 'Free SEO, AEO & GEO Tools for AI Search Optimization';
@@ -154,6 +155,12 @@ async function checkSocialPreview(html) {
   console.log(`OG/Twitter alt OK: ${ogImageAlt}`);
 }
 
+function checkBingXml(xml) {
+  assert.match(xml, /<users\b[^>]*>[\s\S]*<\/users>/i, 'Bing XML has no <users> root');
+  assert.match(xml, new RegExp(`<user>${EXPECTED_BING}</user>`), 'Bing XML has the wrong verification code');
+  assert.equal((xml.match(/<user\b/gi) || []).length, 1, 'expected exactly one Bing XML <user> entry');
+}
+
 async function fetchText(url) {
   const response = await fetch(url, {
     cache: 'no-store',
@@ -169,6 +176,9 @@ async function fetchText(url) {
   const home = await fetchText(HOME);
   checkBing(home);
   console.log(`Bing tag OK: ${HOME}`);
+
+  checkBingXml(await fetchText(BING_XML));
+  console.log(`Bing XML OK: ${BING_XML}`);
 
   await checkSocialPreview(home);
 
