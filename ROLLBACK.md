@@ -42,6 +42,33 @@ npm run bing:check:prod
 
 `bing:check` inspects `site/index.html` locally. `bing:check:prod` fetches the live homepage and applies the same head-only check.
 
+These npm scripts exist from commit `b45b341` onward. If a rollback removes that commit, use the portable check below.
+
+## Portable check
+
+This does not depend on the guard script or `package.json`:
+
+```bash
+node - <<'NODE'
+const fs = require('node:fs');
+const html = fs.readFileSync('site/index.html', 'utf8');
+const head = (html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i) || [])[1] || '';
+const tags = [...head.matchAll(/<meta\b[^>]*\bname\s*=\s*["']?msvalidate\.01["']?[^>]*>/gi)];
+if (tags.length !== 1) throw new Error(`Expected 1 msvalidate.01 tag in <head>, found ${tags.length}`);
+if (!/2E167DAFE14DBC1C787CCF4F3D1D6ED9/.test(tags[0][0])) throw new Error('Wrong msvalidate.01 content');
+if ((html.match(/msvalidate\.01/gi) || []).length !== 1) throw new Error('Expected exactly 1 msvalidate.01 occurrence');
+console.log('Bing tag OK:', tags[0][0]);
+NODE
+```
+
+If the tag is missing and the guard script is unavailable, recover the guard from `b45b341`:
+
+```bash
+git show b45b341:scripts/check-bing-tag.cjs > scripts/check-bing-tag.cjs
+node scripts/check-bing-tag.cjs --write
+node scripts/check-bing-tag.cjs
+```
+
 ## Preferred path: Git revert
 
 Git revert is preferred because it produces a reviewable commit, preserves the release tag, and runs the Netlify build guard.
@@ -54,13 +81,27 @@ This keeps `a9ccb21` and the Bing tag, and reverses only commits made after the 
 git switch -c rollback/2026-11-23 origin/main
 git revert --no-commit release-2026-11-23..HEAD
 # Resolve conflicts without deleting the msvalidate.01 line.
-npm run bing:check
+# This also reverts the guard commit b45b341; the Bing tag remains.
+node - <<'NODE'
+const fs = require('node:fs');
+const html = fs.readFileSync('site/index.html', 'utf8');
+const head = (html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i) || [])[1] || '';
+const tags = [...head.matchAll(/<meta\b[^>]*\bname\s*=\s*["']?msvalidate\.01["']?[^>]*>/gi)];
+if (tags.length !== 1 || !/2E167DAFE14DBC1C787CCF4F3D1D6ED9/.test(tags[0][0])) process.exit(1);
+console.log('Bing tag OK:', tags[0][0]);
+NODE
 git diff --check
 git commit -m "Roll back post-release changes while preserving Bing verification"
 git push origin HEAD:main
 ```
 
-If `HEAD` is already at the release commit, there is nothing to revert.
+If `HEAD` is already at the release commit, there is nothing to revert. If you want the build guard back on the rollback branch, restore it from the guard commit:
+
+```bash
+git checkout b45b341 -- scripts/check-bing-tag.cjs package.json netlify.toml ROLLBACK.md
+```
+
+Then commit the restored guard with the rollback.
 
 ### Roll back to a point before the release
 
@@ -69,14 +110,16 @@ This also removes the release commit, including the Bing tag, so repair the tag 
 ```bash
 git switch -c rollback/pre-release origin/main
 git revert --no-commit 'release-2026-11-23^..HEAD'
+# The revert removes the guard commit; recover the helper if necessary.
+[ -f scripts/check-bing-tag.cjs ] || git show b45b341:scripts/check-bing-tag.cjs > scripts/check-bing-tag.cjs
 node scripts/check-bing-tag.cjs --write
-npm run bing:check
+node scripts/check-bing-tag.cjs
 git diff --check
 git commit -m "Roll back to pre-release content and restore Bing verification"
 git push origin HEAD:main
 ```
 
-`--write` inserts only the exact tag when it is missing. It refuses to overwrite a duplicate or a tag with the wrong content.
+`--write` inserts only the exact tag when it is missing. It refuses to overwrite a duplicate or a tag with the wrong content. If the helper itself was removed by the rollback, the `git show b45b341:...` line restores just the helper before running it.
 
 ### Revert one bad commit
 
@@ -170,6 +213,8 @@ Finally, in Bing Webmaster Tools, verify the **apex** property `https://aeogeose
 
 `netlify.toml` now runs `node scripts/check-bing-tag.cjs` after the existing test. Any Git-based deploy that removes, duplicates, or corrupts the tag fails the build.
 
+This guard is in commit `b45b341`. A rollback that reverts that commit also removes the guard, but it does not remove the Bing tag from the tagged release. Use the portable check and restore the guard from `b45b341` if you want it back on the rollback branch.
+
 This guard does not protect a Netlify deploy restore because restores reuse already-built files. The post-restore production check is mandatory.
 
 ## Decision table
@@ -189,3 +234,4 @@ This guard does not protect a Netlify deploy restore because restores reuse alre
 - Revert `a9ccb21` without restoring the tag.
 - Leave `6b048bdd4d85b74f7fc35d86` published as the final rollback state.
 - Treat `state: "ready"` as proof that the deploy is live.
+- Assume the build guard still exists after reverting `b45b341`; use the portable check.
