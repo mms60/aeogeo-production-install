@@ -416,8 +416,8 @@
       </table>
     </div>
     <div class=ea-plan-actions>
-      <a class=st-button id=ea-checkout-single href="/login/?next=%2Fai-visibility-schema-studio%23pricing" data-ea-checkout=single rel=nofollow>Buy Single-Hub ($799)</a>
-      <a class="st-button st-button-secondary" id=ea-checkout-multi href="/login/?next=%2Fai-visibility-schema-studio%23pricing" data-ea-checkout=multi rel=nofollow>Buy Multi-Location ($1,199)</a>
+      <a class=st-button id=ea-checkout-single href="/login/?next=%2Fai-visibility-schema-studio%23pricing" data-ea-checkout="single" rel=nofollow>Buy Single-Hub ($799)</a>
+      <a class="st-button st-button-secondary" id=ea-checkout-multi href="/login/?next=%2Fai-visibility-schema-studio%23pricing" data-ea-checkout="multi" rel=nofollow>Buy Multi-Location ($1,199)</a>
     </div>
     <p class=ea-pricing-note id=ea-checkout-note>Sign in before checkout so the purchase is linked to your account.</p>
     <p class=ea-pricing-note>No subscription. Pay securely online with Stripe. Checkout is linked to the email on your account. The builder unlocks immediately after payment. Structured data helps search systems interpret your business. It does not guarantee rankings, citations, or recommendations. Prefer to ask first? <a href=#get-started>Use the intake form</a>.</p>
@@ -438,7 +438,7 @@
       </ul>
       <div class=ea-success id=ea-checkout-result role=status hidden></div>
     </div>
-    <form name=entity-authority method=POST data-netlify=true data-netlify-honeypot=bot-field id=ea-intake-form class=ea-intake>
+    <form name=entity-authority method=POST data-netlify=true data-netlify-honeypot=bot-field id="ea-intake-form" class=ea-intake>
       <input type=hidden name=form-name value=entity-authority>
       <p hidden><label>Do not fill this out: <input name=bot-field></label></p>
       <label class=ea-field>Your name <span class=ea-req>*</span><input name=name autocomplete=name required></label>
@@ -484,3 +484,5 @@
 <script defer src="/assets/ai-entity-map-demo.js?v=entity8"></script>
 <script defer src=/assets/supabase.js></script>
 <script defer src="/assets/entity-authority-tool.js?v=entity8"></script>
+</body>
+</html>

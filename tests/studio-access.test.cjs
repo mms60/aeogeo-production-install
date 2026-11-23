@@ -15,7 +15,7 @@ const webhook = fs.readFileSync(path.join(root, 'netlify', 'functions', 'stripe-
 const migration = fs.readFileSync(path.join(root, 'database', '10-entity-purchases.sql'), 'utf8');
 
 test('the public page keeps the hero and example graph intact', () => {
-  assert.ok(page.includes('Make Sure ChatGPT, Perplexity, And Google Know Exactly Who You Are, And Why You\u2019re The Trusted Choice'));
+  assert.ok(page.includes('Help AI Search Understand Your Business'));
   assert.match(page, /id=entity-audit[^>]*aria-label="Interactive entity map example"/);
   assert.match(page, /Example Client Brand/);
 });
@@ -41,7 +41,7 @@ test('the locked builder points to the DIY packages with accurate wording', () =
   assert.match(tool, /Unlock the complete DIY builder with AEOGEO Search\./);
   assert.match(tool, /View DIY Builder Packages/);
   assert.match(tool, /Recommended next steps/);
-  assert.match(page, /Build the Architecture That Connects It All/);
+  assert.match(page, /Build your business information map/);
   assert.match(page, /The free check identifies problems\. The paid plan gives you the builder that generates the complete customized JSON-LD, validates it, and tells you how to publish it\./);
   assert.match(page, /View DIY Builder Packages/);
   assert.doesNotMatch(page, /zero ambiguity/);

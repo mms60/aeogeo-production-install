@@ -112,6 +112,7 @@ function render(article, { inBundle = true } = {}) {
     const ET = 'ET';
     const ST = ['Source one', 'Source two'];
     const aeogeoArticleBottomCTA = 'CTA';
+    const aeogeoContactLinkText = value => value;
     ${extractFunction(APP, 'aeogeoStandaloneArticle')}
     return aeogeoStandaloneArticle({ anchor: ${JSON.stringify(article.anchor)} });
   `;
