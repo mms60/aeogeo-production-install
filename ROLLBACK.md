@@ -192,12 +192,35 @@ While the pre-tag deploy is live, Bing verification can fail. Treat that interva
 
 A deploy can be `ready` without being published. Do not assume a successful build is live.
 
+### Auto publishing
+
+Auto publishing is enabled for production. The published deploy's `locked` flag must be `false`; if it is `true`, Netlify will keep production on the old commit even after a new build succeeds. Unlock the published deploy in Netlify (Deploys → deploy menu → Unlock auto publishing) before merging a release. This is a site setting, not a one-time publish.
+
+Run the release check after every production deploy:
+
+```bash
+npm run release:check -- --expected "$(git rev-parse origin/main)"
+```
+
+It fails when the published deploy is not ready, has no `published_at`, is locked, or its `commit_ref` does not match `origin/main`.
+
 ```bash
 netlify api listSiteDeploys -d '{"site_id":"5e907ce6-0971-4862-9d52-651026e37c00","per_page":5}'
 netlify api getSiteDeploy -d '{"site_id":"5e907ce6-0971-4862-9d52-651026e37c00","deploy_id":"<deploy-id>"}'
 ```
 
-Check `state`, `published_at`, and `error_message`. If the new deploy is ready but `published_at` is null, publish it with `restoreSiteDeploy`.
+Check `state`, `published_at`, and `error_message`. Auto publishing should publish the next Git deploy. If a ready deploy still has `published_at: null`, use `restoreSiteDeploy` as an emergency manual publish; `scripts/netlify-publish.cjs` no longer requires the lock.
+
+## Post-deploy smoke
+
+The `Production smoke` workflow (`.github/workflows/production-smoke.yml`) runs after a successful production deployment status, on manual dispatch, and every six hours. It requires the repository secret `NETLIFY_AUTH_TOKEN` with access to the site. It checks that the published commit matches `origin/main`, then checks the Bing tag, the free-tools title, and the OG image.
+
+Run the same checks locally:
+
+```bash
+npm run release:check -- --expected "$(git rev-parse origin/main)"
+npm run smoke:postdeploy
+```
 
 ## Post-rollback verification
 
@@ -220,9 +243,9 @@ Finally, in Bing Webmaster Tools, verify the **apex** property `https://aeogeose
 
 ## Guard in the build
 
-`netlify.toml` now runs `node scripts/check-bing-tag.cjs` after the existing test. Any Git-based deploy that removes, duplicates, or corrupts the tag fails the build.
+`netlify.toml` runs `npm run ci:site`, which runs the focused tests (including the contact-form regression), `nav:check`, `sitemap:check`, and `bing:check`. Any Git-based deploy that removes or duplicates the Bing tag, leaves the generated navigation stale, or breaks the visible contact form fails the build.
 
-This guard is in commit `b45b341`. A rollback that reverts that commit also removes the guard, but it does not remove the Bing tag from the tagged release. Use the portable check and restore the guard from `b45b341` if you want it back on the rollback branch.
+The Bing guard was added in commit `b45b341`. A rollback that reverts that commit also removes the guard, but it does not remove the Bing tag from the tagged release. Use the portable check and restore the guard from `b45b341` if you want it back on the rollback branch.
 
 This guard does not protect a Netlify deploy restore because restores reuse already-built files. The post-restore production check is mandatory.
 

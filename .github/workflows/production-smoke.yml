@@ -1,0 +1,42 @@
+name: Production smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+  deployments: read
+
+concurrency:
+  group: production-smoke
+  cancel-in-progress: true
+
+jobs:
+  production-smoke:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       contains(fromJSON('["Production","production"]'), github.event.deployment.environment))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22.x"
+      - name: Fetch main
+        run: git fetch --no-tags origin main
+      - name: Verify published deploy matches main
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 5e907ce6-0971-4862-9d52-651026e37c00
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::NETLIFY_AUTH_TOKEN is not configured as a repository secret."
+            exit 1
+          fi
+          node scripts/check-published-deploy.cjs --expected "$(git rev-parse origin/main)"
+      - name: Smoke live pages and OG image
+        run: node scripts/postdeploy-smoke.cjs

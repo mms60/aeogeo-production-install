@@ -1,8 +1,8 @@
 'use strict';
 
-// Publish a ready production deploy while the Netlify deploy lock stays on.
-// The lock is Netlify's "stop auto publishing" gate. This script never changes
-// it: it refuses to publish when the lock is off and verifies it afterwards.
+// Publish a ready production deploy for rollback or emergency use.
+// Auto publishing is normally enabled; this script leaves the lock setting unchanged.
+// It verifies the chosen commit afterwards without requiring or changing the lock.
 //
 // Usage:
 //   NETLIFY_AUTH_TOKEN=... node scripts/netlify-publish.cjs
@@ -149,16 +149,14 @@ async function main() {
   console.log('Live: ' + (published
     ? `${short(published.id)}  ${short(published.commit_ref)}  ${when(published.created_at)}`
     : 'nothing published yet'));
-  console.log('Production deploy lock: ' + (published?.locked === true ? 'ON' : 'OFF'));
+  console.log('Auto publishing: ' + (published?.locked === true ? 'OFF (deploy locked)' : 'ON'));
   console.log('');
   console.log('Newest ready production deploys:');
   if (!ready.length) throw new Error('No ready production deploys were found.');
   ready.forEach((deploy, index) => console.log(`  ${index + 1}) ${describe(deploy, published?.id)}`));
   console.log('');
 
-  if (published?.locked !== true) {
-    throw new Error('Refusing to publish because the production deploy lock is off. Turn the lock on in Netlify first; this script never changes the lock setting.');
-  }
+
 
   let selected;
   if (requested !== null) {
@@ -191,10 +189,7 @@ async function main() {
     return;
   }
 
-  const latest = await api('/sites/' + encodeURIComponent(SITE_ID));
-  if (latest?.published_deploy?.locked !== true) {
-    throw new Error('Refusing to publish because the production deploy lock was turned off. This script never changes the lock setting.');
-  }
+
 
   console.log(`Publishing ${selected.id} (commit ${short(selected.commit_ref)}) ...`);
   await api(`/sites/${encodeURIComponent(SITE_ID)}/deploys/${encodeURIComponent(selected.id)}/restore`, { method: 'POST' });
@@ -208,22 +203,20 @@ async function main() {
   if (!live || !sameCommit(live.commit_ref, selected.commit_ref)) {
     failures.push(`the live commit is ${live?.commit_ref || 'missing'}, not ${selected.commit_ref}`);
   }
-  if (live?.locked !== true) failures.push('the production deploy lock is now OFF');
+
 
   if (failures.length) {
     console.error('');
     console.error('Publish verification failed:');
     for (const failure of failures) console.error('- ' + failure);
-    if (live?.locked !== true) {
-      console.error('This script did not change the lock. Check the Netlify deploy settings before relying on the lock.');
-    }
+
     process.exitCode = 1;
     return;
   }
 
   console.log('');
   console.log(`Live: ${short(live.id)}  commit ${short(live.commit_ref)}  ${when(live.created_at)}`);
-  console.log('Verified: the chosen commit is live and the production deploy lock is still ON.');
+  console.log('Verified: the chosen commit is live.');
 }
 
 main().catch(error => {

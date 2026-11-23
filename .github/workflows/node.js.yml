@@ -33,3 +33,5 @@ jobs:
       run: npm run sitemap:check
     - name: Verify navigation is generated from templates/site-header.html
       run: npm run nav:check
+    - name: Verify Bing verification tag
+      run: npm run bing:check
