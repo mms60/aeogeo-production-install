@@ -15,7 +15,4 @@ shared=(root/'site/assets/geo.js').read_text().split('function renderReport(')[0
 assert shared.startswith('/* AEOGEO') and 'function aggregate(' in shared
 js=shared+(root/'scripts/audit-adapter.jsfrag').read_text()
 (root/'site/assets/audit-tool.js').write_text(js)
-fontcss='\n'.join(re.findall(r'@font-face\{[^}]+\}',(root/'site/assets/geo.css').read_text()))
-assert fontcss.count('@font-face')==9
-(root/'site/assets/audit-fonts.css').write_text('/* Original website Sora/Inter fonts. OFL licenses in assets/fonts. */\n'+fontcss+'\n')
 print('Built the user-supplied audit layout with real-report, progress, account and export adapters.')

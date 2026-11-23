@@ -5,7 +5,7 @@
 Contact: https://aeogeosearch.com/contact · (469) 905-2836 · McKinney, Texas
 
 ## Services
-Our pricing page is the source of truth: 12 service options in six categories. Combination packages combine existing services and are not additional underlying options.
+Our pricing page is the source of truth: 12 service options in six categories, plus separate self-service GEO Audit plans. Published pricing includes the $149/month GEO Audit Professional plan, alongside managed AI Search Optimization plans at $349/$649/$999 per month and the $1,500 one-time Knowledge Base Package. Combination packages combine existing services and are not additional underlying options.
 - [Monthly AI Search Optimization Plans](https://aeogeosearch.com/pricing#monthly-ai-search): Starter $349/month, Growth $649/month, Authority $999/month. Starter includes up to 2 existing website pages/month; Growth and Authority each include up to 4.
 - [Workflow Automation Setup and Support](https://aeogeosearch.com/pricing#workflow-automation): Automation Quick Start, Connected Workflow Setup, and Automation Monitoring and Support.
 - [Content Support Services](https://aeogeosearch.com/pricing#content-support): Website Content Optimization, New SEO and AI Ready Article, and Content and Social Media Plan.

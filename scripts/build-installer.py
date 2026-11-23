@@ -6,7 +6,7 @@ files=[]
 # every original page and image by copying the owner's actual extracted LIVE backup.
 for folder in ['site/geo-audit','site/account','site/login','site/auth','site/assets/fonts','netlify','database','templates']:
  files.extend(p for p in (root/folder).rglob('*') if p.is_file())
-for name in ['geo.css','geo.js','geo-nav.js','supabase.js','audit-tool.css','audit-tool.js','audit-fonts.css','sample-report.json','sample-comparison.json']:
+for name in ['geo.css','geo.js','geo-nav.js','supabase.js','audit-tool.css','audit-tool.js','sample-report.json','sample-comparison.json']:
  files.append(root/'site/assets'/name)
 files.extend(root/p for p in ['package.json','package-lock.json','netlify.toml','.env.example','.gitignore','BUILD-STATUS.md'])
 files.extend(p for p in (root/'scripts').iterdir() if p.is_file())

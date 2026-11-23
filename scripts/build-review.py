@@ -8,7 +8,7 @@ comparison=json.loads((root/'site/assets/sample-comparison.json').read_text())
 bridge='''document.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;const href=a.getAttribute('href')||'';if(href.startsWith('#'))return;if(href.startsWith('/')){e.preventDefault();parent.postMessage({review:href.includes('/run')?'tool':href.includes('/account')||href.includes('/login')?'status':'landing'},'*');}},true);document.querySelectorAll('.choose-plan').forEach(b=>b.onclick=()=>parent.postMessage({review:'status'},'*'));'''
 def build(rel,tool=False):
  s=(root/'site'/rel).read_text()
- files=['audit-fonts.css','audit-tool.css'] if tool else ['geo.css']
+ files=['audit-tool.css'] if tool else ['geo.css']
  for name in files:s=s.replace('<link rel="stylesheet" href="/assets/'+name+'" />','<style>'+(root/'site/assets'/name).read_text()+'</style>').replace('<link rel="stylesheet" href="/assets/'+name+'">','<style>'+(root/'site/assets'/name).read_text()+'</style>')
  s=re.sub(r'<script defer src="/assets/(?:supabase|geo|audit-tool)\.js"></script>','',s)
  localjs=(root/'site/assets/audit-tool.js').read_text() if tool else js

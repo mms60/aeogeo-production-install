@@ -45,6 +45,17 @@
 /knowledge-library     /learn                 301
 /knowledge-library/    /learn                 301
 
+# Canonicalize .html entry URLs for the four pages that load the React app.
+# /tools.html, /visibility-tool.html, /content-order.html and /content-review.html
+# have no app route; without these redirects the catch-all renders the homepage.
+# The two /index.html variants are canonicalized to their directory URLs.
+/tools.html                 /tools                 301!
+/visibility-tool.html       /visibility-tool       301!
+/content-order.html         /content-order/        301!
+/content-review.html        /content-review/       301!
+/content-order/index.html   /content-order/        301!
+/content-review/index.html  /content-review/       301!
+
 # Knowledge Library guide
 /knowledge-library/how-to-get-your-website-on-google-search/ /knowledge-library/how-to-get-your-website-on-google-search 301
 /knowledge-library/how-to-get-your-website-on-google-search  /knowledge-library/how-to-get-your-website-on-google-search.html 200
@@ -138,4 +149,11 @@
 
 
 
+# Canonical host: single hop from http(s)://www to the apex domain
+https://www.aeogeosearch.com/*  https://aeogeosearch.com/:splat  301!
+# Retired paths that were returning 404
+/blog              /learn    301!
+/blog/*            /learn    301!
+/knowledge-base    /pricing  301!
+/knowledge-base/   /pricing  301!
 /* /404.html 404

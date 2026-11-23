@@ -294,7 +294,6 @@ body {
   color: #fff;
   font-weight: 700;
   text-decoration: none;
-  text-transform: uppercase;
   letter-spacing: .03em;
 }
 
@@ -524,7 +523,6 @@ body {
   padding: 16px 30px;
   font-size: 15px;
   letter-spacing: .04em;
-  text-transform: uppercase;
 }
 
 .cd-secondary {

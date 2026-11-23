@@ -547,7 +547,7 @@
                 `</div>` +
               `</div>` +
               `<div class="ws-run-row">` +
-                `<span class="ws-hint">Analyzes public HTTPS pages, robots.txt, sitemaps, 4 Ps, topic gaps, and SWOT (capped at 25 PDF pages).</span>` +
+                `<span class="ws-hint">Analyzes your site and competitor URLs using public HTTPS pages, robots.txt, sitemaps, 4 Ps, topic gaps, and SWOT (capped at 25 PDF pages). Competitors can be commercial rivals or sites competing for the same searches.</span>` +
                 `<button type="submit" class="solidbtn" id="wsSubmitRunBtn">Run full report →</button>` +
               `</div>` +
               `<div class="notice" id="wsFormNotice" role="status" aria-live="polite"></div>` +
@@ -655,22 +655,26 @@
           `<button type="button" class="solidbtn" id="activePdfBtn">↓ Download PDF (${activeReport.page_count || 1} pp)</button>` +
         `</div>` +
         `<div class="reportbody">` +
+          `<p class="metric-note compact"><b>Who is compared:</b> commercial rivals selling the same thing to the same buyers, plus directories, manufacturers and publishers competing for the same searches. They are not always the same businesses.</p>` +
           `<div class="metric-grid">` +
-            `<div class="metric"><span>Your readiness index</span><strong>${esc(snap.yourScore)}/100</strong><small>Rival avg: ${esc(snap.competitorAverageScore)}/100</small></div>` +
-            `<div class="metric"><span>Competitors mapped</span><strong>${esc(snap.competitorsMapped)}</strong><small>${esc(snap.directCount)} direct · ${esc(snap.adjacentCount)} adjacent</small></div>` +
-            `<div class="metric"><span>Search topic gaps</span><strong>${esc(snap.topicGapCount)}</strong><small>Uncovered topic clusters</small></div>` +
-            `<div class="metric"><span>Positioning overlap</span><strong>${esc(snap.positioningOverlap)}%</strong><small>${esc(snap.quickWinCount)} prioritized actions</small></div>` +
+            `<div class="metric"><span>Your readiness index</span><strong>${esc(snap.yourScore)}/100</strong><small>Rival avg: ${esc(snap.competitorAverageScore)}/100 · directional public-signal score</small></div>` +
+            `<div class="metric"><span>Competitors mapped</span><strong>${esc(snap.competitorsMapped)}</strong><small>${esc(snap.directCount)} direct · ${esc(snap.adjacentCount)} adjacent businesses/sites</small></div>` +
+            `<div class="metric"><span>Search topic gaps</span><strong>${esc(snap.topicGapCount)}</strong><small>Topics rivals cover that you do not</small></div>` +
+            `<div class="metric"><span>Positioning overlap</span><strong>${esc(snap.positioningOverlap)}%</strong><small>Estimated public-message similarity · ${esc(snap.quickWinCount)} actions</small></div>` +
           `</div>` +
+          `<p class="metric-note"><b>How to read these scores:</b> Readiness and overlap are directional 0–100 assessments from public on-page signals. They are not traffic, rankings, revenue or market share. Topic gaps are uncovered content clusters, not guaranteed traffic.</p>` +
           (rep.comparisonDelta
             ? `<div class="box" style="margin-top:12px"><strong>Month-to-month comparison (vs. ${esc((rep.comparisonDelta.previousDate || '').slice(0, 10))}):</strong> Score ${rep.comparisonDelta.scoreDelta >= 0 ? '+' : ''}${rep.comparisonDelta.scoreDelta} pts (${rep.comparisonDelta.previousScore} -> ${rep.comparisonDelta.currentScore}/100) · Topic gaps ${rep.comparisonDelta.previousTopicGaps} -> ${rep.comparisonDelta.currentTopicGaps}</div>`
             : '') +
           `<div class="box table-box">` +
             `<div class="box-title">Competitive positioning matrix <small>Live public-HTML directional signals</small></div>` +
-            `<div class="table-wrap"><table class="compare"><thead><tr><th>Brand</th><th>Index</th><th>Audience signal</th><th>Offer / topics</th><th>Price visibility</th><th>Search readiness</th><th>Content angle</th></tr></thead><tbody>` +
+            `<div class="explainer"><strong>The 4 Ps, explained</strong><div class="explainer-grid"><div><b>Product</b><span>What competitors sell.</span></div><div><b>Price</b><span>How they price their products or services.</span></div><div><b>Place</b><span>Where and how they reach customers.</span></div><div><b>Promotion</b><span>How they market themselves.</span></div></div></div>` +
+            `<div class="table-wrap"><table class="compare"><thead><tr><th>Brand</th><th>Readiness index</th><th>Audience signal</th><th>Offer / topics</th><th>Price visibility</th><th>Search readiness</th><th>Content angle</th></tr></thead><tbody>` +
               allSites.map(s => (
                 `<tr><td>${esc(s.domain)}${s.isTarget ? ' (You)' : ''}</td><td><b>${esc(s.score)}/100</b></td><td>${esc(s.audienceSignal)}</td><td>${esc(s.offerSummary)}</td><td class="good">${esc(s.priceVisibility)}</td><td>${esc(s.searchStrength)}</td><td>${esc(s.contentAngle)}</td></tr>`
               )).join('') +
             `</tbody></table></div>` +
+          `<p class="metric-note compact"><b>Search readiness</b> summarizes observable public signals such as site structure, metadata, robots.txt and sitemap access, and content coverage. It is directional, not a ranking or traffic estimate.</p>` +
           `</div>` +
           `<div class="report-grid">` +
             `<div class="box"><div class="box-title">SWOT highlights</div>` +

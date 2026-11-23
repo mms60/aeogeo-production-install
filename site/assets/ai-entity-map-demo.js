@@ -17,8 +17,8 @@
       y: 48,
       uri: "https://examplebrand.com/#organization",
       beforeUri: "No @id (anonymous inline block)",
-      aiUnified: "Acts as the root Entity Home. One canonical @id gives search systems a single node for the brand, while subOrganization, founder, and sameAs edges describe how locations, people, and verified profiles relate to it. Schema markup helps search systems interpret those relationships; it does not control how any AI platform answers a query.",
-      aiFragmented: "Without a canonical @id, AI crawlers treat the homepage Organization snippet as an isolated mention disconnected from location pages, founders, and third-party profiles.",
+      aiUnified: "Acts as the root business record. One consistent @id gives search systems a single node for the brand, while subOrganization, founder, and sameAs edges describe how locations, people, and verified profiles relate to it. Schema markup helps search systems interpret those relationships; it does not control how any AI platform answers a query.",
+      aiFragmented: "Without a consistent @id, search crawlers can treat the homepage Organization snippet as an isolated mention disconnected from location pages, founders, and third-party profiles.",
       unifiedJson: {
         "@type": "Organization",
         "@id": "https://examplebrand.com/#organization",
@@ -54,7 +54,7 @@
       y: 26,
       uri: "https://examplebrand.com/locations/dallas/#localbusiness",
       beforeUri: "Isolated LocalBusiness snippet (no parentOrganization)",
-      aiUnified: "Explicitly linked to the parent Organization via parentOrganization and anchored to its verified Google Business Profile via hasMap and sameAs. Prevents multi-location cannibalization in local AI packs.",
+      aiUnified: "Explicitly linked to the parent Organization via parentOrganization and anchored to its verified Google Business Profile via hasMap and sameAs. This can help search systems associate the location with the parent business; it does not guarantee local visibility.",
       aiFragmented: "Appears as a standalone business entity unlinked from the main brand domain. LLMs struggle to verify whether Dallas reviews and services apply to the parent brand.",
       unifiedJson: {
         "@type": "ProfessionalService",
@@ -122,8 +122,8 @@
       y: 82,
       uri: "https://examplebrand.com/#founder",
       beforeUri: "Plain text author byline (no Person entity)",
-      aiUnified: "Establishes verifiable E-E-A-T authority by linking the founder's Person @id directly to the Organization and their verified LinkedIn profile via sameAs.",
-      aiFragmented: "Author bylines are plain strings. AI search systems cannot verify industry credentials or link published thought leadership back to the brand entity.",
+      aiUnified: "Links the founder to the business and to a public profile you have verified, which can help search systems interpret the relationship.",
+      aiFragmented: "Author bylines are plain strings. It is harder for search systems to confirm industry credentials or link published work back to the business.",
       unifiedJson: {
         "@type": "Person",
         "@id": "https://examplebrand.com/#founder",
@@ -171,7 +171,7 @@
       y: 40,
       uri: "https://g.page/r/example-brand-dallas",
       beforeUri: "Unlinked GBP listing",
-      aiUnified: "Bridges real-time local map pack signals, verified street address, and customer reviews directly into the LocalBusiness @id node for Google AI Overviews.",
+      aiUnified: "Connects the location's verified address and public profile to the business record. This can help search systems associate them; it does not guarantee inclusion in local results.",
       aiFragmented: "Google relies solely on fuzzy NAP string matching between the website footer and GBP, risking entity split when suite numbers or phone formats vary.",
       unifiedJson: {
         "relation": "schema:sameAs & schema:hasMap",
@@ -194,7 +194,7 @@
       uri: "https://www.crunchbase.com/organization/example-brand",
       beforeUri: "Unlinked business directory entity",
       aiUnified: "Reinforces corporate entity legitimacy, founding year, and executive leadership nodes across commercial knowledge graphs queried by Perplexity and ChatGPT.",
-      aiFragmented: "Third-party corporate profile floats independently without a schema bridge back to the canonical Entity Home.",
+      aiFragmented: "Third-party corporate profile floats independently without a schema link back to the main business record.",
       unifiedJson: {
         "relation": "schema:sameAs",
         "source": "https://examplebrand.com/#organization",
@@ -214,7 +214,7 @@
       y: 80,
       uri: "https://www.linkedin.com/company/example-brand",
       beforeUri: "Footer icon link only (no semantic role)",
-      aiUnified: "Connects both the corporate Organization and the Founder Person node to verified professional network entities, strengthening B2B and local trust signals.",
+      aiUnified: "Connects the business and the founder to public profiles you have verified, which can help search systems confirm the relationship.",
       aiFragmented: "A standard HTML anchor tag in the footer tells crawlers a link exists, not that the LinkedIn page represents the exact same legal entity.",
       unifiedJson: {
         "relation": "schema:sameAs",
@@ -282,12 +282,12 @@
     after.setAttribute("aria-pressed", String(isAfter));
 
     document.getElementById("kg-edge-badge").textContent = isAfter
-      ? EDGES.length + " verified edges"
-      : "0 semantic edges";
+      ? EDGES.length + " example links"
+      : "0 example links";
 
     document.getElementById("kg-status-text").innerHTML = isAfter
-      ? '<strong>Unified @graph active:</strong> all entities resolve to canonical <code>@id</code> URIs with bidirectional semantic edges for GraphRAG and LLM retrieval.'
-      : '<strong>Fragmented schema:</strong> isolated JSON-LD blocks without <code>@id</code> URIs force AI models to guess relationships and risk entity collisions.';
+      ? '<strong>Unified @graph active:</strong> one graph connects the brand, locations, people and profiles through consistent identifiers. Example data only.'
+      : '<strong>Fragmented schema:</strong> isolated JSON-LD blocks without <code>@id</code> URIs can make relationships harder to interpret and increase the risk of brand confusion.';
 
     renderGraph();
     updateInspector();
@@ -412,7 +412,7 @@
 
     var stateEl = document.getElementById("kg-state");
     stateEl.textContent = isAfter
-      ? (node.id === "org" ? "Canonical entity home" : "Verified @graph node")
+      ? (node.id === "org" ? "Primary business record" : "Example graph record")
       : "Fragmented / unlinked";
     stateEl.className = "kg-state " + (isAfter ? "is-good" : "is-warn");
 
@@ -438,7 +438,7 @@
     if (!isAfter) {
       var empty = document.createElement("div");
       empty.className = "kg-empty";
-      empty.textContent = "No active semantic edges in fragmented mode. Switch to Unified @graph to inspect the @id links.";
+      empty.textContent = "No example links in fragmented mode. Switch to Unified @graph to inspect the @id connections.";
       list.appendChild(empty);
       return;
     }
@@ -450,7 +450,7 @@
     if (!connected.length) {
       var none = document.createElement("div");
       none.className = "kg-empty";
-      none.textContent = "This node has no semantic edges in the example graph.";
+      none.textContent = "This node has no example connections.";
       list.appendChild(none);
       return;
     }
