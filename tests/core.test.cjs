@@ -10,6 +10,26 @@ test('summary score normalizes unknowns and has truthful limitations',()=>{const
 test('public HTTPS only; private addresses rejected',()=>{for(const v of ['http://example.com','https://127.0.0.1','https://user:pass@example.com','https://example.com:8443','localhost','a.internal'])assert.throws(()=>normalURL(v));assert.equal(normalURL('example.com/a#x').href,'https://example.com/a');for(const ip of ['127.0.0.1','10.0.0.1','169.254.169.254','::1','fc00::1','::ffff:127.0.0.1'])assert.equal(isPublicIP(ip),false);assert.equal(isPublicIP('8.8.8.8'),true);});
 test('robots specific groups and longest matching allow',()=>{const robots='User-agent: *\nDisallow: /private\nAllow: /private/public\nUser-agent: OAI-SearchBot\nDisallow: /\n';assert.equal(robotsAllowed(robots,'/private/x','aeogeoauditbot'),false);assert.equal(robotsAllowed(robots,'/private/public','aeogeoauditbot'),true);assert.equal(robotsAllowed(robots,'/','oai-searchbot'),false);});
 test('Stripe signature valid only for original body and fresh timestamp',()=>{const raw=Buffer.from('{"test":true}'),secret='unit-test-only',t=String(Math.floor(Date.now()/1000)),sig=crypto.createHmac('sha256',secret).update(t+'.').update(raw).digest('hex');assert.ok(verifyWebhook(raw,'t='+t+',v1='+sig,secret));assert.equal(verifyWebhook(Buffer.from('{}'),'t='+t+',v1='+sig,secret),false);assert.equal(verifyWebhook(raw,'t='+t+',v1='+sig,secret,Date.now()+301000),false);assert.equal(verifyWebhook(raw,'t='+t+',v1=not-hex',secret),false);});
-test('checkout has independent readiness gates and confirmed prices',()=>{assert.ok(billingReady());assert.deepEqual(Object.values(PLANS).map(p=>p.monthly),[4900,14900,49900]);assert.deepEqual(Object.values(PLANS).map(p=>p.annual),[47040,143040,479040]);const old=process.env.BILLING_ENABLED;process.env.BILLING_ENABLED='true';assert.match(billingReady(),/locked pending/);if(old===undefined)delete process.env.BILLING_ENABLED;else process.env.BILLING_ENABLED=old;});
+test('checkout has independent readiness gates and confirmed prices', () => {
+  assert.ok(billingReady());
+  assert.deepEqual(Object.values(PLANS).map(p => p.monthly), [4900, 14900, 49900]);
+  assert.deepEqual(Object.values(PLANS).map(p => p.annual), [47040, 143040, 479040]);
+
+  const keys = ['BILLING_TEST_ENABLED', 'BILLING_ENABLED', 'BILLING_REVIEW_COMPLETE'];
+  const saved = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  try {
+    delete process.env.BILLING_TEST_ENABLED;
+    delete process.env.BILLING_ENABLED;
+    assert.match(billingReady(), /not activated/);
+    process.env.BILLING_ENABLED = 'true';
+    delete process.env.BILLING_REVIEW_COMPLETE;
+    assert.match(billingReady(), /locked pending/);
+  } finally {
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  }
+});
 test('endpoints reject unauthenticated access, invalid workers and bad webhooks',async()=>{const oldURL=process.env.SUPABASE_URL,oldKEY=process.env.SUPABASE_SERVICE_ROLE_KEY;process.env.SUPABASE_URL='https://example.com';process.env.SUPABASE_SERVICE_ROLE_KEY='test-only';try{const api=require('../netlify/functions/product-api'),worker=require('../netlify/functions/run-audit-background'),webhook=require('../netlify/functions/stripe-webhook');assert.equal((await api.handler({headers:{},queryStringParameters:{action:'account'}})).statusCode,401);assert.equal((await worker.handler({headers:{},body:'{"id":"fake"}'})).statusCode,401);assert.equal((await webhook.handler({httpMethod:'POST',headers:{},body:'{}'})).statusCode,400);assert.equal((await require('../netlify/functions/start-audit').handler({httpMethod:'GET'})).statusCode,405);}finally{if(oldURL===undefined)delete process.env.SUPABASE_URL;else process.env.SUPABASE_URL=oldURL;if(oldKEY===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=oldKEY;}});
 test('main navigation integration exists and checkout bypass cannot grant entitlements',()=>{const root=path.join(__dirname,'..');assert.ok(fs.readFileSync(path.join(root,'site/assets/app.js'),'utf8').includes('{label:"GEO Audit",path:"/geo-audit/"}'));assert.ok(fs.readFileSync(path.join(root,'site/index.html'),'utf8').includes('/assets/geo-nav.js'));const js=fs.readFileSync(path.join(root,'site/assets/geo.js'),'utf8');assert.ok(js.includes('Access is granted only after the server verifies the paid Stripe invoice'));assert.ok(!js.includes('service_role'));});
