@@ -93,6 +93,9 @@ function checkBing(html) {
   assert.equal(tags.length, 1, `expected one msvalidate.01 tag in <head>, found ${tags.length}`);
   assert.match(tags[0], new RegExp(`\\bcontent\\s*=\\s*["']?${EXPECTED_BING}["']?`, 'i'));
   assert.equal((html.match(/msvalidate\.01/gi) || []).length, 1, 'expected exactly one msvalidate.01 occurrence');
+  assert.equal((html.match(/<body\b/gi) || []).length, 1, 'expected exactly one <body> element');
+  assert.equal((html.match(/<\/body\s*>/gi) || []).length, 1, 'expected exactly one closing </body> tag');
+  assert.equal((html.match(/<\/html\s*>/gi) || []).length, 1, 'expected exactly one closing </html> tag');
 }
 
 async function checkSocialPreview(html) {
