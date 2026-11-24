@@ -120,7 +120,7 @@ p.type-h2,h2.type-h2{
 /* Eyebrow labels: one color and one size on every page. */
 html body :is(
   .eyebrow,.hr-eyebrow,.st-eyebrow,.cc-eyebrow,.route-eyebrow,.hz-eyebrow,.ea-card-eyebrow,
-  .ea-output-kicker,.kicker,.route-role,.kit-hero-card-label,.hr-card-number,.tag,
+  .ea-output-kicker,.kicker,.cd-kicker,.route-role,.kit-hero-card-label,.hr-card-number,.tag,
   p[class~="uppercase"][class~="text-royal-400"],
   p[class~="uppercase"][class~="text-royal-300"],
   :is(h1,h2,h3,h4,h5,h6)[class~="uppercase"]:is([class~="text-royal-400"],[class~="text-royal-300"]),

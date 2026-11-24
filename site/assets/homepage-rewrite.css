@@ -83,3 +83,18 @@
 .hr-home .hr-faq details ul.hr-faq-list{margin:12px 0 0;padding-left:22px;list-style:disc}
 .hr-home .hr-faq details ul.hr-faq-list li+li{margin-top:7px}
 .hr-home .hr-faq details p+p,.hr-home .hr-faq details ul+p{margin-top:12px}
+
+/* Free tools page: the "Five free self-serve tools" subtitle only had a margin
+   inside .hr-home, so on /free-tools/ it sat flush against the audit block above
+   and the tool grid below. This applies wherever the subtitle is used; the
+   homepage's own scoped rule still wins there. */
+/* `html body` out-specifies the shared `.hr-home h3` spacing on that page. */
+html body .hr-tools-subtitle {
+  margin: 48px 0 20px;
+}
+
+@media (max-width: 640px) {
+  html body .hr-tools-subtitle {
+    margin: 32px 0 16px;
+  }
+}

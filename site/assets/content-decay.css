@@ -58,12 +58,10 @@ body {
   .cd-hero .cd-hero-claim { order: 5; }
 }
 
+/* Size, weight, letter spacing and the green color come from the shared eyebrow
+   rule in typography-consistency.css, so this page reads like every other one. */
 .cd-kicker {
   margin: 0 0 12px;
-  color: #a9c5ff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .14em;
   text-transform: uppercase;
 }
 
