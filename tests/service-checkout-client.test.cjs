@@ -3,10 +3,16 @@
 // The service checkout page used to answer every non-JSON reply with one line:
 // "The payment service returned an unreadable response." That is what a visitor
 // saw when the platform, not the payment code, returned an error page. These
-// tests pin the behaviour that replaced it: transient platform failures are
-// retried once, the status is named, and a refusal from the server (expired
-// browser session, closed checkout) is shown exactly as the server sent it and
-// is never retried.
+// tests pin the behaviour that replaced it: a transient platform failure on the
+// read is retried once, the status is named, and a refusal from the server
+// (expired browser session, closed checkout) is shown exactly as the server sent
+// it and is never retried.
+//
+// The write is different. Opening checkout creates a Stripe session and the
+// customer inside it, and the server's idempotency key for that call is derived
+// from this browser's signed cookie. An automatic retry that arrived without the
+// cookie would key a second session and a second customer, so a POST is never
+// retried: the visitor is told to press the button again.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -101,4 +107,52 @@ test('a checkout request keeps its CSRF token and JSON content type', async () =
   assert.equal(call.init.method, 'GET');
   assert.equal(call.init.credentials, 'same-origin');
   assert.match(call.url, /\/\.netlify\/functions\/guest-service-checkout\?service=knowledge-base/);
+});
+
+test('a failed checkout POST is never retried, so it cannot open a second Stripe session', async () => {
+  const env = mount([READY, PLATFORM_ERROR]);
+  await waitFor(() => /No AEOGEO account needed/.test(env.message()), 'the ready state');
+
+  env.w.document.getElementById('service-purchase').click();
+  await waitFor(() => /did not answer/.test(env.message()), 'the failure message');
+
+  assert.equal(env.calls.length, 2, 'one GET to load the page, one POST to buy, no retry');
+  assert.equal(env.calls[1].init.method, 'POST', 'the write is the request that failed');
+  assert.match(env.message(), /HTTP 502/);
+  assert.match(env.message(), /Nothing was charged/);
+  assert.match(env.message(), /press the button again/);
+  assert.equal(env.w.document.getElementById('service-purchase').disabled, false,
+    'the visitor can try again deliberately');
+});
+
+test('pressing the button again after a failed POST sends exactly one more write', async () => {
+  const env = mount([READY, PLATFORM_ERROR, READY]);
+  await waitFor(() => /No AEOGEO account needed/.test(env.message()), 'the ready state');
+  const button = env.w.document.getElementById('service-purchase');
+
+  button.click();
+  await waitFor(() => /did not answer/.test(env.message()), 'the failure message');
+  assert.equal(env.calls.length, 2);
+
+  button.click();
+  await waitFor(() => /No AEOGEO account needed/.test(env.message()), 'the second attempt');
+  assert.equal(env.calls.length, 3, 'a deliberate second press sends one request, not a burst');
+  assert.deepEqual(env.calls.map(call => call.init.method), ['GET', 'POST', 'POST']);
+});
+
+test('the checkout POST carries the service, action, CSRF token and JSON body', async () => {
+  const env = mount([READY, PLATFORM_ERROR]);
+  await waitFor(() => /No AEOGEO account needed/.test(env.message()), 'the ready state');
+  env.w.document.getElementById('service-purchase').click();
+  await waitFor(() => /did not answer/.test(env.message()), 'the failure message');
+
+  const post = env.calls[1].init;
+  assert.equal(post.method, 'POST');
+  assert.equal(post.credentials, 'same-origin');
+  assert.equal(post.headers['Content-Type'], 'application/json');
+  const body = JSON.parse(post.body);
+  assert.equal(body.service, 'knowledge-base');
+  assert.equal(body.action, 'checkout');
+  assert.equal(body.csrf, 'csrf-1');
+  assert.match(env.calls[1].url, /guest-service-checkout$/);
 });
