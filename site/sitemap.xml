@@ -14,10 +14,10 @@
     * Re-submit in GSC (Sitemaps > add /sitemap.xml) after deploying.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://aeogeosearch.com/</loc><lastmod>2026-11-23</lastmod></url>
+  <url><loc>https://aeogeosearch.com/</loc><lastmod>2026-11-24</lastmod></url>
   <url><loc>https://aeogeosearch.com/about</loc><lastmod>2026-11-23</lastmod></url>
   <url><loc>https://aeogeosearch.com/services</loc><lastmod>2026-11-23</lastmod></url>
-  <url><loc>https://aeogeosearch.com/pricing</loc><lastmod>2026-11-23</lastmod></url>
+  <url><loc>https://aeogeosearch.com/pricing</loc><lastmod>2026-11-24</lastmod></url>
   <url><loc>https://aeogeosearch.com/what-is-aeom</loc><lastmod>2026-11-18</lastmod></url>
   <url><loc>https://aeogeosearch.com/resources</loc><lastmod>2026-11-24</lastmod></url>
   <url><loc>https://aeogeosearch.com/learn</loc><lastmod>2026-11-22</lastmod></url>
