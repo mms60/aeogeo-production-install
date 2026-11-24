@@ -34,6 +34,7 @@
   let checkoutBusy = false;
   let lastDisagreements = 0;
   let factLinkSeen = false;
+  let factLinkObserver = null;
   // What the free summary was showing when the visitor last looked at it, so a
   // click on the $49 offer can be read next to the fact count it followed.
   let lastFact = null;
@@ -221,7 +222,20 @@
   // "Reached the fact-check link" means the link itself scrolled into view, not
   // that the page loaded. Fires once per scan so a visitor who scrolls up and
   // down does not inflate the number.
+  //
+  // Only one observer may ever watch the link. A second scan on the same visit
+  // would otherwise leave the first scan's observer attached, and both could
+  // report the same view.
+  function stopFactLinkWatch() {
+    if (!factLinkObserver) return;
+    try {
+      factLinkObserver.disconnect();
+    } catch { /* an already-finished observer is fine */ }
+    factLinkObserver = null;
+  }
+
   function watchFactLink(link, disagreements) {
+    stopFactLinkWatch();
     factLinkSeen = false;
     if (typeof window.IntersectionObserver !== 'function') return;
     const observer = new IntersectionObserver(entries => {
@@ -230,8 +244,10 @@
         factLinkSeen = true;
         track('content_decay_fact_link_view', {disagreements});
         observer.disconnect();
+        factLinkObserver = null;
       }
     }, {threshold: 0.5});
+    factLinkObserver = observer;
     observer.observe(link);
   }
 
@@ -247,6 +263,7 @@
     const facts = Number(check?.factsCompared);
     const disagreements = Number(check?.disagreements) || 0;
     if (!check || !Number.isFinite(facts) || facts <= 0) {
+      stopFactLinkWatch();
       lastFact = null;
       block.hidden = true;
       return;
@@ -266,6 +283,7 @@
     lastDisagreements = disagreements;
     lastFact = {facts, disagreements, pages};
     if (disagreements > 0) watchFactLink(link, disagreements);
+    else stopFactLinkWatch();
   }
 
   function render(scan) {

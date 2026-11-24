@@ -85,6 +85,12 @@ function mount({consent = true, session = null, scan = SCAN} = {}) {
     disconnect() {
       this.disconnected = true;
     }
+    // A real observer stops calling back once disconnected; the fake has to do
+    // the same or the tests cannot tell a live watcher from an abandoned one.
+    trigger(entries) {
+      if (this.disconnected) return;
+      this.callback(entries);
+    }
   };
   w.fetch = async (url, options) => {
     const queued = Boolean(options && options.method === 'POST');
@@ -150,6 +156,23 @@ test('seeing the fact-check link is recorded once, when it scrolls into view', a
 
   observer.callback([{isIntersecting: true}]);
   observer.callback([{isIntersecting: true}]);
+  assert.deepEqual(named(env.events, 'content_decay_fact_link_view'), [{disagreements: 3}]);
+});
+
+test('a second scan replaces the fact-link observer instead of stacking one', async () => {
+  const env = mount();
+  await runScan(env);
+  assert.equal(env.observers.length, 1, 'the first scan watches the link');
+
+  await runScan(env);
+  await waitFor(() => env.observers.length === 2, 'the second scan to watch the link');
+  assert.equal(env.observers[0].disconnected, true, 'the first observer is disconnected');
+
+  env.observers[0].trigger([{isIntersecting: true}]);
+  assert.deepEqual(named(env.events, 'content_decay_fact_link_view'), [], 'a replaced observer cannot fire');
+
+  env.observers[1].trigger([{isIntersecting: true}]);
+  env.observers[1].trigger([{isIntersecting: true}]);
   assert.deepEqual(named(env.events, 'content_decay_fact_link_view'), [{disagreements: 3}]);
 });
 
