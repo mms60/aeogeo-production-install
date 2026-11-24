@@ -148,6 +148,9 @@
 /resources/what-is-aeom/ /what-is-aeom 301
 /resources/measure-ai-visibility /resources/measure-ai-visibility/ 301
 /resources/measure-ai-visibility/ /resources/measure-ai-visibility/index.html 200
+
+/resources/local-search-ai-visibility /resources/local-search-ai-visibility/ 301
+/resources/local-search-ai-visibility/ /resources/local-search-ai-visibility/index.html 200
 # END individual-resource-articles-v1
 # AEOGEOSearch free content checker. One canonical page; no SPA catch-all.
 /tools/content-checker       /tools/geo-content-checker/             301!
