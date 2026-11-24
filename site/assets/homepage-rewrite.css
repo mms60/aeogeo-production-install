@@ -98,3 +98,18 @@ html body .hr-tools-subtitle {
     margin: 32px 0 16px;
   }
 }
+
+/* The shared body-size rule applies 17px to every paragraph. This pull quote is
+   display type (27px, 23px on phones) and must keep its designed size. This file
+   loads before the shared stylesheet, so the selector is spelled out to win on
+   specificity rather than on order. */
+html body .hr-home .hr-featured-quote p {
+  font-size: 27px !important;
+  line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+  html body .hr-home .hr-featured-quote p {
+    font-size: 23px !important;
+  }
+}

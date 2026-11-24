@@ -42,8 +42,18 @@
   letter-spacing:normal!important;
 }
 
-/* Body copy: one size everywhere, including inside article bodies. */
-:is(main,article,.card,.wrap,.page-wrap) :is(p,li,dt,dd,blockquote,figcaption,td,th,summary,legend){
+/* Body copy: one size everywhere, including inside article bodies.
+
+   Text that is deliberately not body copy keeps its own size, because forcing it
+   to 17px shrank prices and pull quotes to the size of a paragraph and blew up
+   labels: display type (font-display, text-lg…text-5xl), small print (text-xs and
+   text-[…px]), and eyebrow or uppercase labels. One :not() with a list keeps the
+   specificity at a single class so it cannot out-rank the eyebrow rule below. */
+:is(main,article,.card,.wrap,.page-wrap) :is(p,li,dt,dd,blockquote,figcaption,td,th,summary,legend):not(
+  [class*="font-display"],[class*="eyebrow"],[class*="kicker"],[class*="text-xs"],
+  [class*="text-["],[class*="text-lg"],[class*="text-xl"],[class*="text-2xl"],
+  [class*="text-3xl"],[class*="text-4xl"],[class*="text-5xl"],[class~="uppercase"],.tag
+){
   font-family:var(--type-body)!important;
   font-size:var(--type-body-size)!important;
   line-height:1.7!important;
@@ -65,6 +75,15 @@ html body .hr-button{
   line-height:1.25!important;
   font-weight:700!important;
   letter-spacing:normal!important;
+}
+
+/* Icon-only controls are drawn as a glyph, so they are not words and must keep
+   their size: the cookie banner's close × was set to 30px and the shared button
+   size shrank it to a 16px × on every page. */
+html body .aeogeo-cookie-close{
+  font-size:30px!important;
+  line-height:1!important;
+  font-weight:400!important;
 }
 
 /* Small print stays small, but at the same two steps everywhere */
