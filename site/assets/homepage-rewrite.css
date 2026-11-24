@@ -113,3 +113,19 @@ html body .hr-home .hr-featured-quote p {
     font-size: 23px !important;
   }
 }
+
+/* Free tools page only: no photography behind the hero or the FAQ band.
+   The dark gradients stay so the sections keep their depth; the page itself is
+   otherwise unchanged, and the homepage keeps its own images. */
+.hr-free-tools .hr-hero,
+.hr-free-tools #frequently-asked-questions.hr-alt {
+  background-image: none !important;
+}
+
+.hr-free-tools .hr-hero {
+  background-color: #050b1f !important;
+}
+
+.hr-free-tools #frequently-asked-questions.hr-alt {
+  background-color: #071127 !important;
+}
