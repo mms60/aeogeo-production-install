@@ -186,6 +186,15 @@
       if (currentScanId) {
         track('content_decay_offer_click', factParams());
         beginCheckout(currentScanId);
+        return;
+      }
+      // The report is built from a scan, so there is nothing to sell until the
+      // free scan above has run. Say that instead of doing nothing.
+      track('content_decay_buy_without_scan');
+      setBuyStatus('Run the free scan in step 1 first — the $49 report is built from the pages that scan reads. Nothing has been charged.', 'error');
+      try { input.focus({preventScroll: true}); } catch { /* older browsers */ }
+      if (typeof form.scrollIntoView === 'function') {
+        form.scrollIntoView({behavior: 'smooth', block: 'center'});
       }
     });
   }

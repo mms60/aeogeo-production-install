@@ -420,6 +420,12 @@ body {
 
 .cd-cta:hover { transform: translateY(-1px); }
 .cd-cta:focus-visible { outline: 3px solid #c1d8ff; outline-offset: 2px; }
+.cd-cta-secondary {
+  background: transparent;
+  border: 1px solid rgba(193, 216, 255, .5);
+  color: #e8f0ff;
+}
+.cd-cta-secondary:hover { background: rgba(79, 139, 255, .16); }
 
 .cd-score-row {
   display: flex;
