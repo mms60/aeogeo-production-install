@@ -137,9 +137,11 @@ test('other failure codes keep the original generic wording', async () => {
 
 test('the scan response keeps exactly the same fields', async () => {
   const body = await statusFor('CONTENT_DECAY_DNS_FAILED');
+  // factCheck carries the free summary's two facts counts (compared, and found
+  // disagreeing) and nothing else; it is null until the scan completes.
   assert.deepEqual(Object.keys(body).sort(), [
-    'completedAt', 'createdAt', 'error', 'hostname', 'id', 'overallScore', 'pageLimit',
-    'pagesScanned', 'startedAt', 'status', 'summary', 'token'
+    'completedAt', 'createdAt', 'error', 'factCheck', 'hostname', 'id', 'overallScore',
+    'pageLimit', 'pagesScanned', 'startedAt', 'status', 'summary', 'token'
   ].sort());
   assert.equal(body.status, 'failed');
   assert.equal(body.token, token());

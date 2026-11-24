@@ -179,6 +179,35 @@
 
   const label = (value) => String(value ?? 0);
 
+  // The free summary gets the count of facts compared and disagreements found,
+  // so a visitor can see there is something specific to unlock. The conflicts
+  // themselves are only in the paid report; the API never sends them here.
+  function renderFacts(scan) {
+    const block = document.getElementById('cd-facts');
+    const line = document.getElementById('cd-facts-line');
+    const link = document.getElementById('cd-facts-link');
+    if (!block || !line || !link) return;
+    const check = scan.factCheck || null;
+    const facts = Number(check?.factsCompared);
+    const disagreements = Number(check?.disagreements) || 0;
+    if (!check || !Number.isFinite(facts) || facts <= 0) {
+      block.hidden = true;
+      return;
+    }
+    const pages = Number(scan.pagesScanned) || 0;
+    const pageLabel = pages
+      ? ' across the ' + pages + ' page' + (pages === 1 ? '' : 's') + ' we read'
+      : '';
+    line.textContent = disagreements > 0
+      ? 'We compared ' + facts + ' facts about your business' + pageLabel + ' and found '
+        + disagreements + ' place' + (disagreements === 1 ? '' : 's')
+        + ' where your own pages disagree with each other.'
+      : 'We compared ' + facts + ' facts about your business' + pageLabel
+        + ' and found no contradictions between pages.';
+    link.hidden = disagreements <= 0;
+    block.hidden = false;
+  }
+
   function render(scan) {
     const summary = scan.summary || {};
     results.hidden = false;
@@ -248,6 +277,8 @@
     }
     parts.push('An undated page is not automatically stale, and an old page with current information is not decayed. These are crawl facts, not a verdict.');
     note.textContent = parts.join(' ');
+
+    renderFacts(scan);
   }
 
   async function poll(token) {

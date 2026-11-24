@@ -177,6 +177,22 @@ function failureMessage(code) {
   return FAILURE_MESSAGES[code] || 'The scan could not finish.';
 }
 
+// The one facts number a free scan may show: how many claims were compared and
+// how many disagreements between pages were found. Counts only. The conflicts
+// themselves, with both quotes and page URLs, stay in the paid report. A
+// missing table (migration 13 not applied) hides the block instead of failing.
+async function freeFactCounts(scanId) {
+  const query = encodeURIComponent(scanId);
+  const [claims, conflicts] = await Promise.all([
+    db('content_decay_fact_claims?scan_id=eq.' + query + '&select=category').catch(() => []),
+    db('content_decay_fact_conflicts?scan_id=eq.' + query + '&select=severity').catch(() => [])
+  ]);
+  const factsCompared = Array.isArray(claims) ? claims.length : 0;
+  const disagreements = Array.isArray(conflicts) ? conflicts.length : 0;
+  if (!factsCompared) return null;
+  return {factsCompared, disagreements};
+}
+
 async function status(event) {
   const token = String(event.queryStringParameters?.token || '').trim().toLowerCase();
   if (!TOKEN.test(token)) {
@@ -189,8 +205,13 @@ async function status(event) {
   const scan = Array.isArray(rows) ? rows[0] : null;
   if (!scan) return reply(404, {error: 'Scan not found.', code: 'CONTENT_DECAY_SCAN_NOT_FOUND'});
 
+  // Counted once the scan is finished, so the two-second polling never pays
+  // for these reads.
+  const factCheck = scan.status === 'completed' ? await freeFactCounts(scan.id) : null;
+
   return reply(200, {
     token,
+    factCheck,
     id: scan.id,
     status: scan.status,
     hostname: scan.hostname,
