@@ -223,7 +223,9 @@ test('each prerendered article page mirrors the bundle article', () => {
     const html = fs.readFileSync(file, 'utf8');
     const url = `https://aeogeosearch.com/resources/${article.anchor}/`;
     const description = article.metaDescription || article.answer;
-    const expectedTitle = `${article.title} | AEOGEO Search`;
+    // A shorter optional seoTitle keeps <title> inside search-result limits while
+    // the H1 and the JSON-LD headline continue to use the full article.title.
+    const expectedTitle = `${article.seoTitle || article.title} | AEOGEO Search`;
     const articleMatch = html.match(/<article\b[\s\S]*?<\/article>/);
     if (!articleMatch) {
       problems.push(`${label}: no <article> block`);
