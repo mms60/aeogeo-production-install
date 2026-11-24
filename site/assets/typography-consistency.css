@@ -188,3 +188,13 @@ html body .geo-legal-links .geo-footer-legal-actions{
 }
 html body .geo-legal-links .aeogeo-footer-terms-row{display:contents!important}
 html body .geo-legal-links .aeogeo-footer-social{grid-column:1/-1!important;justify-self:start}
+
+/* /tools case study: the dl values are display numbers, not body copy. Held at
+   paragraph size they became the same weight as their own labels, which made the
+   biggest proof on the page read like small print. */
+html body :is(main,.card,.wrap,.page-wrap) dl.hr-metrics dd{
+  font-family:var(--type-display)!important;
+  font-size:2rem!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+}
