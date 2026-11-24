@@ -717,9 +717,33 @@ body {
 }
 
 .cd-section ul,
-.cd-section ol {
+.cd-section ol,
+.cd-final ul {
   margin: 0 0 16px;
   padding-left: 22px;
+  /* site.css resets every list to no marker; these passages read as lists, so
+     restore the marker rather than relying on spacing alone. */
+  list-style: disc;
+}
+
+.cd-section ol {
+  list-style: decimal;
+}
+
+.cd-section li::marker,
+.cd-final li::marker,
+.cd-panel li::marker {
+  color: #8fb0e8;
+}
+
+.cd-list {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  list-style: disc;
+}
+
+.cd-list li {
+  margin: 8px 0;
 }
 
 .cd-section li {
@@ -781,6 +805,12 @@ body {
   border-radius: 22px;
   background: linear-gradient(150deg, #173a74, #0d1d3a 62%);
   box-shadow: 0 24px 60px rgba(18, 40, 90, .45);
+}
+
+.cd-final .cd-closing-note {
+  margin: 24px 0;
+  font-size: 1.0625rem !important;
+  line-height: 1.7 !important;
 }
 
 .cd-final p.cd-closing {

@@ -6,6 +6,10 @@
 :root{
   --type-display:'Sora',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --type-body:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* The two sizes the whole site reads at. Body copy and buttons each have one
+     value, so a page cannot drift to 15px or 17px on its own. */
+  --type-body-size:1.0625rem;
+  --type-button-size:1rem;
 }
 
 /* H1: one size, one family, every page */
@@ -38,20 +42,28 @@
   letter-spacing:normal!important;
 }
 
-/* Body copy */
-:is(main,.card,.wrap,.page-wrap) p,
-:is(main,.card,.wrap,.page-wrap) li,
-:is(main,.card,.wrap,.page-wrap) dt,
-:is(main,.card,.wrap,.page-wrap) dd,
-:is(main,.card,.wrap,.page-wrap) blockquote,
-:is(main,.card,.wrap,.page-wrap) figcaption,
-:is(main,.card,.wrap,.page-wrap) td,
-:is(main,.card,.wrap,.page-wrap) th,
-:is(main,.card,.wrap,.page-wrap) summary,
-:is(main,.card,.wrap,.page-wrap) legend{
+/* Body copy: one size everywhere, including inside article bodies. */
+:is(main,article,.card,.wrap,.page-wrap) :is(p,li,dt,dd,blockquote,figcaption,td,th,summary,legend){
   font-family:var(--type-body)!important;
-  font-size:1.0625rem!important;
+  font-size:var(--type-body-size)!important;
   line-height:1.7!important;
+  letter-spacing:normal!important;
+}
+
+/* Buttons: one family, one size, one weight, on every page. Kept as a plain
+   selector list, not a grouped :is() block, so it cannot be mistaken for the
+   shared eyebrow rule further down this file. */
+html body button,
+html body [type=submit],
+html body [type=button],
+html body [type=reset],
+html body .cd-cta,
+html body .cd-buy,
+html body .hr-button{
+  font-family:var(--type-body)!important;
+  font-size:var(--type-button-size)!important;
+  line-height:1.25!important;
+  font-weight:700!important;
   letter-spacing:normal!important;
 }
 
