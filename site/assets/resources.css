@@ -1,0 +1,33 @@
+/* Resources hub: vertical rhythm between the guide groups.
+   The four guide sections on /resources asked for `pt-12`, a utility that is
+   not present in the compiled site.css, so they rendered with no top padding
+   and ran straight into the block above. These rules give them real spacing
+   and a wider gap between the guide cards, without touching the shared bundle. */
+
+.resources-section {
+  padding-top: 2.5rem;
+}
+
+.resources-grid {
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .resources-section {
+    padding-top: 3.5rem;
+  }
+
+  .resources-grid {
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .resources-section {
+    padding-top: 4.5rem;
+  }
+
+  .resources-grid {
+    gap: 2rem;
+  }
+}
