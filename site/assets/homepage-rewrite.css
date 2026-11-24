@@ -129,3 +129,35 @@ html body .hr-home .hr-featured-quote p {
 .hr-free-tools #frequently-asked-questions.hr-alt {
   background-color: #071127 !important;
 }
+
+/* Free tools page: every tool card ends in the same full-width button, pinned to
+   the bottom of the card, so the five CTAs form one even line across each row
+   instead of ragged text links of different widths. Explicit link resets keep any
+   older stylesheet from turning them back into underlined words. */
+.hr-free-tools .hr-tool-card .hr-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;
+  padding: 13px 20px;
+  border-bottom: 0;
+  border-radius: 999px;
+  background: #3766e9;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.hr-free-tools .hr-tool-card .hr-button:hover,
+.hr-free-tools .hr-tool-card .hr-button:focus {
+  background: #4b7bf5;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* The last card has no partner, so its button still ends the card cleanly. */
+.hr-free-tools .hr-tool-card { min-height: 100%; }
