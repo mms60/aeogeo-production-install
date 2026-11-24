@@ -75,6 +75,15 @@ const coversItem = (selectorList, item) =>
   selectorList.split(',').some(part => squash(part).endsWith(squash(item)));
 
 test('every text item in the navigation bar resolves to the same font size', () => {
+  // The stylesheets can keep naming a class the template no longer uses, and then
+  // every selector check below passes while the rule applies to nothing. Assert
+  // each item selector still finds an element in the header first.
+  const $ = load(template);
+  const dead = NAV_ITEM_SELECTORS.filter(selector => $(selector).length === 0);
+  assert.deepEqual(dead, [],
+    'every navigation item selector must match an element in templates/site-header.html, unmatched: '
+    + dead.join(', '));
+
   const rules = navFontRules();
   const shared = rules.filter(rule => /!important/.test(rule.value));
 
