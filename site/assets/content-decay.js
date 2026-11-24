@@ -32,6 +32,8 @@
   let currentScanId = null;
   let pendingConfirm = null;
   let checkoutBusy = false;
+  let lastDisagreements = 0;
+  let factLinkSeen = false;
 
   const setBuyStatus = (message, kind) => {
     if (!buyStatus) return;
@@ -76,6 +78,7 @@
       const active = await ContentDecaySession.session();
       if (!active) {
         checkoutBusy = false;
+        track('content_decay_checkout_signin');
         setBuyButton('Sign in to buy — $49', {
           href: ContentDecaySession.signInUrl('/content-decay/?scan=' + encodeURIComponent(scanId) + '&buy=1')
         });
@@ -92,6 +95,7 @@
         return;
       }
       if (!result.url) throw new Error('Checkout did not return a payment link. No payment was taken.');
+      track('content_decay_checkout_open');
       location.assign(result.url);
     } catch (error) {
       checkoutBusy = false;
@@ -154,6 +158,13 @@
     }
   }
 
+  const factsLink = document.getElementById('cd-facts-link');
+  if (factsLink) {
+    factsLink.addEventListener('click', () => {
+      track('content_decay_fact_link_click', {disagreements: lastDisagreements});
+    });
+  }
+
   if (buy) {
     buy.addEventListener('click', () => {
       if (!window.ContentDecaySession) {
@@ -178,6 +189,35 @@
   };
 
   const label = (value) => String(value ?? 0);
+
+  // ---- Funnel analytics ---------------------------------------------------
+  // Counts only, and only when the visitor allowed analytics and the Google tag
+  // is present. No scan id, hostname, page URL or email is ever sent, so these
+  // events can sit in the public property without exposing anyone's site.
+  function track(name, params) {
+    try {
+      if (!window.AEOGEOCookieConsent?.allowsAnalytics?.()) return;
+      if (typeof window.gtag !== 'function') return;
+      window.gtag('event', name, params || {});
+    } catch { /* analytics must never break the page */ }
+  }
+
+  // "Reached the fact-check link" means the link itself scrolled into view, not
+  // that the page loaded. Fires once per scan so a visitor who scrolls up and
+  // down does not inflate the number.
+  function watchFactLink(link, disagreements) {
+    factLinkSeen = false;
+    if (typeof window.IntersectionObserver !== 'function') return;
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting || factLinkSeen) continue;
+        factLinkSeen = true;
+        track('content_decay_fact_link_view', {disagreements});
+        observer.disconnect();
+      }
+    }, {threshold: 0.5});
+    observer.observe(link);
+  }
 
   // The free summary gets the count of facts compared and disagreements found,
   // so a visitor can see there is something specific to unlock. The conflicts
@@ -206,6 +246,8 @@
         + ' and found no contradictions between pages.';
     link.hidden = disagreements <= 0;
     block.hidden = false;
+    lastDisagreements = disagreements;
+    if (disagreements > 0) watchFactLink(link, disagreements);
   }
 
   function render(scan) {
@@ -279,6 +321,12 @@
     note.textContent = parts.join(' ');
 
     renderFacts(scan);
+
+    track('content_decay_scan_complete', {
+      pages_scanned: Number(scan.pagesScanned) || 0,
+      fact_check: scan.factCheck ? 1 : 0,
+      disagreements: Number(scan.factCheck?.disagreements) || 0
+    });
   }
 
   async function poll(token) {
