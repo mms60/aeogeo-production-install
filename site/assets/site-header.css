@@ -80,3 +80,22 @@ html body .geo-legal-links .geo-footer-badges img.geo-footer-badge{display:block
  html body .geo-footer-legal-actions{flex-direction:column;align-items:flex-start;gap:4px}
  html body .geo-legal-links .geo-footer-badges{gap:12px;max-width:320px}
 }
+
+/* One text size across the whole navigation bar.
+   The bar used to mix 13px links (13.5px and 14px at wider widths) with an
+   16-18px wordmark and a 14px consultation button, so the row read unevenly.
+   Every item in the bar now shares one size and one line height. */
+/* `html body header` is needed so this beats the site-wide button size rule,
+   which is also !important and which otherwise leaves the dropdown buttons at
+   16px. The wordmark, the links, the dropdown buttons and the consultation
+   button now all read at one size in the same bar. */
+html body header .website-brand,
+html body header .website-brand-name,
+html body header .website-main-navigation>a,
+html body header .website-resources-toggle,
+html body header .website-resource-links a,
+html body header .website-consultation,
+html body header .website-mobile-consultation{
+ font-size:14px!important;
+ line-height:20px!important;
+}
