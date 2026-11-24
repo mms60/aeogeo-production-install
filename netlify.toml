@@ -36,6 +36,13 @@
     X-Robots-Tag = "noindex, nofollow, noarchive"
 
 # Isolated content-service private pages and owner-notice retries.
+# Guest service checkout: the click path makes several sequential Stripe calls
+# (price, existing session, portal configuration, customer, session). The
+# platform's 10s synchronous limit could cut it off and return an HTML error
+# page, which the page could only report as an unreadable response.
+[functions."guest-service-checkout"]
+  timeout = 26
+
 # AI Visibility & Schema Studio: crawler scans run as a background function.
 [functions."avss-scan-background"]
   timeout = 900
