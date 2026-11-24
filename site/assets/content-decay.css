@@ -245,6 +245,98 @@ body {
 .cd-offer > p { margin: 0 0 12px; color: #d4e0f4; }
 .cd-offer strong { color: #fff; }
 
+/* Price and the report credit. The price is the first thing read, so it stands
+   on its own line; the credit sits directly beneath it as a reassurance rather
+   than fine print at the bottom of the panel. */
+.cd-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 26px;
+  align-items: flex-end;
+  margin: 2px 0 20px;
+}
+
+.cd-offer .cd-price {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.cd-price-amount {
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: clamp(40px, 6vw, 54px);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+
+.cd-price-unit {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--cd-muted);
+}
+
+.cd-offer .cd-price-note {
+  flex: 1 1 300px;
+  margin: 0 0 4px;
+  max-width: 460px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #b9cbe6;
+}
+
+.cd-credit {
+  margin: 0 0 24px;
+  padding: 14px 18px;
+  border: 1px solid rgba(80, 200, 120, .3);
+  border-left: 4px solid var(--cd-good);
+  border-radius: 0 12px 12px 0;
+  background: rgba(80, 200, 120, .07);
+}
+
+.cd-offer .cd-credit-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #8fe0ad;
+}
+
+.cd-offer .cd-credit p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #dae7f7;
+}
+
+.cd-credit a { color: #a9c5ff; text-decoration: underline; text-underline-offset: 2px; }
+.cd-credit a:hover { color: #d6e6ff; }
+
+.cd-offer-subhead {
+  margin: 0 0 10px;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.cd-offer-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+}
+
+.cd-offer-buy .cd-status { margin: 0; }
+
 .cd-offer-list {
   margin: 14px 0 20px;
   padding-left: 20px;
@@ -418,6 +510,50 @@ body {
 }
 
 .cd-finding-page a { color: #a9c5ff; }
+
+/* Fact consistency: two quoted values side by side, one per page. */
+.cd-facts { display: grid; gap: 14px; }
+.cd-fact-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+.cd-fact-side {
+  padding: 12px 14px;
+  border: 1px solid #23385a;
+  border-radius: 10px;
+  background: #081226;
+  overflow-wrap: anywhere;
+}
+.cd-fact-side-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #9db0cc;
+}
+.cd-fact-side a {
+  display: block;
+  color: #a9c5ff;
+  font-size: 13px;
+  /* One line each side, so the values and quotes beneath them line up even
+     when one URL is much longer. The full href is still in the link. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-fact-sides { align-items: start; }
+.cd-fact-value {
+  margin: 6px 0 0;
+  font-family: var(--font-display, Sora), Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.cd-fact-side .cd-evidence { margin: 8px 0 0; font-size: 13px; }
 
 .cd-finding-detail { margin: 0 0 10px; font-size: 15px; color: #d4e0f4; }
 

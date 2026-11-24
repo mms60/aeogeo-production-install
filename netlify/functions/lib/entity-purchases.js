@@ -33,6 +33,11 @@ const UPGRADE = Object.freeze({
   amount: 40000,
   credit: 79900
 });
+// A Content Decay report bought within 30 days is credited in full against
+// either setup offer. The checkout applies it as a one-off coupon and records
+// the amount in the session metadata, so verification can expect the reduced
+// total instead of rejecting a legitimately discounted purchase.
+const REPORT_CREDIT = 4900;
 const SESSION_ID = /^cs_(?:test|live)_[A-Za-z0-9_-]{8,}$/;
 const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_INPUT_BYTES = 200000;
@@ -104,13 +109,25 @@ function sessionIsUpgrade(session, offer) {
   );
 }
 
+// Only the exact credit this checkout issues is accepted: the metadata value
+// must be the fixed amount, so a forged or edited session cannot claim a larger
+// discount than the one coupon Stripe actually applied.
+function sessionReportCredit(session, offer) {
+  if (!session || typeof session !== 'object' || !offer) return 0;
+  if (sessionIsUpgrade(session, offer)) return 0;
+  const declared = Number(session.metadata && session.metadata.report_credit);
+  return declared === REPORT_CREDIT ? REPORT_CREDIT : 0;
+}
+
 function sessionIsPaid(session, offer) {
   if (!session || typeof session !== 'object' || !offer) return false;
   if (session.object !== 'checkout.session' || session.mode !== 'payment') return false;
   if (session.status !== 'complete' || session.payment_status !== 'paid') return false;
   if (session.livemode !== true) return false;
   if (String(session.currency || '').toLowerCase() !== 'usd') return false;
-  const expectedAmount = sessionIsUpgrade(session, offer) ? UPGRADE.amount : offer.amount;
+  const expectedAmount = sessionIsUpgrade(session, offer)
+    ? UPGRADE.amount
+    : offer.amount - sessionReportCredit(session, offer);
   if (Number(session.amount_total) !== expectedAmount) return false;
   const metadata = session.metadata || {};
   return metadata.product === PRODUCT && metadata.plan === offer.plan && metadata.price === offer.priceId;
@@ -528,7 +545,9 @@ module.exports = {
   OFFERS,
   LIMITS,
   UPGRADE,
+  REPORT_CREDIT,
   sessionIsUpgrade,
+  sessionReportCredit,
   offerForPlan,
   limitsForPlan,
   sessionIsPaid,

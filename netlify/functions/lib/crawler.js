@@ -15,15 +15,24 @@ function normalURL(value){
  u.hash='';return u;
 }
 function isPublicIP(value){try{const a=ipaddr.process(value);return a.range()==='unicast';}catch{return false;}}
+// A dual-stack name often publishes both an IPv4 and an IPv6 address, and one
+// of the two is regularly unreachable from a given host (an IPv4-only or
+// IPv6-only runtime, a broken route, a stale record). Pinning the first address
+// the resolver happened to return meant a working website could look down, so
+// prefer IPv4 and keep every address as a fallback.
+function preferredAddresses(addresses){
+ const v4=addresses.filter(a=>a.family===4);
+ return v4.length?[...v4,...addresses.filter(a=>a.family!==4)]:addresses.slice();
+}
 async function resolvePublic(host){
  const addresses=await Promise.race([dns.lookup(host,{all:true,verbatim:true}),new Promise((_,reject)=>{const t=setTimeout(()=>reject(new Error('Website DNS timed out.')),5000);t.unref();})]);
  if(!addresses.length||addresses.some(a=>!isPublicIP(a.address)))throw new Error('This address does not resolve exclusively to public internet addresses.');
- return addresses[0];
+ // Two addresses are enough to cover a dual-stack host without letting a host
+ // that publishes several dead records multiply the crawl deadline.
+ return preferredAddresses(addresses).slice(0,3);
 }
-async function getPage(value,redirects=0){
- const u=normalURL(value);if(redirects>5)throw new Error('Too many website redirects.');
- const resolved=await resolvePublic(u.hostname);
- const result=await new Promise((resolve,reject)=>{
+function fetchPinned(u,resolved,{responseMs,hardMs}){
+ return new Promise((resolve,reject)=>{
   // Pin the connection to the validated IP; preserve hostname for TLS and Host header.
   const req=https.request(u,{method:'GET',agent:false,servername:u.hostname,lookup:(_host,opts,cb)=>{if(opts?.all)cb(null,[resolved]);else cb(null,resolved.address,resolved.family);},headers:{'User-Agent':USER_AGENT,Accept:'text/html,application/xhtml+xml,application/xml,text/xml,text/plain;q=0.8','Accept-Encoding':'identity'}},res=>{
    if([301,302,303,307,308].includes(res.statusCode)&&res.headers.location){res.resume();resolve({redirect:new URL(res.headers.location,u).href});return;}
@@ -31,11 +40,29 @@ async function getPage(value,redirects=0){
    res.on('data',c=>{bytes+=c.length;if(bytes>MAX_BYTES){res.destroy(new Error('Page exceeds the 1.8 MB audit download limit.'));return;}chunks.push(c);});
    res.on('error',reject);res.on('end',()=>resolve({status:res.statusCode,type:String(res.headers['content-type']||''),text:Buffer.concat(chunks).toString('utf8'),url:u.href}));
   });
-  req.setTimeout(6500,()=>req.destroy(new Error('Website response timed out.')));
-  const hard=setTimeout(()=>req.destroy(new Error('Website download timed out.')),10000);hard.unref();
+  req.setTimeout(responseMs,()=>req.destroy(new Error('Website response timed out.')));
+  const hard=setTimeout(()=>req.destroy(new Error('Website download timed out.')),hardMs);hard.unref();
   req.on('close',()=>clearTimeout(hard));req.on('error',reject);req.end();
  });
- return result.redirect?getPage(result.redirect,redirects+1):result;
+}
+async function getPage(value,redirects=0){
+ const u=normalURL(value);if(redirects>5)throw new Error('Too many website redirects.');
+ const addresses=await resolvePublic(u.hostname);
+ let lastError=null;
+ for(let i=0;i<addresses.length;i++){
+  try{
+   // The first address gets the full budget. A fallback gets a shorter one, so a
+   // host with one dead record still finishes well inside the crawl deadline.
+   const result=await fetchPinned(u,addresses[i],i===0?{responseMs:6500,hardMs:10000}:{responseMs:4000,hardMs:6000});
+   return result.redirect?getPage(result.redirect,redirects+1):result;
+  }catch(error){
+   // Try the next address. Even a certificate error is per-address: a site whose
+   // A and AAAA records land on different edges can serve a valid certificate
+   // for the name on one address and a default certificate on another.
+   lastError=error;
+  }
+ }
+ throw lastError||new Error('The website could not be reached.');
 }
 function robotsGroups(text){
  const groups=[];let group=null,sawRule=false;
@@ -101,4 +128,4 @@ async function crawl(target){
  const fixes=new Map();for(const p of pages)for(const c of p.checks)if(c.pass===false){const key=c.name;const item=fixes.get(key)||{name:key,recommendation:c.fix,pages:[]};item.pages.push(p.url);fixes.set(key,item);}
  return {version:1,createdAt:new Date().toISOString(),target:initial.href,score,pageCount:pages.length,pageLimit:25,pages:pages.map(({internalLinks,...p})=>p),skipped,robots:{status:robotsStatus,chatGPTSearch:robotsAllowed(robots,'/','oai-searchbot'),perplexitySearch:robotsAllowed(robots,'/','perplexitybot'),note:'Robots interpretation at / only. Training and search agents differ. Permission is not a guarantee of crawling, indexing, or citation.'},sitemapStatus,fixes:[...fixes.values()].sort((a,b)=>b.pages.length-a.pages.length),limitations:['This is an equal-weight technical HTML readiness checklist, not a validated AI visibility score or ranking prediction.','Up to 25 discoverable pages on one HTTPS origin. Sitemap indexes, JavaScript rendering, search results, actual AI answers, backlinks, citation frequency, and Core Web Vitals are not measured.','Unknown or not-applicable checks are excluded from the page score. Heuristic recommendations need human review.','A partial scan may omit blocked, failed, large, slow, or undiscovered pages. See the skipped list.']};
 }
-module.exports={normalURL,isPublicIP,getPage,robotsAllowed,analyzeHTML,crawl};
+module.exports={normalURL,isPublicIP,getPage,robotsAllowed,analyzeHTML,crawl,preferredAddresses};

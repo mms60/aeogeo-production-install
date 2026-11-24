@@ -184,6 +184,15 @@ function analysePage(html, url) {
   const mainText = $text('body').text().replace(/\s+/g, ' ').trim();
   const wordCount = mainText ? mainText.split(/\s+/).length : 0;
 
+  // Fact comparison needs header and footer copy too, because that is where a
+  // phone number, address and opening hours usually live. Only executable and
+  // non-visible elements are removed, never navigation. Bounded so a hostile
+  // page cannot exhaust memory. This text stays in the worker's memory: only the
+  // extracted claims are persisted, never the page copy itself.
+  const $facts = cheerio.load(html);
+  $facts('script,style,noscript,template,svg').remove();
+  const factText = $facts('body').text().replace(/\s+/g, ' ').trim().slice(0, 80000);
+
   const hasAuthor = $('[rel="author"], [itemprop="author"], .author, .byline').length > 0
     || dates.types.some(type => /^(Person|Organization)$/i.test(type));
   const hasFaq = /(?:frequently asked questions|\bfaq\b)/i.test(visibleText)
@@ -256,6 +265,9 @@ function analysePage(html, url) {
     title: title || url,
     wordCount,
     contentHash: crypto.createHash('sha256').update(mainText).digest('hex'),
+    // Consumed by ./fact-extract in the scan worker; not persisted.
+    text: factText,
+    jsonLd: jsonLdBlocks.slice(0, 30).map(block => block.slice(0, 20000)),
     declaredModifiedAt: modifiedCandidates.length ? modifiedCandidates[modifiedCandidates.length - 1] : null,
     declaredPublishedAt: publishedCandidates.length ? publishedCandidates[0] : null,
     dateSource: dates.modified.length ? 'json-ld'

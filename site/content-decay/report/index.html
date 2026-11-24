@@ -17,7 +17,7 @@
 <link rel=stylesheet href="/assets/aeogeo-cookie-consent.css?v=2">
 <link rel=stylesheet href="/assets/aeogeo-footer-facebook.css?v=5">
 <link rel=stylesheet href="/assets/typography-consistency.css?v=tap45">
-<link rel=stylesheet href=/assets/content-decay.css>
+<link rel=stylesheet href="/assets/content-decay.css?v=facts1">
 <script defer src=/assets/site-header.js></script>
 <script defer src="/assets/aeogeo-cookie-consent.js?v=google-tag-rtyb910tmq-v2" data-aeogeo-cookie-consent=v1></script>
 <script defer src="/assets/aeogeo-analytics.js?v=google-tag-rtyb910tmq-v1" data-aeogeo-analytics=G-RTYB910TMQ></script>
@@ -25,7 +25,7 @@
 <script defer src=/assets/audit-scroll-top.js></script>
 <script defer src=/assets/supabase.js></script>
 <script defer src=/assets/content-decay-session.js></script>
-<script defer src=/assets/content-decay-report.js></script>
+<script defer src="/assets/content-decay-report.js?v=facts1"></script>
 </head>
 <body>
 <!-- site-header:start --><header class="site-nav website-header" data-header-revision="site-header-v1">
@@ -84,6 +84,13 @@
       <p class=cd-help>Ordered by severity. Each finding names the page it came from and quotes the evidence the scan collected.</p>
       <div id=cd-findings class=cd-findings></div>
       <p id=cd-no-findings class=cd-note hidden>No rule-based findings were recorded for the pages this scan read.</p>
+    </section>
+
+    <section class=cd-panel aria-labelledby=cd-facts-title>
+      <h2 id=cd-facts-title class=cd-panel-title>Facts that disagree</h2>
+      <p class=cd-help>Every value below is quoted from the page it came from. A finding appears only when two pages state values for the same fact that do not overlap, or when a page's structured data contradicts its own visible copy. Prices, phone numbers, addresses, opening hours, founding year and team size are compared.</p>
+      <div id=cd-facts class=cd-facts></div>
+      <p id=cd-no-facts class=cd-note hidden>No disagreeing facts were found on the pages this scan read.</p>
     </section>
 
     <section class=cd-panel aria-labelledby=cd-pages-title>

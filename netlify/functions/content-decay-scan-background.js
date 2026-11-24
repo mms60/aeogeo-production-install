@@ -15,6 +15,8 @@ const crypto = require('node:crypto');
 const {db, reply} = require('./lib/db');
 const {crawlSite, summarise} = require('./lib/content-decay-crawler');
 const {analyseScan} = require('./lib/content-decay-analysis');
+const {extractClaims} = require('./lib/fact-extract');
+const {diffClaims} = require('./lib/fact-diff');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -35,15 +37,105 @@ function verifyDispatch(scanId, time, signature) {
   return expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
 }
 
+// syscall errno values that identify the three failure families a scan can hit
+// before it reads a single page. Without these every one of them reached the
+// visitor as the same CONTENT_DECAY_CRAWL_FAILED.
+const DNS_ERROR_CODES = new Set([
+  'ENOTFOUND', 'ENODATA', 'EAI_AGAIN', 'EAI_FAIL', 'EAI_NONAME', 'EAI_NODATA', 'ESERVFAIL'
+]);
+const TLS_ERROR_CODES = new Set([
+  'EPROTO', 'ERR_TLS_CERT_ALTNAME_INVALID', 'ERR_TLS_HANDSHAKE_TIMEOUT',
+  'ERR_SSL_WRONG_VERSION_NUMBER', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'SELF_SIGNED_CERT_IN_CHAIN',
+  'DEPTH_ZERO_SELF_SIGNED_CERT', 'CERT_HAS_EXPIRED', 'CERT_NOT_YET_VALID'
+]);
+const CONNECTION_ERROR_CODES = new Set([
+  'ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH', 'EHOSTDOWN', 'ENETUNREACH',
+  'EADDRNOTAVAIL', 'EPIPE', 'ENETDOWN'
+]);
+
 function errorCode(error) {
   if (error?.code && /^CONTENT_DECAY_/.test(error.code)) return error.code;
+  const errno = String(error?.code || '').toUpperCase();
   const message = String(error?.message || '');
+
+  // DNS is checked before the timeout rule: "Website DNS timed out." is a
+  // resolution failure, not a slow page.
+  if (DNS_ERROR_CODES.has(errno) || /\bDNS\b|could not be resolved/i.test(message)) {
+    return 'CONTENT_DECAY_DNS_FAILED';
+  }
+  if (TLS_ERROR_CODES.has(errno) || /certificate|\bTLS\b|\bSSL\b/i.test(message)) {
+    return 'CONTENT_DECAY_TLS_FAILED';
+  }
+  if (CONNECTION_ERROR_CODES.has(errno) || /socket hang up|ECONNREFUSED|ECONNRESET/i.test(message)) {
+    return 'CONTENT_DECAY_CONNECTION_FAILED';
+  }
+
   if (/robots\.txt/i.test(message)) return 'CONTENT_DECAY_ROBOTS_DISALLOWED';
   if (/1\.8 MB|too large/i.test(message)) return 'CONTENT_DECAY_PAGE_TOO_LARGE';
   if (/timed out|timeout/i.test(message)) return 'CONTENT_DECAY_TIMEOUT';
   if (/redirect/i.test(message)) return 'CONTENT_DECAY_REDIRECT_LIMIT';
   if (/valid public website|HTTPS|domain/i.test(message)) return 'CONTENT_DECAY_INVALID_URL';
   return 'CONTENT_DECAY_CRAWL_FAILED';
+}
+
+// Exposed for the offline tests; the deployed contract is the handler only.
+exports.errorCode = errorCode;
+
+// Extracts claims from page text that is still in memory, compares them and
+// stores only the claims and conflicts. A missing table (migration 13 not yet
+// applied) is not an error: the report simply renders without a facts section.
+async function storeFactConsistency(scanId, pages, pageIdByUrl) {
+  try {
+    const today = new Date();
+    const claims = extractClaims({pages, today});
+    const {conflicts} = diffClaims({claims, pages, today});
+
+    // Idempotent: a retried dispatch replaces the previous claim set.
+    await db('content_decay_fact_claims?scan_id=eq.' + scanId, {method: 'DELETE'});
+    await db('content_decay_fact_conflicts?scan_id=eq.' + scanId, {method: 'DELETE'});
+
+    if (claims.length) {
+      await db('content_decay_fact_claims', {
+        method: 'POST',
+        body: claims.map(claim => ({
+          scan_id: scanId,
+          page_id: pageIdByUrl.get(claim.sourceUrl) || null,
+          category: claim.category,
+          attribute: claim.attribute,
+          value_key: claim.valueKey,
+          value_display: claim.valueDisplay,
+          quote: claim.quote,
+          source_url: claim.sourceUrl,
+          source_kind: claim.sourceKind
+        }))
+      });
+    }
+
+    if (conflicts.length) {
+      await db('content_decay_fact_conflicts', {
+        method: 'POST',
+        body: conflicts.map(conflict => ({
+          scan_id: scanId,
+          kind: conflict.kind,
+          category: conflict.category,
+          attribute: conflict.attribute,
+          severity: conflict.severity,
+          title: conflict.title,
+          detail: conflict.detail,
+          value_a: conflict.valueA,
+          value_b: conflict.valueB,
+          page_a_url: conflict.pageAUrl,
+          page_b_url: conflict.pageBUrl,
+          quote_a: conflict.quoteA,
+          quote_b: conflict.quoteB,
+          recommendation: conflict.recommendation
+        }))
+      });
+    }
+  } catch (error) {
+    console.error('Fact consistency not stored', scanId, error?.code || error?.message || 'unavailable');
+  }
 }
 
 exports.handler = async event => {
@@ -119,6 +211,11 @@ exports.handler = async event => {
       });
     }
 
+    // Fact consistency is additive. The tables arrive with
+    // database/13-fact-consistency.sql, which may not be applied yet, so a
+    // failure here is logged and never fails a scan that already succeeded.
+    await storeFactConsistency(scanId, crawl.pages, pageIdByUrl);
+
     for (const page of analysis.pages) {
       const pageId = pageIdByUrl.get(page.url);
       if (!pageId) continue;
@@ -148,13 +245,23 @@ exports.handler = async event => {
 
     return reply(200, {ok: true, pages: crawl.pages.length});
   } catch (error) {
-    console.error('Content decay scan failed', scanId, errorCode(error));
+    const code = errorCode(error);
+    // Server-side only. The code alone was not enough to diagnose a failure, so
+    // the underlying errno and message are logged here. Neither is ever returned
+    // to the browser, and neither contains request data, tokens or keys.
+    console.error(
+      'Content decay scan failed',
+      scanId,
+      code,
+      error?.code || 'no-code',
+      String(error?.message || '').slice(0, 300)
+    );
     try {
       await db('content_decay_scans?id=eq.' + scanId, {
         method: 'PATCH',
         body: {
           status: 'failed',
-          error_code: errorCode(error),
+          error_code: code,
           completed_at: new Date().toISOString()
         }
       });

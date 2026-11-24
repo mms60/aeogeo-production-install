@@ -117,7 +117,7 @@ function defaultRoutes(overrides = {}) {
   };
 }
 
-test('price preflight accepts an active one-time USD 19.99 test price', async () => {
+test('price preflight accepts an active one-time USD 49 test price', async () => {
   const result = await pricePreflight({
     priceId: PRICE_ID,
     mode: 'test',

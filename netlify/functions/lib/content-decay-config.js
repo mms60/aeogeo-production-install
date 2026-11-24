@@ -9,8 +9,10 @@
 
 const {requireStripeCredential} = require('./stripe-credential');
 
-// The approved live one-time price for the Content Decay Report.
-const LIVE_PRICE_FALLBACK = 'price_1UdvRBBIJX5f6Wmhm4uU56Zj';
+// The approved live one-time price for the Content Decay Report: $49, created
+// 2026-11-24. The earlier $19.99 price (price_1UdvRBBIJX5f6Wmhm4uU56Zj) stays in
+// Stripe for reference but no longer belongs to this deployment.
+const LIVE_PRICE_FALLBACK = 'price_1UfLY5BIJX5f6Wmhc3WdQqsr';
 const MAX_FREE_PAGES_CEILING = 10;
 
 function fail(code, message) {

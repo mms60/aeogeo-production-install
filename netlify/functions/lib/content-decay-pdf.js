@@ -31,7 +31,7 @@ function shortUrl(url) {
   return String(url || '').replace(/^https?:\/\//i, '');
 }
 
-function buildReport({scan, pages = [], findings = [], generatedAt} = {}) {
+function buildReport({scan, pages = [], findings = [], facts = [], factConflicts = [], generatedAt} = {}) {
   if (!scan) {
     throw Object.assign(
       new Error('A completed scan is required to build the report. Reference: CONTENT_DECAY_INVALID_REQUEST.'),
@@ -108,6 +108,9 @@ function buildReport({scan, pages = [], findings = [], generatedAt} = {}) {
   pdf.drawBullet(`Pages declaring no update date: ${summary.undatedPages ?? 0}.`);
   pdf.drawBullet(`Pages declaring an update over 12 months old: ${summary.staleOver12Months ?? 0}.`);
   pdf.drawBullet(`Pages under 300 words: ${summary.thinPages ?? 0}. Pages without one clear H1: ${summary.pagesWithoutSingleH1 ?? 0}.`);
+  if (facts.length || factConflicts.length) {
+    pdf.drawBullet(`Facts compared across pages: ${facts.length}. Disagreements found: ${factConflicts.length}.`);
+  }
   if (summary.coverageComplete === false) {
     pdf.drawParagraph(
       'This was a partial scan. The findings describe only the pages that were read; pages that were blocked, '
@@ -134,7 +137,34 @@ function buildReport({scan, pages = [], findings = [], generatedAt} = {}) {
     }
   }
 
-  pdf.drawSectionHeading('3. Pages Read');
+  pdf.drawSectionHeading('3. Facts That Disagree');
+  if (!factConflicts.length) {
+    pdf.drawParagraph(
+      'No disagreeing facts were found on the pages this scan read. Only facts stated in visible copy or in the '
+      + 'page JSON-LD are compared: prices, phone numbers, addresses, opening hours, founding year and team size.'
+    );
+  } else {
+    pdf.drawParagraph(
+      'Each finding names two pages that state different values for the same fact, or one page whose structured '
+      + 'data contradicts its own copy. Two pages are only compared when their values do not overlap, so a page that '
+      + 'lists more numbers than another is not treated as a contradiction.'
+    );
+    for (const conflict of factConflicts) {
+      pdf.drawSubheading(`${severityLabel(conflict.severity)}: ${conflict.title || 'Fact conflict'}`);
+      pdf.drawParagraph(`${shortUrl(conflict.pageAUrl)}: ${conflict.valueA || ''}`, {size: 8.5});
+      if (conflict.quoteA) pdf.drawParagraph(`Evidence: "${conflict.quoteA}"`, {size: 8.5});
+      if (conflict.pageBUrl && conflict.pageBUrl !== conflict.pageAUrl) {
+        pdf.drawParagraph(`${shortUrl(conflict.pageBUrl)}: ${conflict.valueB || ''}`, {size: 8.5});
+        if (conflict.quoteB) pdf.drawParagraph(`Evidence: "${conflict.quoteB}"`, {size: 8.5});
+      } else {
+        pdf.drawParagraph(`The page's structured data declares: ${conflict.valueB || ''}`, {size: 8.5});
+        if (conflict.quoteB) pdf.drawParagraph(`Evidence: ${conflict.quoteB}`, {size: 8.5});
+      }
+      if (conflict.recommendation) pdf.drawParagraph(`Fix: ${conflict.recommendation}`);
+    }
+  }
+
+  pdf.drawSectionHeading('4. Pages Read');
   if (!pages.length) {
     pdf.drawParagraph('No page rows were recorded for this scan.');
   } else {
@@ -152,7 +182,7 @@ function buildReport({scan, pages = [], findings = [], generatedAt} = {}) {
     }
   }
 
-  pdf.drawSectionHeading('4. Method and Limits');
+  pdf.drawSectionHeading('5. Method and Limits');
   pdf.drawParagraph(
     'This report reads the HTML a server returns. It does not run page JavaScript, and it cannot see pages that are '
     + 'blocked, broken, behind a login, or not linked from the site or its sitemap. Dates come only from what a page '

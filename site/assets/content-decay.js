@@ -54,7 +54,7 @@
     pendingConfirm = null;
     offer.hidden = false;
     if (offerHost) offerHost.textContent = scan.hostname || 'this site';
-    setBuyButton('Buy the report — $19.99');
+    setBuyButton('Buy the report — $49');
     setBuyStatus('');
   }
 
@@ -76,7 +76,7 @@
       const active = await ContentDecaySession.session();
       if (!active) {
         checkoutBusy = false;
-        setBuyButton('Sign in to buy — $19.99', {
+        setBuyButton('Sign in to buy — $49', {
           href: ContentDecaySession.signInUrl('/content-decay/?scan=' + encodeURIComponent(scanId) + '&buy=1')
         });
         setBuyStatus('The report is tied to your account. Sign in and you will come straight back to this scan.', 'error');
@@ -96,13 +96,13 @@
     } catch (error) {
       checkoutBusy = false;
       if (error.status === 401) {
-        setBuyButton('Sign in to buy — $19.99', {
+        setBuyButton('Sign in to buy — $49', {
           href: ContentDecaySession.signInUrl('/content-decay/?scan=' + encodeURIComponent(scanId) + '&buy=1')
         });
         setBuyStatus('Your session has ended. Sign in again to continue.', 'error');
         return;
       }
-      setBuyButton('Try checkout again — $19.99');
+      setBuyButton('Try checkout again — $49');
       setBuyStatus(error.message || 'Checkout could not open. No payment was taken.', 'error');
     }
   }
@@ -134,7 +134,7 @@
       });
       if (result.paid === false) {
         pendingConfirm = null;
-        setBuyButton('Buy the report — $19.99');
+        setBuyButton('Buy the report — $49');
         setBuyStatus(result.refunded
           ? 'This purchase was refunded, so the report is no longer available. You can buy it again if you want access.'
           : 'This purchase is no longer active, so the report is not available.', 'error');

@@ -165,6 +165,18 @@ async function scan(event, body) {
   return reply(202, {token, status: 'queued', pageLimit});
 }
 
+// Plain-language explanations for scan failures. A visitor cannot act on a code,
+// and the generic wording is kept for any code without an entry here.
+const FAILURE_MESSAGES = {
+  CONTENT_DECAY_DNS_FAILED: 'That website address did not resolve. Check the spelling of the address and try again.',
+  CONTENT_DECAY_TLS_FAILED: 'The website\u2019s secure certificate could not be verified. Its HTTPS setup may be broken or out of date.',
+  CONTENT_DECAY_CONNECTION_FAILED: 'The website refused or dropped the connection. It may be down, or blocking automated requests.'
+};
+
+function failureMessage(code) {
+  return FAILURE_MESSAGES[code] || 'The scan could not finish.';
+}
+
 async function status(event) {
   const token = String(event.queryStringParameters?.token || '').trim().toLowerCase();
   if (!TOKEN.test(token)) {
@@ -190,7 +202,7 @@ async function status(event) {
     startedAt: scan.started_at,
     completedAt: scan.completed_at,
     error: scan.status === 'failed'
-      ? 'The scan could not finish. Reference: ' + (scan.error_code || 'CONTENT_DECAY_CRAWL_FAILED') + '.'
+      ? failureMessage(scan.error_code) + ' Reference: ' + (scan.error_code || 'CONTENT_DECAY_CRAWL_FAILED') + '.'
       : null
   });
 }
@@ -275,6 +287,21 @@ async function paidReport(event) {
     || (b.priority || 0) - (a.priority || 0)
   );
 
+  // The fact tables arrive with database/13-fact-consistency.sql. Until that
+  // migration is applied, a paid report must still render, so these reads fall
+  // back to empty instead of failing the report.
+  const facts = await db(
+    'content_decay_fact_claims?scan_id=eq.' + encodeURIComponent(scanId)
+    + '&select=page_id,category,attribute,value_key,value_display,quote,source_url,source_kind'
+  ).catch(() => []);
+  const factConflicts = await db(
+    'content_decay_fact_conflicts?scan_id=eq.' + encodeURIComponent(scanId)
+    + '&select=kind,category,attribute,severity,title,detail,value_a,value_b,page_a_url,page_b_url,quote_a,quote_b,recommendation'
+  ).catch(() => []);
+  const orderedConflicts = (Array.isArray(factConflicts) ? factConflicts : []).sort((a, b) =>
+    (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0)
+  );
+
   return {
     scan: {
       id: scan.id,
@@ -306,6 +333,31 @@ async function paidReport(event) {
       evidence: finding.evidence,
       recommendation: finding.recommendation,
       suggestedReplacement: finding.suggested_replacement
+    })),
+    facts: (Array.isArray(facts) ? facts : []).map(fact => ({
+      pageId: fact.page_id,
+      category: fact.category,
+      attribute: fact.attribute,
+      valueKey: fact.value_key,
+      valueDisplay: fact.value_display,
+      quote: fact.quote,
+      sourceUrl: fact.source_url,
+      sourceKind: fact.source_kind
+    })),
+    factConflicts: orderedConflicts.map(conflict => ({
+      kind: conflict.kind,
+      category: conflict.category,
+      attribute: conflict.attribute,
+      severity: conflict.severity,
+      title: conflict.title,
+      detail: conflict.detail,
+      valueA: conflict.value_a,
+      valueB: conflict.value_b,
+      pageAUrl: conflict.page_a_url,
+      pageBUrl: conflict.page_b_url,
+      quoteA: conflict.quote_a,
+      quoteB: conflict.quote_b,
+      recommendation: conflict.recommendation
     }))
   };
 }

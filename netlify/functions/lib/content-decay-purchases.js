@@ -26,7 +26,7 @@ const config = require('./content-decay-config');
 const {db, UUID} = require('./db');
 
 const PRODUCT = 'content_decay';
-const REPORT_AMOUNT = 1999; // $19.99 in cents
+const REPORT_AMOUNT = 4999; // $49.00 in cents
 const REPORT_CURRENCY = 'usd';
 const CHECKOUT_SESSION = /^cs_[A-Za-z0-9_]+$/;
 const PRICE = /^price_[A-Za-z0-9_]+$/;
@@ -119,7 +119,7 @@ async function pricePreflight({priceId, mode = config.environment(), client = st
     && price.livemode === (mode === 'live');
   if (!valid) {
     throw fail(503, 'CONTENT_DECAY_PRICE_MISMATCH',
-      'The configured report price is not an active one-time USD 19.99 price in this environment.');
+      'The configured report price is not an active one-time USD 49 price in this environment.');
   }
   return {
     id: price.id,

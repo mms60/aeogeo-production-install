@@ -19,6 +19,19 @@
     freshness: 'Freshness',
     factual_support: 'Factual support'
   };
+  const FACT_KIND_LABEL = {
+    contradiction: 'Two pages disagree',
+    drift: 'Possibly outdated page',
+    jsonld_vs_visible: 'Structured data vs copy'
+  };
+  const FACT_CATEGORY_LABEL = {
+    pricing: 'Pricing',
+    phone: 'Phone',
+    address: 'Address',
+    hours: 'Hours',
+    founded: 'History',
+    headcount: 'Team'
+  };
 
   const title = document.getElementById('cd-report-title');
   const meta = document.getElementById('cd-report-meta');
@@ -32,6 +45,8 @@
   const note = document.getElementById('cd-report-note');
   const findingsWrap = document.getElementById('cd-findings');
   const noFindings = document.getElementById('cd-no-findings');
+  const factsWrap = document.getElementById('cd-facts');
+  const noFacts = document.getElementById('cd-no-facts');
   const pagesBody = document.getElementById('cd-pages-body');
   const pdfButton = document.getElementById('cd-pdf');
   const pdfStatus = document.getElementById('cd-pdf-status');
@@ -91,7 +106,7 @@
     return element;
   }
 
-  function renderMetrics(scan, pages, findings) {
+  function renderMetrics(scan, pages, findings, facts, conflicts) {
     const summary = scan.summary || {};
     const discovered = Number(summary.pagesDiscovered);
     const lowerBound = summary.pagesDiscoveredLowerBound === true;
@@ -104,7 +119,13 @@
       ['Declared stale over 12 months', String(summary.staleOver12Months ?? 0), summary.staleOver12Months ? 'cd-warn' : 'cd-good'],
       ['Pages under 300 words', String(summary.thinPages ?? 0), summary.thinPages ? 'cd-warn' : 'cd-good'],
       ['Pages without one clear H1', String(summary.pagesWithoutSingleH1 ?? 0), summary.pagesWithoutSingleH1 ? 'cd-warn' : 'cd-good'],
-      ['Findings', String(findings.length), findings.length ? 'cd-warn' : 'cd-good']
+      ['Findings', String(findings.length), findings.length ? 'cd-warn' : 'cd-good'],
+      ...(facts.length || conflicts.length
+        ? [
+          ['Facts compared', String(facts.length), ''],
+          ['Facts that disagree', String(conflicts.length), conflicts.length ? 'cd-warn' : 'cd-good']
+        ]
+        : [])
     ];
 
     metrics.textContent = '';
@@ -185,6 +206,60 @@
       }
 
       findingsWrap.append(card);
+    }
+  }
+
+  function factSide(url, value, quote, label) {
+    const side = node('div', 'cd-fact-side');
+    side.append(node('span', 'cd-fact-side-label', label || 'Stated here'));
+    if (url) side.append(pageLink(url));
+    if (value) side.append(node('p', 'cd-fact-value', value));
+    if (quote) side.append(node('blockquote', 'cd-evidence', quote));
+    return side;
+  }
+
+  // Renders only what the API returned. Each conflict already carries both
+  // pages and both quotes, so nothing is reconstructed in the browser.
+  function renderFacts(conflicts, facts) {
+    if (!factsWrap) return;
+    factsWrap.textContent = '';
+    if (noFacts) {
+      noFacts.hidden = conflicts.length > 0;
+      noFacts.textContent = facts.length
+        ? 'No disagreeing facts were found on the pages this scan read.'
+        : 'No comparable facts were found in the visible copy or JSON-LD of the pages this scan read.';
+    }
+
+    for (const conflict of conflicts) {
+      const key = SEVERITY_LABEL[conflict.severity] ? conflict.severity : 'low';
+      const card = node('article', 'cd-finding is-' + key);
+      const head = node('div', 'cd-finding-head');
+      head.append(badge(conflict.severity));
+      head.append(node('span', 'cd-finding-category', FACT_KIND_LABEL[conflict.kind] || 'Fact'));
+      if (conflict.category) {
+        head.append(node('span', 'cd-finding-category', FACT_CATEGORY_LABEL[conflict.category] || conflict.category));
+      }
+      card.append(head);
+      card.append(node('h3', 'cd-finding-title', conflict.title || 'Fact conflict'));
+      if (conflict.detail) card.append(node('p', 'cd-finding-detail', conflict.detail));
+
+      // A structured-data conflict is one page against itself, so the two
+      // sides are labelled by source instead of both saying "stated here".
+      const samePage = conflict.pageAUrl === conflict.pageBUrl;
+      const sides = node('div', 'cd-fact-sides');
+      sides.append(factSide(conflict.pageAUrl, conflict.valueA, conflict.quoteA,
+        samePage ? 'Visible copy' : 'Stated here'));
+      sides.append(factSide(conflict.pageBUrl, conflict.valueB, conflict.quoteB,
+        samePage ? 'Structured data' : 'Stated here'));
+      card.append(sides);
+
+      if (conflict.recommendation) {
+        const fix = node('p', 'cd-fix');
+        fix.append(node('strong', null, 'Fix: '), document.createTextNode(conflict.recommendation));
+        card.append(fix);
+      }
+
+      factsWrap.append(card);
     }
   }
 
@@ -285,10 +360,14 @@
     const score = Number(scan.overallScore);
     overall.textContent = Number.isFinite(score) ? String(Math.round(score)) : '—';
 
+    const facts = Array.isArray(data.facts) ? data.facts : [];
+    const factConflicts = Array.isArray(data.factConflicts) ? data.factConflicts : [];
+
     renderSeverity(findings);
-    renderMetrics(scan, pages, findings);
+    renderMetrics(scan, pages, findings, facts, factConflicts);
     const pageById = new Map(pages.map(page => [page.id, page]));
     renderFindings(findings, pageById);
+    renderFacts(factConflicts, facts);
     renderPages(pages);
 
     if (pdfButton) pdfButton.hidden = false;
@@ -336,7 +415,7 @@
       if (error.status === 402) {
         title.textContent = 'This report has not been purchased';
         meta.textContent = 'Signed in as ' + (active.user?.email || 'your account') + '.';
-        setStatus('No completed $19.99 payment is linked to this scan and account.', 'error');
+        setStatus('No completed $49 payment is linked to this scan and account.', 'error');
         setCta('Return to the free scan', '/content-decay/');
         return;
       }

@@ -301,3 +301,86 @@ test('the report page renders fixture findings, severity order, evidence and pag
 
   dom.window.close();
 });
+
+test('the report renders fact conflicts with both pages, both values and both quotes', async () => {
+  const data = fixture();
+  data.facts = [
+    {pageId: FRESH, category: 'pricing', attribute: 'plan_price:starter:month', valueKey: 'usd:34900:month', valueDisplay: '$349 / month', quote: 'The starter plan is $349/month.', sourceUrl: 'https://example.com/fresh', sourceKind: 'visible'},
+    {pageId: STALE, category: 'pricing', attribute: 'plan_price:starter:month', valueKey: 'usd:19900:month', valueDisplay: '$199 / month', quote: 'The starter plan is $199/month.', sourceUrl: 'https://example.com/stale', sourceKind: 'visible'}
+  ];
+  data.factConflicts = [
+    {
+      kind: 'drift',
+      category: 'pricing',
+      attribute: 'plan_price:starter:month',
+      severity: 'medium',
+      title: 'A possibly outdated page states a different value for the starter plan price',
+      detail: 'example.com/fresh says "$349 / month". example.com/stale says "$199 / month".',
+      valueA: '$349 / month',
+      valueB: '$199 / month',
+      pageAUrl: 'https://example.com/fresh',
+      pageBUrl: 'https://example.com/stale',
+      quoteA: 'The starter plan is $349/month.',
+      quoteB: 'The starter plan is $199/month.',
+      recommendation: 'Confirm whether the older page is still accurate.'
+    },
+    {
+      kind: 'jsonld_vs_visible',
+      category: 'phone',
+      attribute: 'phone',
+      severity: 'high',
+      title: 'Structured data disagrees with the visible copy on the phone number',
+      detail: 'example.com/fresh says "(469) 905-2836". example.com/fresh says "(469) 905-2837".',
+      valueA: '(469) 905-2836',
+      valueB: '(469) 905-2837',
+      pageAUrl: 'https://example.com/fresh',
+      pageBUrl: 'https://example.com/fresh',
+      quoteA: 'Call (469) 905-2836',
+      quoteB: 'telephone: +1 469 905 2837',
+      recommendation: 'Make the structured data match the visible copy.'
+    }
+  ];
+
+  const {dom, window} = render(data);
+  const document = window.document;
+  await waitFor(
+    () => document.getElementById('cd-report-body').hidden === false,
+    'the populated report body');
+
+  const facts = [...document.querySelectorAll('#cd-facts article.cd-finding')];
+  assert.equal(facts.length, 2);
+  assert.equal(document.getElementById('cd-no-facts').hidden, true);
+
+  const first = facts[0];
+  assert.equal(first.className, 'cd-finding is-medium');
+  assert.equal(
+    first.querySelector('.cd-finding-title').textContent,
+    'A possibly outdated page states a different value for the starter plan price');
+  assert.deepEqual(
+    [...first.querySelectorAll('.cd-finding-category')].map(item => item.textContent),
+    ['Possibly outdated page', 'Pricing']);
+
+  const sides = [...first.querySelectorAll('.cd-fact-side')];
+  assert.equal(sides.length, 2);
+  assert.equal(sides[0].querySelector('a').textContent, 'https://example.com/fresh');
+  assert.equal(sides[0].querySelector('a').getAttribute('href'), 'https://example.com/fresh');
+  assert.equal(sides[0].querySelector('.cd-fact-value').textContent, '$349 / month');
+  assert.equal(sides[0].querySelector('.cd-evidence').textContent, 'The starter plan is $349/month.');
+  assert.equal(sides[1].querySelector('a').textContent, 'https://example.com/stale');
+  assert.equal(sides[1].querySelector('.cd-fact-value').textContent, '$199 / month');
+  assert.match(first.querySelector('.cd-fix').textContent, /^Fix: Confirm whether the older page/);
+
+  // A structured-data conflict shows the same page on both sides.
+  const second = facts[1];
+  assert.equal(second.className, 'cd-finding is-high');
+  assert.deepEqual(
+    [...second.querySelectorAll('.cd-fact-side a')].map(link => link.textContent),
+    ['https://example.com/fresh', 'https://example.com/fresh']);
+
+  const metricLabels = [...document.querySelectorAll('#cd-report-metrics .cd-metric dt')]
+    .map(item => item.textContent);
+  assert.ok(metricLabels.includes('Facts compared'));
+  assert.ok(metricLabels.includes('Facts that disagree'));
+
+  dom.window.close();
+});

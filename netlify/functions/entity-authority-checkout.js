@@ -5,7 +5,7 @@
 // the Stripe session. A Single-Hub owner can buy the Multi-Location upgrade for
 // the $400 difference instead of paying the full Multi-Location price again.
 const { stripe, origin } = require('./lib/stripe');
-const { user: authUser } = require('./lib/db');
+const { user: authUser, db } = require('./lib/db');
 const purchases = require('./lib/entity-purchases');
 
 const PRODUCT = 'entity-authority';
@@ -14,6 +14,14 @@ const UPGRADE = Object.freeze({
   to: 'multi',
   amount: 40000,
   credit: 79900
+});
+// A Content Decay report bought in the last 30 days is credited in full against
+// either setup offer. It is never stacked on the Single-Hub upgrade credit,
+// which already accounts for the earlier purchase.
+const REPORT_CREDIT = Object.freeze({
+  amount: 4900,
+  days: 30,
+  name: 'Content Decay report credit'
 });
 const OFFERS = Object.freeze({
   single: Object.freeze({
@@ -96,6 +104,24 @@ function validLivePrice(price, offer) {
     !price.custom_unit_amount &&
     !price.transform_quantity
   );
+}
+
+// Full credit for a report bought within the last 30 days. A lookup failure must
+// not stop a paying customer, so it degrades to no credit and says so in the log.
+async function reportCreditFor(userId) {
+  const since = new Date(Date.now() - REPORT_CREDIT.days * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const rows = await db(
+      'content_decay_purchases?user_id=eq.' + encodeURIComponent(userId)
+      + '&status=eq.paid&livemode=eq.true&environment=eq.live'
+      + '&created_at=gte.' + encodeURIComponent(since)
+      + '&select=id&limit=1'
+    );
+    return Array.isArray(rows) && rows.length ? REPORT_CREDIT.amount : 0;
+  } catch (error) {
+    console.error('entity-authority-checkout report credit lookup failed', error && error.message);
+    return 0;
+  }
 }
 
 async function requireUser(event) {
@@ -186,7 +212,33 @@ exports.handler = async event => {
       couponId = coupon.id;
     }
 
-    const expectedAmount = request.upgrade ? UPGRADE.amount : offer.amount;
+    // The report credit is applied after the upgrade check so the two credits
+    // can never be stacked on one purchase.
+    let reportCredit = 0;
+    if (!request.upgrade) {
+      reportCredit = await reportCreditFor(checkoutUser.id);
+      if (reportCredit > 0) {
+        const coupon = await stripe('coupons', {
+          method: 'POST',
+          idempotency: `ea-report-credit-${checkoutUser.id}`,
+          data: {
+            amount_off: String(reportCredit),
+            currency: 'usd',
+            duration: 'once',
+            name: REPORT_CREDIT.name,
+            'metadata[product]': PRODUCT,
+            'metadata[source]': 'content_decay',
+            'metadata[user_id]': checkoutUser.id
+          }
+        });
+        if (!coupon || !coupon.id) {
+          throw statusError(503, 'The Content Decay report credit could not be created.', 'REPORT_CREDIT_COUPON_MISSING');
+        }
+        couponId = coupon.id;
+      }
+    }
+
+    const expectedAmount = request.upgrade ? UPGRADE.amount : offer.amount - reportCredit;
     const base = origin();
     const sessionData = {
       mode: 'payment',
@@ -212,8 +264,14 @@ exports.handler = async event => {
     if (request.upgrade) {
       sessionData['metadata[upgrade]'] = '1';
       sessionData['metadata[previous_plan]'] = UPGRADE.from;
-      sessionData['discounts[0][coupon]'] = couponId;
     }
+    if (reportCredit > 0) {
+      // Verification reads this back, so the reduced total is expected rather
+      // than treated as a mismatch.
+      sessionData['metadata[report_credit]'] = String(reportCredit);
+      sessionData['payment_intent_data[metadata][report_credit]'] = String(reportCredit);
+    }
+    if (couponId) sessionData['discounts[0][coupon]'] = couponId;
 
     const session = await stripe('checkout/sessions', {
       method: 'POST',
@@ -263,4 +321,6 @@ exports.handler = async event => {
 
 exports.OFFERS = OFFERS;
 exports.UPGRADE = UPGRADE;
+exports.REPORT_CREDIT = REPORT_CREDIT;
 exports.validLivePrice = validLivePrice;
+exports.reportCreditFor = reportCreditFor;
