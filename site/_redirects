@@ -80,8 +80,25 @@
 /resources             /resources.html        200
 /learn                 /learn.html            200
 /tools                 /tools.html            200
-/free-tools            /free-tools/index.html  200
+/free-tools            /free-tools/            301
 /free-tools/           /free-tools/index.html  200
+
+# --- Old tools addresses: one canonical URL, /free-tools/ ----------------
+# Typed by hand, bookmarked or linked from older versions of the site. Each
+# one is forced, so an old address can never reach the 404 catch-all or be
+# answered with the homepage.
+/free-tools.html         /free-tools/   301!
+/free-tools/index.html   /free-tools/   301!
+/freetools               /free-tools/   301!
+/freetools/              /free-tools/   301!
+/free_tools              /free-tools/   301!
+/free_tools/             /free-tools/   301!
+/diy-tools               /free-tools/   301!
+/diy-tools/              /free-tools/   301!
+/tools/free              /free-tools/   301!
+/tools/free/             /free-tools/   301!
+/tools/free-tools        /free-tools/   301!
+/tools/free-tools/       /free-tools/   301!
 /visibility-tool       /visibility-tool.html  200
 /terms-of-service      /terms-of-service.html 200
 /privacy-policy        /privacy-policy.html   200
