@@ -34,6 +34,9 @@
   let checkoutBusy = false;
   let lastDisagreements = 0;
   let factLinkSeen = false;
+  // What the free summary was showing when the visitor last looked at it, so a
+  // click on the $49 offer can be read next to the fact count it followed.
+  let lastFact = null;
 
   const setBuyStatus = (message, kind) => {
     if (!buyStatus) return;
@@ -78,7 +81,7 @@
       const active = await ContentDecaySession.session();
       if (!active) {
         checkoutBusy = false;
-        track('content_decay_checkout_signin');
+        track('content_decay_checkout_signin', factParams());
         setBuyButton('Sign in to buy — $49', {
           href: ContentDecaySession.signInUrl('/content-decay/?scan=' + encodeURIComponent(scanId) + '&buy=1')
         });
@@ -95,7 +98,7 @@
         return;
       }
       if (!result.url) throw new Error('Checkout did not return a payment link. No payment was taken.');
-      track('content_decay_checkout_open');
+      track('content_decay_checkout_open', factParams());
       location.assign(result.url);
     } catch (error) {
       checkoutBusy = false;
@@ -179,7 +182,10 @@
         finishPurchase(pendingConfirm.scanId, pendingConfirm.sessionId);
         return;
       }
-      if (currentScanId) beginCheckout(currentScanId);
+      if (currentScanId) {
+        track('content_decay_offer_click', factParams());
+        beginCheckout(currentScanId);
+      }
     });
   }
 
@@ -194,6 +200,16 @@
   // Counts only, and only when the visitor allowed analytics and the Google tag
   // is present. No scan id, hostname, page URL or email is ever sent, so these
   // events can sit in the public property without exposing anyone's site.
+  // The free summary state an offer click came from. Counts only: no scan id,
+  // hostname or page URL, and nothing is added to the free API response.
+  function factParams() {
+    return {
+      fact_check: lastFact ? 1 : 0,
+      facts_compared: lastFact ? lastFact.facts : 0,
+      disagreements: lastFact ? lastFact.disagreements : 0
+    };
+  }
+
   function track(name, params) {
     try {
       if (!window.AEOGEOCookieConsent?.allowsAnalytics?.()) return;
@@ -231,6 +247,7 @@
     const facts = Number(check?.factsCompared);
     const disagreements = Number(check?.disagreements) || 0;
     if (!check || !Number.isFinite(facts) || facts <= 0) {
+      lastFact = null;
       block.hidden = true;
       return;
     }
@@ -247,6 +264,7 @@
     link.hidden = disagreements <= 0;
     block.hidden = false;
     lastDisagreements = disagreements;
+    lastFact = {facts, disagreements, pages};
     if (disagreements > 0) watchFactLink(link, disagreements);
   }
 

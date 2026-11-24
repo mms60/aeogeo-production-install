@@ -2,11 +2,12 @@
 
 // Funnel events for the content decay page.
 //
-// The $49 report has had scans but no purchases, so the free scan page now
-// records four steps in Google Analytics: the scan finishing, the fact-check
-// link being seen, the link being clicked, and Stripe checkout opening. A
-// fifth event marks the sign-in gate, which is the step where a signed-out
-// visitor never reaches checkout at all.
+// The $49 report has had scans but no purchases, so the free scan page records
+// the steps a visitor takes in Google Analytics: the scan finishing, the
+// fact-check link being seen and clicked, the $49 offer being clicked, Stripe
+// checkout opening, and the sign-in gate (where a signed-out visitor never
+// reaches checkout at all). The offer and checkout steps carry the fact counts
+// they followed, so clicks can be compared with and without the fact block.
 //
 // These tests pin the behaviour: the events fire once, at the right moment,
 // carry counts only, and stay silent when the visitor has not allowed
@@ -54,7 +55,7 @@ const HTML = `<!doctype html><html><body>
 </section>
 </body></html>`;
 
-function mount({consent = true, session = null} = {}) {
+function mount({consent = true, session = null, scan = SCAN} = {}) {
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', () => {});
   const dom = new JSDOM(HTML, {
@@ -90,7 +91,7 @@ function mount({consent = true, session = null} = {}) {
     return {
       ok: true,
       status: queued ? 202 : 200,
-      json: async () => (queued ? {token: TOKEN, status: 'queued', pageLimit: 10} : SCAN)
+      json: async () => (queued ? {token: TOKEN, status: 'queued', pageLimit: 10} : scan)
     };
   };
   if (session) w.ContentDecaySession = session;
@@ -168,6 +169,34 @@ test('a signed-out buyer is recorded at the sign-in gate, not at checkout', asyn
   assert.deepEqual(named(env.events, 'content_decay_checkout_open'), []);
 });
 
+test('clicking the $49 offer is recorded next to the fact count it followed', async () => {
+  const env = mount({session: {session: async () => null, api: async () => ({}), signInUrl: () => '/login'}});
+  await runScan(env);
+  env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
+  await waitFor(() => named(env.events, 'content_decay_offer_click').length === 1, 'the offer click');
+  assert.deepEqual(named(env.events, 'content_decay_offer_click'), [
+    {fact_check: 1, facts_compared: 32, disagreements: 3}
+  ]);
+  await waitFor(() => named(env.events, 'content_decay_checkout_signin').length === 1, 'the sign-in gate');
+  assert.deepEqual(named(env.events, 'content_decay_checkout_signin'), [
+    {fact_check: 1, facts_compared: 32, disagreements: 3}
+  ]);
+});
+
+test('a scan with no fact count reports zero, so the offer funnel can be split', async () => {
+  const env = mount({
+    scan: {...SCAN, factCheck: null},
+    session: {session: async () => null, api: async () => ({}), signInUrl: () => '/login'}
+  });
+  await runScan(env);
+  assert.equal(env.w.document.getElementById('cd-facts').hidden, true, 'the block stays hidden');
+  env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
+  await waitFor(() => named(env.events, 'content_decay_offer_click').length === 1, 'the offer click');
+  assert.deepEqual(named(env.events, 'content_decay_offer_click'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0}
+  ]);
+});
+
 test('checkout opening is recorded when the payment link is returned', async () => {
   const env = mount({
     session: {
@@ -179,7 +208,9 @@ test('checkout opening is recorded when the payment link is returned', async () 
   await runScan(env);
   env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
   await waitFor(() => named(env.events, 'content_decay_checkout_open').length === 1, 'checkout to open');
-  assert.deepEqual(named(env.events, 'content_decay_checkout_open'), [{}]);
+  assert.deepEqual(named(env.events, 'content_decay_checkout_open'), [
+    {fact_check: 1, facts_compared: 32, disagreements: 3}
+  ]);
   assert.deepEqual(named(env.events, 'content_decay_checkout_signin'), []);
 });
 
