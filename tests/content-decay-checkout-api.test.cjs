@@ -326,6 +326,38 @@ test('POST action=credit reports the credit the signed-in buyer already holds', 
     'identity comes from the session, never the body');
 });
 
+test('a priced checkout failure reaches the page with the price it tried', async () => {
+  reset({
+    checkoutError: Object.assign(
+      new Error('The configured report price (price_1UdvRBBIJX5f6Wmhm4uU56Zj) is not an active'
+        + ' one-time USD 49 price in this environment. Reference: CONTENT_DECAY_PRICE_MISMATCH.'),
+      {status: 503, code: 'CONTENT_DECAY_PRICE_MISMATCH'}
+    )
+  });
+
+  const response = await api.handler(postEvent({action: 'checkout', credit: true}));
+
+  assert.equal(response.statusCode, 503);
+  assert.equal(payloadOf(response).code, 'CONTENT_DECAY_PRICE_MISMATCH');
+  assert.match(payloadOf(response).error, /price_1UdvRBBIJX5f6Wmhm4uU56Zj/,
+    'the configured price is named so the setting can be fixed');
+});
+
+test('an unexpected 503 stays generic instead of leaking internals', async () => {
+  reset({
+    checkoutError: Object.assign(new Error('connection reset by peer at 10.0.0.4'), {
+      status: 503,
+      code: 'SOMETHING_UNEXPECTED'
+    })
+  });
+
+  const response = await api.handler(postEvent({action: 'checkout', credit: true}));
+
+  assert.equal(response.statusCode, 503);
+  assert.equal(payloadOf(response).code, 'CONTENT_DECAY_UNAVAILABLE');
+  assert.doesNotMatch(payloadOf(response).error, /10\.0\.0\.4/);
+});
+
 test('POST action=credit reports an unpaid checkout the page can continue', async () => {
   reset({
     openCreditResult: {

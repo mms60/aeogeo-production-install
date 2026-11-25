@@ -24,6 +24,28 @@ const TOKEN = /^[0-9a-f]{32,64}$/;
 const MAX_BODY_BYTES = 8192;
 const RATE_LIMIT = 5;
 const RATE_WINDOW_SECONDS = 600;
+// Codes whose message tells the operator what to fix (which price, which missing
+// setting). Only these survive the generic 503 wrapper; everything else keeps
+// its details in the server log. See the catch at the bottom of the handler.
+const DIAGNOSTIC_CODES = new Set([
+  'CONTENT_DECAY_PRICE_MISSING',
+  'CONTENT_DECAY_PRICE_MISMATCH',
+  'CONTENT_DECAY_PRICE_UNAVAILABLE',
+  'CONTENT_DECAY_TEST_PRICE_IS_LIVE',
+  'CONTENT_DECAY_LIVE_KEY_MISSING',
+  'CONTENT_DECAY_TEST_KEY_MISSING',
+  'CONTENT_DECAY_KEY_FORMAT',
+  'CONTENT_DECAY_KEY_WRONG_MODE',
+  'CONTENT_DECAY_LIVE_KEY_IS_TEST',
+  'CONTENT_DECAY_TEST_IN_PRODUCTION',
+  'CONTENT_DECAY_SITE_URL',
+  'CONTENT_DECAY_WEBHOOK_SECRET_MISSING',
+  'PAYMENT_KEY_MISSING',
+  'PAYMENT_KEY_MASKED',
+  'PAYMENT_KEY_ORGANIZATION',
+  'PAYMENT_KEY_PUBLISHABLE',
+  'PAYMENT_KEY_FORMAT'
+]);
 
 function siteOrigin() {
   const value = process.env.PUBLIC_SITE_URL || process.env.URL || '';
@@ -477,8 +499,18 @@ exports.handler = async event => {
     return reply(405, {error: 'Use GET or POST.'});
   } catch (error) {
     const status = Number(error?.status);
+    // Configuration and payment problems carry a curated message that names what
+    // is wrong (which price, which missing setting). Collapsing those into the
+    // generic 503 left a broken checkout with nothing to act on, so the codes
+    // this service writes for people are passed through. Anything unexpected
+    // still answers generically and keeps its details in the server log.
+    const curated = DIAGNOSTIC_CODES.has(String(error?.code || ''))
+      && typeof error.message === 'string';
     if (Number.isInteger(status) && status >= 400 && status < 500) {
       return reply(status, {error: error.message, code: error.code || 'CONTENT_DECAY_REQUEST'});
+    }
+    if (curated && status >= 500 && status < 600) {
+      return reply(status, {error: error.message, code: error.code});
     }
     console.error('Content decay API failed', status || 500, error.code || 'internal');
     return reply(503, {
