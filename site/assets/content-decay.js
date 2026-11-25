@@ -216,10 +216,24 @@
         token: active.access_token,
         body: {}
       });
-      if (result && result.available) showCredit(result);
+      if (result && result.available) {
+        showCredit(result);
+        return;
+      }
+      // A checkout this buyer already started. Offering to continue it is what
+      // stops the page from selling the same report a second time.
+      if (result && result.pending && result.checkoutUrl) showPendingCheckout(result);
     } catch {
       // Signed out, or the lookup failed. The normal offer still stands.
     }
+  }
+
+  // Points the buy button at the unpaid checkout instead of a new payment.
+  function showPendingCheckout(state) {
+    if (!state || !state.checkoutUrl) return;
+    checkoutBusy = false;
+    setBuyButton('Continue checkout — $49', {href: state.checkoutUrl});
+    setBuyStatus('You started this payment earlier. Continue where you left off.');
   }
 
   // Buys the $49 report before any scan exists. The payment becomes a credit on

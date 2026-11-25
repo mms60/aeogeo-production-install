@@ -238,9 +238,10 @@ async function createCheckout({
   return {sessionId: session.id, url: session.url, scanId};
 }
 
-// The buyer's unspent credit, if any. This is the single rule that stops a
-// second payment for the same report: the page shows the credit instead of
-// inviting another checkout, and createCreditCheckout refuses to open one.
+// What the page needs to know before offering the report: the buyer's unspent
+// credit, or a checkout they already started and did not finish. The database
+// allows one of those at a time, and reporting both is what stops the page from
+// inviting a second payment for the same report.
 async function openCreditFor({user, database = db, mode = config.environment()} = {}) {
   if (!user || !user.id) {
     throw fail(401, 'CONTENT_DECAY_SIGN_IN_REQUIRED', 'Please sign in to use your report credit.');
@@ -249,19 +250,39 @@ async function openCreditFor({user, database = db, mode = config.environment()} 
 
   const rows = await database(
     'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
-    + '&status=eq.open&environment=eq.' + encodeURIComponent(mode)
-    + '&select=id,amount_total,currency,created_at'
-    + '&order=created_at.asc&limit=1'
+    + '&environment=eq.' + encodeURIComponent(mode)
+    + '&' + CREDIT_LIVE_STATES
+    + '&select=id,status,amount_total,currency,created_at,checkout_url'
+    + '&order=created_at.asc'
   );
-  const credit = Array.isArray(rows) ? rows[0] : null;
-  if (!credit) return {available: false};
-  return {
-    available: true,
-    creditId: credit.id,
-    amountTotal: credit.amount_total,
-    currency: credit.currency,
-    createdAt: credit.created_at || null
-  };
+  const found = Array.isArray(rows) ? rows : [];
+
+  const credit = found.find(row => row.status === 'open') || null;
+  if (credit) {
+    return {
+      available: true,
+      pending: false,
+      creditId: credit.id,
+      amountTotal: credit.amount_total,
+      currency: credit.currency,
+      createdAt: credit.created_at || null
+    };
+  }
+
+  const pending = found.find(row => row.status === 'pending') || null;
+  if (pending) {
+    return {
+      available: false,
+      pending: true,
+      creditId: pending.id,
+      // Null while the checkout is still being created: there is nothing to
+      // continue yet, and the page must not invent a link.
+      checkoutUrl: pending.checkout_url || null,
+      createdAt: pending.created_at || null
+    };
+  }
+
+  return {available: false, pending: false};
 }
 
 // The two states that own a buyer's one report: an unpaid reservation and a

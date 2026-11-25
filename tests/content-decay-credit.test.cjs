@@ -212,7 +212,7 @@ test('an existing open credit is returned instead of starting a second payment',
 test('the open credit lookup reports the buyer credit, or nothing', async () => {
   const found = await openCreditFor({
     user: {id: USER},
-    database: fakeDatabase(routes({openCredits: [openCredit({created_at: '2026-11-25T10:00:00.000Z'})]})),
+    database: fakeDatabase(routes({creditRows: [openCredit({created_at: '2026-11-25T10:00:00.000Z'})]})),
     mode: 'test'
   });
 
@@ -223,10 +223,57 @@ test('the open credit lookup reports the buyer credit, or nothing', async () => 
 
   const empty = await openCreditFor({
     user: {id: USER},
-    database: fakeDatabase(routes({openCredits: []})),
+    database: fakeDatabase(routes({creditRows: []})),
     mode: 'test'
   });
-  assert.deepEqual(empty, {available: false});
+  assert.deepEqual(empty, {available: false, pending: false});
+});
+
+test('the page is told about an unpaid checkout it can continue', async () => {
+  const state = await openCreditFor({
+    user: {id: USER},
+    database: fakeDatabase(routes({
+      creditRows: [openCredit({
+        status: 'pending',
+        checkout_url: 'https://checkout.stripe.com/c/pay/credit'
+      })]
+    })),
+    mode: 'test'
+  });
+
+  assert.equal(state.available, false, 'an unpaid checkout is not a credit yet');
+  assert.equal(state.pending, true);
+  assert.equal(state.checkoutUrl, 'https://checkout.stripe.com/c/pay/credit');
+  assert.equal(state.creditId, CREDIT);
+});
+
+test('an unpaid checkout without a link yet reports no url', async () => {
+  const state = await openCreditFor({
+    user: {id: USER},
+    database: fakeDatabase(routes({
+      creditRows: [openCredit({status: 'pending', checkout_url: null})]
+    })),
+    mode: 'test'
+  });
+
+  assert.equal(state.pending, true);
+  assert.equal(state.checkoutUrl, null, 'the page never invents a payment link');
+});
+
+test('a paid credit is reported ahead of an unpaid checkout', async () => {
+  const state = await openCreditFor({
+    user: {id: USER},
+    database: fakeDatabase(routes({
+      creditRows: [
+        openCredit({status: 'pending', checkout_url: 'https://checkout.stripe.com/c/pay/credit'}),
+        openCredit({id: '88888888-8888-4888-8888-888888888888', status: 'open'})
+      ]
+    })),
+    mode: 'test'
+  });
+
+  assert.equal(state.available, true);
+  assert.equal(state.creditId, '88888888-8888-4888-8888-888888888888');
 });
 
 test('a signed-out buyer cannot look up a credit', async () => {

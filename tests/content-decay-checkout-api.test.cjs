@@ -326,6 +326,27 @@ test('POST action=credit reports the credit the signed-in buyer already holds', 
     'identity comes from the session, never the body');
 });
 
+test('POST action=credit reports an unpaid checkout the page can continue', async () => {
+  reset({
+    openCreditResult: {
+      available: false,
+      pending: true,
+      creditId: ENTITLEMENT,
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/credit'
+    }
+  });
+
+  const response = await api.handler(postEvent({action: 'credit'}));
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(payloadOf(response), {
+    available: false,
+    pending: true,
+    creditId: ENTITLEMENT,
+    checkoutUrl: 'https://checkout.stripe.com/c/pay/credit'
+  });
+});
+
 test('POST action=confirm with credit confirms the reserved credit, not a scan', async () => {
   reset();
 
