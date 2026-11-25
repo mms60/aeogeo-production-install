@@ -117,7 +117,20 @@ async function pricePreflight({priceId, mode = config.environment(), client = st
     throw fail(503, 'CONTENT_DECAY_PRICE_MISSING',
       'The Content Decay Stripe price is not configured for this environment.');
   }
-  const price = await client.retrievePrice(priceId);
+  // Reading the price is the one Stripe call the other products avoid by
+  // hardcoding their ids, so a key without price read access fails here and
+  // nowhere else. That is worth naming instead of reporting a generic failure.
+  let price;
+  try {
+    price = await client.retrievePrice(priceId);
+  } catch (error) {
+    // A missing or wrong-shaped key keeps its own message; anything else is a
+    // Stripe permission or transport failure on this read.
+    if (/KEY/.test(String(error?.code || ''))) throw error;
+    throw fail(503, 'CONTENT_DECAY_PRICE_UNAVAILABLE',
+      'The report price (' + priceId
+      + ') could not be read from Stripe. Check that the Stripe server key may read prices.');
+  }
   const valid = price
     && price.id === priceId
     && price.active === true
