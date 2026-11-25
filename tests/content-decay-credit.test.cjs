@@ -8,6 +8,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
+  createCheckout,
   createCreditCheckout,
   openCreditFor,
   confirmCredit,
@@ -932,4 +933,92 @@ test('a paid reservation becomes the open credit instead of a second row', async
   assert.equal(store.rows[0].status, 'open');
   assert.equal(store.rows[0].stripe_payment_intent, 'pi_test_credit1');
   assert.equal(store.rows[0].amount_total, REPORT_AMOUNT);
+});
+
+// ---- a scan checkout never charges a buyer who already paid ----------------
+
+test('buying the report for a scan spends an open credit instead of charging again', async () => {
+  let sessions = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+  const database = fakeDatabase(routes({
+    creditRows: [openCredit()],
+    openCredits: [openCredit()]
+  }));
+
+  const result = await createCheckout({
+    scanId: SCAN,
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.alreadyPurchased, true, 'the paid credit is spent, not sold again');
+  assert.equal(result.claimed, true);
+  assert.equal(result.entitlementId, ENTITLEMENT);
+  assert.equal(sessions, 0, 'no second payment is created for an already-paid report');
+  const purchase = database.calls.find(call => call.path === 'content_decay_purchases');
+  assert.ok(purchase, 'the purchase is recorded against the scan');
+  assert.equal(purchase.options.body.scan_id, SCAN);
+});
+
+test('a scan checkout continues the unpaid checkout it already has', async () => {
+  let sessions = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+  const database = fakeDatabase(routes({
+    creditRows: [openCredit({status: 'pending', checkout_url: 'https://checkout.stripe.com/c/pay/credit'})]
+  }));
+
+  const result = await createCheckout({
+    scanId: SCAN,
+    user: {id: USER},
+    client,
+    database,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.pending, true);
+  assert.equal(result.checkoutUrl, 'https://checkout.stripe.com/c/pay/credit');
+  assert.equal(sessions, 0, 'an open payment is resumed, never duplicated');
+});
+
+test('a reservation still being created blocks a second payment instead of charging', async () => {
+  let sessions = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+  const database = fakeDatabase(routes({
+    creditRows: [openCredit({status: 'pending', checkout_url: null, stripe_session_id: null})]
+  }));
+
+  await assert.rejects(
+    () => createCheckout({
+      scanId: SCAN,
+      user: {id: USER},
+      client,
+      database,
+      mode: 'test',
+      priceId: PRICE_ID,
+      origin: 'https://aegeosearch.com'
+    }),
+    error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_PENDING'
+  );
+  assert.equal(sessions, 0, 'a second payment is never created');
 });

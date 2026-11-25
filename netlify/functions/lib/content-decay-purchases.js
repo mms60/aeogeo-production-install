@@ -261,6 +261,27 @@ async function createCheckout({
     return {alreadyPurchased: true, entitlementId: existing.id, scanId};
   }
 
+  // A buyer who paid before scanning already holds one $49 report credit.
+  // Spending that credit is this checkout: creating a payment here would charge
+  // twice for the same report, which is exactly what the credit exists to
+  // prevent. An unpaid checkout is resumed for the same reason.
+  const held = await liveCreditFor({user, database, mode});
+  if (held && held.status === 'open') {
+    const spent = await claimCredit({scanId, user, database, mode});
+    if (!spent || !spent.claimed) {
+      throw fail(409, 'CONTENT_DECAY_CREDIT_NOT_APPLIED',
+        'Your $49 report credit could not be applied to this scan, so no new payment was started. Reload this page and try again.');
+    }
+    return {alreadyPurchased: true, claimed: true, scanId, entitlementId: spent.entitlementId};
+  }
+  if (held && held.status === 'pending') {
+    if (held.checkout_url) {
+      return {available: false, pending: true, creditId: held.id, checkoutUrl: held.checkout_url, scanId};
+    }
+    throw fail(409, 'CONTENT_DECAY_CREDIT_PENDING',
+      'A payment for this report is already open on this account. Reload this page in a moment to continue it.');
+  }
+
   const resolved = await resolveReportPrice({priceId, mode, client});
 
   const params = {

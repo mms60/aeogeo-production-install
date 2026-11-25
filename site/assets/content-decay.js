@@ -57,6 +57,34 @@
     else delete buy.dataset.href;
   };
 
+  // The scan this browser last completed, kept across reloads and sign-ins. A
+  // paid credit is applied to it on the next visit, even when the scan itself
+  // was run signed out, so a payment can never end up with no report behind it.
+  const SCAN_MEMORY = 'contentDecayLastScan';
+  const SCAN_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  function rememberScan(scan) {
+    if (!scan || !SCAN_ID.test(String(scan.id || ''))) return;
+    try {
+      localStorage.setItem(SCAN_MEMORY, JSON.stringify({
+        id: scan.id,
+        hostname: scan.hostname || '',
+        at: new Date().toISOString()
+      }));
+    } catch {
+      // Private mode or a full store: the credit is still shown, it just cannot
+      // be aimed at this scan automatically.
+    }
+  }
+
+  function lastScan() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(SCAN_MEMORY) || 'null');
+      if (stored && SCAN_ID.test(String(stored.id || ''))) return stored;
+    } catch { /* unreadable store: no remembered scan */ }
+    return null;
+  }
+
   function showOffer(scan) {
     if (!offer || !scan || !scan.id) return;
     currentScanId = scan.id;
@@ -65,6 +93,7 @@
     if (offerHost) offerHost.textContent = scan.hostname || 'this site';
     setBuyButton('Buy the report — $49');
     setBuyStatus('');
+    rememberScan(scan);
     applyCreditToScan(scan.id);
   }
 
@@ -100,6 +129,19 @@
       });
       if (result.alreadyPurchased) {
         location.assign('/content-decay/report/?scan=' + encodeURIComponent(result.scanId || scanId));
+        return;
+      }
+      // The server spent a paid credit or found an unpaid checkout instead of
+      // opening a second payment for this report.
+      if (result.pending && result.checkoutUrl) {
+        track('content_decay_checkout_open', factParams());
+        location.assign(result.checkoutUrl);
+        return;
+      }
+      if (result.pending) {
+        checkoutBusy = false;
+        setBuyButton('Buy the report — $49');
+        setBuyStatus('A payment for this report is already open. Reload this page in a moment to continue it.');
         return;
       }
       if (!result.url) throw new Error('Checkout did not return a payment link. No payment was taken.');
@@ -166,13 +208,14 @@
     }
   }
 
-  // A buyer who paid before scanning holds a $49 credit. The first scan they
-  // finish spends it, so the report opens without a second payment.
+  // Spends a paid credit on one scan and opens the report. Returns true only
+  // when the report actually opened, so a caller can fall back to showing the
+  // credit instead of assuming it was applied.
   async function applyCreditToScan(scanId) {
-    if (!window.ContentDecaySession) return;
+    if (!scanId || !window.ContentDecaySession) return false;
     let active;
-    try { active = await ContentDecaySession.session(); } catch { return; }
-    if (!active) return;
+    try { active = await ContentDecaySession.session(); } catch { return false; }
+    if (!active) return false;
     let result;
     try {
       result = await ContentDecaySession.api('claim', {
@@ -183,33 +226,43 @@
     } catch {
       // No credit, or a claim that failed for a reason the free summary should
       // not be blocked by. The offer below still works exactly as before.
-      return;
+      return false;
     }
-    if (!result || !result.claimed) return;
+    if (!result || !result.claimed) return false;
     setBuyButton('Opening your report…', {disabled: true});
     setBuyStatus('Your credit is applied. Opening the report…');
     location.assign('/content-decay/report/?scan=' + encodeURIComponent(scanId));
+    return true;
   }
 
-  function creditMessage() {
-    return 'You already have a $49 report credit. Scan your site in step 1 and the report opens automatically.';
+  function creditMessage(remembered) {
+    return 'Your $49 report is already paid for'
+      + (remembered && remembered.hostname ? ' and is waiting for your ' + remembered.hostname + ' scan' : '')
+      + '. Scan the site and the report opens automatically — there is nothing more to pay.';
   }
 
   // Shows the credit that is already paid for, so the page never invites a
   // second payment for the same report.
   function showCredit(credit) {
     creditReady = credit || {available: true};
+    const remembered = lastScan();
     setBuyButton('Credit ready — scan your site');
-    setBuyStatus(creditMessage(), 'busy');
+    setBuyStatus(creditMessage(remembered), 'busy');
+    // The scan the credit is meant for is one click away instead of retyping the
+    // address, which is also what keeps it off a different site by accident.
+    if (remembered && remembered.hostname && input && !input.value.trim()) {
+      input.value = remembered.hostname;
+    }
   }
 
-  // Asked on load, so a buyer who comes back to this page sees their credit
-  // before they click anything.
+  // Asked on load and on the return from sign-in, so a buyer who paid before
+  // scanning gets the report they paid for without doing anything else. Returns
+  // true when the credit was spent or is shown waiting.
   async function loadExistingCredit() {
-    if (!window.ContentDecaySession || !buy) return;
+    if (!window.ContentDecaySession || !buy) return false;
     let active;
-    try { active = await ContentDecaySession.session(); } catch { return; }
-    if (!active) return;
+    try { active = await ContentDecaySession.session(); } catch { return false; }
+    if (!active) return false;
     try {
       const result = await ContentDecaySession.api('credit', {
         method: 'POST',
@@ -217,15 +270,34 @@
         body: {}
       });
       if (result && result.available) {
+        // Paid already: spend it on the scan this browser last completed, even
+        // when that scan was run while signed out. That is what stops a paid
+        // buyer from being offered the report again with no report behind it.
+        const known = lastScan();
+        const scan = currentScanId || (known && known.id) || null;
+        if (scan && await applyCreditToScan(scan)) return true;
         showCredit(result);
-        return;
+        return true;
       }
       // A checkout this buyer already started. Offering to continue it is what
       // stops the page from selling the same report a second time.
-      if (result && result.pending && result.checkoutUrl) showPendingCheckout(result);
+      if (result && result.pending && result.checkoutUrl) {
+        showPendingCheckout(result);
+        return true;
+      }
+      return false;
     } catch {
       // Signed out, or the lookup failed. The normal offer still stands.
+      return false;
     }
+  }
+
+  // Returning from sign-in with no scan in the URL. A paid credit is applied to
+  // the last scan this browser ran; only a buyer with nothing paid reaches
+  // checkout.
+  async function startCreditPurchase() {
+    if (await loadExistingCredit()) return;
+    beginCreditCheckout();
   }
 
   // Points the buy button at the unpaid checkout instead of a new payment.
@@ -335,6 +407,10 @@
         return;
       }
       checkoutBusy = false;
+      // The payment is a credit now. If this browser already ran the scan the
+      // buyer wants, spend it here instead of asking them to scan again.
+      const paidFor = currentScanId || (lastScan() && lastScan().id) || null;
+      if (paidFor && await applyCreditToScan(paidFor)) return;
       setBuyButton('Buy the report — $49');
       setBuyStatus('Payment received. Scan your site in step 1 and the report will open automatically.');
       setStatus('Payment received. Scan your site in step 1 and the report will open automatically.');
@@ -649,10 +725,11 @@
     beginCheckout(linkedScan);
   } else if (params.get('buy') === '1') {
     if (offer) offer.hidden = false;
-    beginCreditCheckout();
+    startCreditPurchase();
   }
 
   // A returning buyer may already hold an unspent credit. Showing it here is
-  // what stops the page from selling the same report twice.
-  if (!returnedSession) loadExistingCredit();
+  // what stops the page from selling the same report twice. The buy=1 branch
+  // above already asked, so it is not asked twice.
+  if (!returnedSession && params.get('buy') !== '1') loadExistingCredit();
 })();

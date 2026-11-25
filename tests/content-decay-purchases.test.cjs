@@ -94,6 +94,7 @@ function defaultRoutes(overrides = {}) {
     refund: PURCHASE,
     dispute: PURCHASE,
     creditsByIntent: [],
+    creditsByUser: [],
     ...overrides
   };
   return (path, options) => {
@@ -114,6 +115,8 @@ function defaultRoutes(overrides = {}) {
     if (path.startsWith('content_decay_report_credits?stripe_payment_intent=eq.')) {
       return config.creditsByIntent;
     }
+    // A scan checkout first checks whether the buyer already paid for a credit.
+    if (path.startsWith('content_decay_report_credits?user_id=eq.')) return config.creditsByUser;
     if (path === 'rpc/content_decay_grant_entitlement') return ENTITLEMENT;
     if (path === 'rpc/content_decay_refund_purchase') return config.refund;
     if (path === 'rpc/content_decay_dispute_purchase') return config.dispute;
