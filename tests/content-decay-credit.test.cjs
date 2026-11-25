@@ -184,6 +184,104 @@ test('a credit checkout needs no scan and carries no scan id', async () => {
   assert.match(params.success_url, /\/content-decay\/\?credit=1&session_id=\{CHECKOUT_SESSION_ID\}$/);
 });
 
+const APPROVED_PRICE = 'price_1UfLY5BIJX5f6Wmhc3WdQqsr';
+const STALE_PRICE = 'price_1UdvRBBIJX5f6Wmhm4uU56Zj';
+
+test('a stale configured price sells at the approved price and says so', async () => {
+  let params;
+  const client = fakeClient({
+    retrievePrice: async id => (id === STALE_PRICE
+      ? {id: STALE_PRICE, active: false, type: 'one_time', currency: 'usd', unit_amount: 1999, livemode: true}
+      : {id: APPROVED_PRICE, active: true, type: 'one_time', currency: 'usd', unit_amount: REPORT_AMOUNT, livemode: true}),
+    createCheckoutSession: async data => {
+      params = data;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: fakeDatabase(routes()),
+    mode: 'live',
+    priceId: STALE_PRICE,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(params['line_items[0][price]'], APPROVED_PRICE,
+    'the inactive $19.99 price is never charged');
+  assert.equal(result.configuredPriceId, STALE_PRICE);
+  assert.match(result.priceNotice, new RegExp(STALE_PRICE));
+  assert.match(result.priceNotice, new RegExp(APPROVED_PRICE));
+});
+
+test('a configured price Stripe cannot read also falls back to the approved price', async () => {
+  let params;
+  const client = fakeClient({
+    retrievePrice: async id => {
+      if (id === STALE_PRICE) {
+        throw Object.assign(new Error('No such price'), {status: 503, code: 'CONTENT_DECAY_STRIPE_REQUEST'});
+      }
+      return {id: APPROVED_PRICE, active: true, type: 'one_time', currency: 'usd', unit_amount: REPORT_AMOUNT, livemode: true};
+    },
+    createCheckoutSession: async data => {
+      params = data;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: fakeDatabase(routes()),
+    mode: 'live',
+    priceId: STALE_PRICE,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(params['line_items[0][price]'], APPROVED_PRICE);
+  assert.match(result.priceNotice, new RegExp(STALE_PRICE));
+});
+
+test('a valid configured price is used without a notice', async () => {
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client: fakeClient(),
+    database: fakeDatabase(routes()),
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.credit, true);
+  assert.equal(result.priceNotice, undefined);
+});
+
+test('a payment at the approved price is accepted when the configured price was stale', async () => {
+  const session = creditSession({
+    livemode: true,
+    metadata: {...creditSession().metadata, environment: 'live', credit_id: CREDIT},
+    line_items: {data: [{quantity: 1, price: {id: APPROVED_PRICE}}]}
+  });
+  const store = creditStore([openCredit({
+    id: CREDIT,
+    user_id: USER,
+    environment: 'live',
+    status: 'pending',
+    stripe_session_id: SESSION_ID
+  })]);
+
+  const result = await confirmCredit({
+    sessionId: SESSION_ID,
+    expectedUserId: USER,
+    client: fakeClient({retrieveSession: async () => session}),
+    database: store,
+    priceId: STALE_PRICE
+  });
+
+  assert.equal(result.paid, true, 'a buyer who paid the approved price keeps their credit');
+});
+
 test('an existing open credit is returned instead of starting a second payment', async () => {
   let sessions = 0;
   const client = fakeClient({

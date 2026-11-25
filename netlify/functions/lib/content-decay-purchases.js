@@ -153,6 +153,40 @@ async function pricePreflight({priceId, mode = config.environment(), client = st
   };
 }
 
+// The price this deployment must sell. A configured price that is inert —
+// archived, or an older object such as the $19.99 one left in Netlify — would
+// otherwise refuse every purchase, so the approved $49 price is used and the
+// response says so. In test mode the approved live price cannot pass the
+// preflight, so a stale test price still fails loudly instead of charging live.
+const APPROVED_PRICE = config.LIVE_PRICE_FALLBACK;
+
+async function resolveReportPrice({priceId, mode, client}) {
+  try {
+    await pricePreflight({priceId, mode, client});
+    return {priceId, fallback: false};
+  } catch (error) {
+    // A price that is archived cannot be read back either (Stripe answers 404),
+    // so both the mismatch and the unreadable cases are recoverable. If the key
+    // itself is at fault the retry below fails the same way and nothing is sold.
+    const recoverable = error?.code === 'CONTENT_DECAY_PRICE_MISMATCH'
+      || error?.code === 'CONTENT_DECAY_PRICE_UNAVAILABLE';
+    if (!recoverable || priceId === APPROVED_PRICE) throw error;
+    await pricePreflight({priceId: APPROVED_PRICE, mode, client});
+    console.warn('Content decay used the approved price instead of the configured', priceId);
+    return {priceId: APPROVED_PRICE, fallback: true, configuredPriceId: priceId};
+  }
+}
+
+function withPriceNotice(result, resolved) {
+  if (!resolved.fallback) return result;
+  return {
+    ...result,
+    priceNotice: 'The configured report price (' + resolved.configuredPriceId
+      + ') is not the approved $49 live price, so ' + resolved.priceId + ' was used.',
+    configuredPriceId: resolved.configuredPriceId
+  };
+}
+
 async function loadScan(database, scanId) {
   const rows = await database(
     'content_decay_scans?id=eq.' + encodeURIComponent(scanId)
@@ -227,7 +261,7 @@ async function createCheckout({
     return {alreadyPurchased: true, entitlementId: existing.id, scanId};
   }
 
-  await pricePreflight({priceId, mode, client});
+  const resolved = await resolveReportPrice({priceId, mode, client});
 
   const params = {
     mode: 'payment',
@@ -235,7 +269,7 @@ async function createCheckout({
       + '&session_id={CHECKOUT_SESSION_ID}',
     cancel_url: origin + '/content-decay/?checkout=cancelled',
     client_reference_id: user.id,
-    'line_items[0][price]': priceId,
+    'line_items[0][price]': resolved.priceId,
     'line_items[0][quantity]': 1,
     'metadata[product]': PRODUCT,
     'metadata[scan_id]': scanId,
@@ -251,7 +285,7 @@ async function createCheckout({
   if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
     throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
   }
-  return {sessionId: session.id, url: session.url, scanId};
+  return withPriceNotice({sessionId: session.id, url: session.url, scanId}, resolved);
 }
 
 // What the page needs to know before offering the report: the buyer's unspent
@@ -398,7 +432,7 @@ async function startCreditCheckout({credit, user, client, database, mode, priceI
 }
 
 async function openCheckout({credit, user, client, database, mode, priceId, origin}) {
-  await pricePreflight({priceId, mode, client});
+  const resolved = await resolveReportPrice({priceId, mode, client});
 
   const params = {
     mode: 'payment',
@@ -406,7 +440,7 @@ async function openCheckout({credit, user, client, database, mode, priceId, orig
     success_url: origin + '/content-decay/?credit=1&session_id={CHECKOUT_SESSION_ID}',
     cancel_url: origin + '/content-decay/?checkout=cancelled',
     client_reference_id: user.id,
-    'line_items[0][price]': priceId,
+    'line_items[0][price]': resolved.priceId,
     'line_items[0][quantity]': 1,
     'metadata[product]': PRODUCT,
     'metadata[kind]': CREDIT_KIND,
@@ -453,7 +487,7 @@ async function openCheckout({credit, user, client, database, mode, priceId, orig
       'That checkout could not be tied to your report credit, so it was cancelled. No payment was taken.');
   }
 
-  return {sessionId: session.id, url: session.url, credit: true};
+  return withPriceNotice({sessionId: session.id, url: session.url, credit: true}, resolved);
 }
 
 // Ends a checkout that must never be paid. A failed expire is not retried here:
@@ -554,7 +588,9 @@ function sessionProblems(session, {priceId, expectedUserId, kind = 'report'}) {
   if (typeof session?.livemode !== 'boolean') problems.push('livemode');
   const item = session?.line_items?.data?.[0];
   if (!item || item.quantity !== 1) problems.push('quantity');
-  if (!item || item.price?.id !== priceId) problems.push('price');
+  // A checkout may have been created at the approved price because the
+  // configured one was inert, so both are valid payments for this product.
+  if (!item || (item.price?.id !== priceId && item.price?.id !== APPROVED_PRICE)) problems.push('price');
   return problems;
 }
 
