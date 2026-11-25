@@ -32,6 +32,9 @@
   let currentScanId = null;
   let pendingConfirm = null;
   let checkoutBusy = false;
+  // When the Stripe session behind the continue button stops taking payments.
+  // Zero means there is no continue link on screen.
+  let pendingUntil = 0;
   // Set once the buyer is known to hold an unspent $49 credit, so the page can
   // show it instead of starting a second payment.
   let creditReady = null;
@@ -304,6 +307,10 @@
   function showPendingCheckout(state) {
     if (!state || !state.checkoutUrl) return;
     checkoutBusy = false;
+    const seconds = Number(state.checkoutExpiresInSeconds);
+    // Measured from now, not from the server's clock, so an unsynced device
+    // cannot offer a session that has already expired.
+    pendingUntil = Number.isFinite(seconds) && seconds > 0 ? Date.now() + seconds * 1000 : Date.now();
     setBuyButton('Continue checkout — $49', {href: state.checkoutUrl});
     setBuyStatus('You started this payment earlier. Continue where you left off.');
   }
@@ -440,6 +447,14 @@
         return;
       }
       if (buy.dataset.href) {
+        // The Stripe session behind a continue link can lapse while this tab is
+        // open. Starting a fresh checkout is better than a dead checkout page.
+        if (pendingUntil && Date.now() >= pendingUntil) {
+          delete buy.dataset.href;
+          pendingUntil = 0;
+          beginCreditCheckout();
+          return;
+        }
         location.assign(buy.dataset.href);
         return;
       }

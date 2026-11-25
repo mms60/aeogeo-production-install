@@ -313,7 +313,7 @@ async function createCheckout({
 // credit, or a checkout they already started and did not finish. The database
 // allows one of those at a time, and reporting both is what stops the page from
 // inviting a second payment for the same report.
-async function openCreditFor({user, database = db, mode = config.environment()} = {}) {
+async function openCreditFor({user, database = db, mode = config.environment(), client = stripeClient()} = {}) {
   if (!user || !user.id) {
     throw fail(401, 'CONTENT_DECAY_SIGN_IN_REQUIRED', 'Please sign in to use your report credit.');
   }
@@ -323,7 +323,7 @@ async function openCreditFor({user, database = db, mode = config.environment()} 
     'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
     + '&environment=eq.' + encodeURIComponent(mode)
     + '&' + CREDIT_LIVE_STATES
-    + '&select=id,status,amount_total,currency,created_at,checkout_url'
+    + '&select=id,status,amount_total,currency,created_at,checkout_url,stripe_session_id'
     + '&order=created_at.asc'
   );
   const found = Array.isArray(rows) ? rows : [];
@@ -342,15 +342,28 @@ async function openCreditFor({user, database = db, mode = config.environment()} 
 
   const pending = found.find(row => row.status === 'pending') || null;
   if (pending) {
-    return {
-      available: false,
-      pending: true,
-      creditId: pending.id,
-      // Null while the checkout is still being created: there is nothing to
-      // continue yet, and the page must not invent a link.
-      checkoutUrl: pending.checkout_url || null,
-      createdAt: pending.created_at || null
-    };
+    const state = checkoutState(pending);
+    // A continue link is only offered while Stripe can still take the payment
+    // through it. Once the session has lapsed the reservation is ended here, so
+    // the page starts a fresh checkout instead of opening a dead page.
+    if (state === 'dead') {
+      try {
+        await endAbandonedCredit({credit: pending, client, database});
+      } catch { /* an unreleasable row still must not hand out a dead link */ }
+    } else {
+      return {
+        available: false,
+        pending: true,
+        creditId: pending.id,
+        // Null while the checkout is still being created: there is nothing to
+        // continue yet, and the page must not invent a link.
+        checkoutUrl: state === 'payable' ? pending.checkout_url : null,
+        createdAt: pending.created_at || null,
+        // How long the link stays usable, measured from now, so a tab left open
+        // cannot offer a session that has since expired.
+        checkoutExpiresInSeconds: Math.max(0, Math.ceil((checkoutDeadline(pending) - Date.now()) / 1000))
+      };
+    }
   }
 
   return {available: false, pending: false};
@@ -360,13 +373,36 @@ async function openCreditFor({user, database = db, mode = config.environment()} 
 // paid credit that has not been spent yet. The database allows one of them per
 // buyer and environment, which is what makes the guarantee hold under a race.
 const CREDIT_LIVE_STATES = 'status=in.(pending,open)';
-// An abandoned checkout keeps its reservation for about as long as its Stripe
-// session lives, so a buyer who changes their mind can try again.
-const CREDIT_STALE_MS = 65 * 60 * 1000;
+// A credit checkout's Stripe session can take money for this long. The
+// reservation row is written just before the session is created, so this window
+// never ends later than Stripe's own expiry.
 const CREDIT_SESSION_MINUTES = 60;
+// A link is only offered while its session can still be paid. Ending the offer
+// two minutes early keeps clock skew — and the row being written a moment before
+// Stripe's session exists — from ever pointing a buyer at a lapsed session.
+const CREDIT_RESUMABLE_MS = (CREDIT_SESSION_MINUTES - 2) * 60 * 1000;
 // A reservation with no session id has no payable link, so it only blocks a new
 // attempt while that checkout is genuinely being created.
 const CREDIT_SESSIONLESS_GRACE_MS = 60 * 1000;
+
+// When the checkout behind a reservation can no longer be paid. A row without a
+// creation time cannot be proven payable, so it is treated as finished.
+function checkoutDeadline(credit) {
+  const created = Date.parse(credit && credit.created_at ? credit.created_at : 0);
+  return Number.isFinite(created) ? created + CREDIT_RESUMABLE_MS : 0;
+}
+
+// 'payable'   the page may offer "continue this checkout".
+// 'preparing' the session is still being written; there is nothing to offer yet.
+// 'dead'      the session has lapsed or never existed; it must be replaced.
+function checkoutState(credit, now = Date.now()) {
+  if (!credit) return 'dead';
+  if (credit.checkout_url) return checkoutDeadline(credit) > now ? 'payable' : 'dead';
+  const created = Date.parse(credit.created_at || 0);
+  if (!Number.isFinite(created)) return 'dead';
+  if (credit.stripe_session_id || now - created < CREDIT_SESSIONLESS_GRACE_MS) return 'preparing';
+  return 'dead';
+}
 
 async function liveCreditFor({user, database, mode}) {
   const rows = await database(
@@ -393,42 +429,47 @@ async function reuseCredit({credit, client, database}) {
     };
   }
 
-  const age = Date.now() - Date.parse(credit.created_at || 0);
-  if (Number.isFinite(age) && age < CREDIT_STALE_MS) {
-    // A stored link means a real payment is waiting to be finished: hand it back.
-    if (credit.checkout_url) {
-      return {
-        alreadyCredited: true,
-        pending: true,
-        creditId: credit.id,
-        checkoutUrl: credit.checkout_url
-      };
-    }
-    // No link yet. If a session id exists its url is still being stored; if
-    // neither exists, the previous attempt failed and only a short grace keeps
-    // it blocking, because nothing can be paid through a reservation with no
-    // session.
-    if (credit.stripe_session_id || age < CREDIT_SESSIONLESS_GRACE_MS) {
-      return {alreadyCredited: true, pending: true, creditId: credit.id, checkoutUrl: null};
-    }
+  const state = checkoutState(credit);
+  if (state === 'payable') {
+    // A stored link means a real payment is waiting to be finished: hand it back
+    // only while Stripe can still take the money through it.
+    return {
+      alreadyCredited: true,
+      pending: true,
+      creditId: credit.id,
+      checkoutUrl: credit.checkout_url
+    };
+  }
+  if (state === 'preparing') {
+    // No link yet. Its url is still being stored, or the attempt just failed;
+    // only a short grace keeps it blocking, because nothing can be paid through
+    // a reservation without a session.
+    return {alreadyCredited: true, pending: true, creditId: credit.id, checkoutUrl: null};
   }
 
-  // Abandoned checkout: end the session so its link can never charge, then let
+  // Abandoned or lapsed: end the session so its link can never charge, then let
   // the caller replace the reservation.
+  await endAbandonedCredit({credit, client, database});
+  return null;
+}
+
+// Ends a reservation whose checkout can no longer be paid, so the buyer's one
+// report is free for a fresh attempt. A session that already completed belongs
+// to the webhook, so that row is left alone and answered by a re-read.
+async function endAbandonedCredit({credit, client, database}) {
   if (credit.stripe_session_id && typeof client.expireSession === 'function') {
     try {
       await client.expireSession(credit.stripe_session_id);
     } catch {
-      // The session already completed, so the webhook owns this row now and the
-      // caller must re-read it rather than replace it.
-      return null;
+      // The session is already complete; the webhook owns this row now.
+      return false;
     }
   }
   await database(
     'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.pending',
     {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
   );
-  return null;
+  return true;
 }
 
 // A reservation that never became a checkout must not hold the buyer's one

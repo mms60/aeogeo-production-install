@@ -90,6 +90,7 @@ const openCredit = (overrides = {}) => ({
   livemode: false,
   email: 'buyer@example.com',
   status: 'open',
+  created_at: new Date().toISOString(),
   ...overrides
 });
 
@@ -344,6 +345,8 @@ test('the page is told about an unpaid checkout it can continue', async () => {
   assert.equal(state.pending, true);
   assert.equal(state.checkoutUrl, 'https://checkout.stripe.com/c/pay/credit');
   assert.equal(state.creditId, CREDIT);
+  assert.ok(state.checkoutExpiresInSeconds > 0, 'the page is told when the link stops working');
+  assert.ok(state.checkoutExpiresInSeconds <= 58 * 60, 'the offer ends before the session does');
 });
 
 test('an unpaid checkout without a link yet reports no url', async () => {
@@ -1021,4 +1024,86 @@ test('a reservation still being created blocks a second payment instead of charg
     error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_PENDING'
   );
   assert.equal(sessions, 0, 'a second payment is never created');
+});
+
+// ---- a continue link is never handed out after its session lapses -----------
+
+test('a lapsed checkout is not offered as continuable', async () => {
+  // The gap this covers: the session lapsed at 60 minutes, and the page used to
+  // keep offering it until 65.
+  const lapsed = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/lapsed',
+    created_at: new Date(Date.now() - 62 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([lapsed]);
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    }
+  });
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test', client});
+
+  assert.deepEqual(page, {available: false, pending: false},
+    'the page is never pointed at a session Stripe has already expired');
+  assert.deepEqual(expired, [SESSION_ID], 'the lapsed session is ended at Stripe');
+  assert.equal(store.rows[0].status, 'expired', 'the reservation no longer blocks a fresh checkout');
+});
+
+test('a checkout lapsed in the 60 to 65 minute gap starts a fresh payment', async () => {
+  const lapsed = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/lapsed',
+    created_at: new Date(Date.now() - 61 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([lapsed]);
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    },
+    createCheckoutSession: async () => ({id: 'cs_test_fresh1', url: 'https://checkout.stripe.com/c/pay/fresh'})
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.credit, true, 'a fresh checkout replaces the dead link');
+  assert.equal(result.url, 'https://checkout.stripe.com/c/pay/fresh');
+  assert.deepEqual(expired, [SESSION_ID]);
+  assert.equal(store.rows.filter(row => row.status === 'expired').length, 1);
+  assert.equal(store.rows.filter(row => row.status === 'pending').length, 1);
+});
+
+test('a reservation with no session and no link is released instead of blocking', async () => {
+  const stale = openCredit({
+    status: 'pending',
+    checkout_url: null,
+    stripe_session_id: null,
+    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([stale]);
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    }
+  });
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test', client});
+
+  assert.deepEqual(page, {available: false, pending: false});
+  assert.deepEqual(expired, [], 'there was no Stripe session to end');
+  assert.equal(store.rows[0].status, 'expired');
 });
