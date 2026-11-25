@@ -126,8 +126,11 @@ async function pricePreflight({priceId, mode = config.environment(), client = st
     && price.unit_amount === REPORT_AMOUNT
     && price.livemode === (mode === 'live');
   if (!valid) {
+    // The price id is named so a wrong STRIPE_CONTENT_DECAY_PRICE_ID value is
+    // identifiable from the message instead of only from Stripe's dashboard.
     throw fail(503, 'CONTENT_DECAY_PRICE_MISMATCH',
-      'The configured report price is not an active one-time USD 49 price in this environment.');
+      'The configured report price (' + priceId
+      + ') is not an active one-time USD 49 price in this environment.');
   }
   return {
     id: price.id,
@@ -293,6 +296,9 @@ const CREDIT_LIVE_STATES = 'status=in.(pending,open)';
 // session lives, so a buyer who changes their mind can try again.
 const CREDIT_STALE_MS = 65 * 60 * 1000;
 const CREDIT_SESSION_MINUTES = 60;
+// A reservation with no session id has no payable link, so it only blocks a new
+// attempt while that checkout is genuinely being created.
+const CREDIT_SESSIONLESS_GRACE_MS = 60 * 1000;
 
 async function liveCreditFor({user, database, mode}) {
   const rows = await database(
@@ -321,14 +327,22 @@ async function reuseCredit({credit, client, database}) {
 
   const age = Date.now() - Date.parse(credit.created_at || 0);
   if (Number.isFinite(age) && age < CREDIT_STALE_MS) {
-    // Another tab is paying right now, or has just paid and the webhook has not
-    // landed yet. Either way this attempt must not reach Stripe.
-    return {
-      alreadyCredited: true,
-      pending: true,
-      creditId: credit.id,
-      checkoutUrl: credit.checkout_url || null
-    };
+    // A stored link means a real payment is waiting to be finished: hand it back.
+    if (credit.checkout_url) {
+      return {
+        alreadyCredited: true,
+        pending: true,
+        creditId: credit.id,
+        checkoutUrl: credit.checkout_url
+      };
+    }
+    // No link yet. If a session id exists its url is still being stored; if
+    // neither exists, the previous attempt failed and only a short grace keeps
+    // it blocking, because nothing can be paid through a reservation with no
+    // session.
+    if (credit.stripe_session_id || age < CREDIT_SESSIONLESS_GRACE_MS) {
+      return {alreadyCredited: true, pending: true, creditId: credit.id, checkoutUrl: null};
+    }
   }
 
   // Abandoned checkout: end the session so its link can never charge, then let
@@ -359,6 +373,18 @@ async function releaseReservation({credit, database}) {
 }
 
 async function startCreditCheckout({credit, user, client, database, mode, priceId, origin}) {
+  try {
+    return await openCheckout({credit, user, client, database, mode, priceId, origin});
+  } catch (error) {
+    // Anything that stops the checkout — a misconfigured price, a Stripe outage,
+    // a session that could not be stored — must give the reservation back, or
+    // the buyer is locked out of their one report until it goes stale.
+    await releaseReservation({credit, database});
+    throw error;
+  }
+}
+
+async function openCheckout({credit, user, client, database, mode, priceId, origin}) {
   await pricePreflight({priceId, mode, client});
 
   const params = {
@@ -380,15 +406,8 @@ async function startCreditCheckout({credit, user, client, database, mode, priceI
   };
   if (user.email) params.customer_email = user.email;
 
-  let session;
-  try {
-    session = await client.createCheckoutSession(params);
-  } catch (error) {
-    await releaseReservation({credit, database});
-    throw error;
-  }
+  const session = await client.createCheckoutSession(params);
   if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
-    await releaseReservation({credit, database});
     throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
   }
 

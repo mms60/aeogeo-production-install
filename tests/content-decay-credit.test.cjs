@@ -677,6 +677,70 @@ test('an abandoned checkout is expired and replaced instead of blocking the buye
     'exactly one usable attempt remains');
 });
 
+test('a failed price check gives the reservation back so the next attempt works', async () => {
+  const database = fakeDatabase(routes());
+  let sessions = 0;
+  const client = fakeClient({
+    retrievePrice: async () => ({
+      id: PRICE_ID, active: false, type: 'one_time', currency: 'usd', unit_amount: 1999, livemode: false
+    }),
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+
+  await assert.rejects(
+    () => createCreditCheckout({
+      user: {id: USER, email: 'buyer@example.com'},
+      client,
+      database,
+      mode: 'test',
+      priceId: PRICE_ID,
+      origin: 'https://aegeosearch.com'
+    }),
+    error => error.status === 503 && error.code === 'CONTENT_DECAY_PRICE_MISMATCH'
+  );
+
+  assert.equal(sessions, 0, 'no payment is created for a price that is not the $49 report');
+  const released = database.calls.find(
+    call => call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(released, 'the reservation is given back');
+  assert.equal(released.options.body.status, 'expired', 'a blocked buyer is not locked out');
+});
+
+test('a reservation with no payment link is reclaimed instead of blocking', async () => {
+  const failed = openCredit({
+    status: 'pending',
+    stripe_session_id: null,
+    checkout_url: null,
+    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([failed]);
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    },
+    createCheckoutSession: async () => ({id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'})
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.credit, true, 'the buyer can buy again after a failed attempt');
+  assert.deepEqual(expired, [], 'there was no payment link to expire');
+  assert.equal(store.rows.filter(row => row.status === 'expired').length, 1);
+  assert.equal(store.rows.filter(row => row.status === 'pending').length, 1);
+});
+
 test('a session whose reservation moved on is expired instead of handed back', async () => {
   const expired = [];
   const client = fakeClient({
