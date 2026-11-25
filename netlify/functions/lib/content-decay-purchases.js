@@ -34,6 +34,10 @@ const EVENT = /^evt_[A-Za-z0-9_]{8,}$/;
 const CHARGE = /^ch_[A-Za-z0-9_]+$/;
 const DISPUTE = /^dp_[A-Za-z0-9_]+$/;
 const PAYMENT_INTENT = /^pi_[A-Za-z0-9_]+$/;
+// A credit is the $49 report bought before any scan exists. Stripe metadata
+// carries this kind instead of a scan id; the credit is spent later, on the
+// first site the buyer scans.
+const CREDIT_KIND = 'credit';
 
 function fail(status, code, message) {
   return Object.assign(new Error(message + ' Reference: ' + code + '.'), {status, code});
@@ -230,13 +234,99 @@ async function createCheckout({
   return {sessionId: session.id, url: session.url, scanId};
 }
 
-function sessionProblems(session, {priceId, expectedUserId}) {
+// The buyer's unspent credit, if any. This is the single rule that stops a
+// second payment for the same report: the page shows the credit instead of
+// inviting another checkout, and createCreditCheckout refuses to open one.
+async function openCreditFor({user, database = db, mode = config.environment()} = {}) {
+  if (!user || !user.id) {
+    throw fail(401, 'CONTENT_DECAY_SIGN_IN_REQUIRED', 'Please sign in to use your report credit.');
+  }
+  requireId(user.id, 'account');
+
+  const rows = await database(
+    'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
+    + '&status=eq.open&environment=eq.' + encodeURIComponent(mode)
+    + '&select=id,amount_total,currency,created_at'
+    + '&order=created_at.asc&limit=1'
+  );
+  const credit = Array.isArray(rows) ? rows[0] : null;
+  if (!credit) return {available: false};
+  return {
+    available: true,
+    creditId: credit.id,
+    amountTotal: credit.amount_total,
+    currency: credit.currency,
+    createdAt: credit.created_at || null
+  };
+}
+
+// Creates the checkout for a $49 report credit, with no scan required. The
+// session carries the buyer and the environment, never a scan id.
+async function createCreditCheckout({
+  user,
+  client = stripeClient(),
+  database = db,
+  mode = config.environment(),
+  priceId = config.priceId(),
+  origin = siteOrigin()
+} = {}) {
+  if (!user || !user.id) {
+    throw fail(401, 'CONTENT_DECAY_SIGN_IN_REQUIRED', 'Please sign in before buying the report.');
+  }
+  requireId(user.id, 'account');
+
+  // Already paid for a report they have not used yet: return that credit. No
+  // Stripe session is created, so a double click, a reloaded tab or a second
+  // visit to the page cannot produce a second charge for one report.
+  const existing = await openCreditFor({user, database, mode});
+  if (existing.available) {
+    return {
+      alreadyCredited: true,
+      creditId: existing.creditId,
+      amountTotal: existing.amountTotal,
+      createdAt: existing.createdAt
+    };
+  }
+
+  await pricePreflight({priceId, mode, client});
+
+  const params = {
+    mode: 'payment',
+    success_url: origin + '/content-decay/?credit=1&session_id={CHECKOUT_SESSION_ID}',
+    cancel_url: origin + '/content-decay/?checkout=cancelled',
+    client_reference_id: user.id,
+    'line_items[0][price]': priceId,
+    'line_items[0][quantity]': 1,
+    'metadata[product]': PRODUCT,
+    'metadata[kind]': CREDIT_KIND,
+    'metadata[user_id]': user.id,
+    'metadata[environment]': mode,
+    'payment_intent_data[metadata][product]': PRODUCT,
+    'payment_intent_data[metadata][kind]': CREDIT_KIND,
+    'payment_intent_data[metadata][user_id]': user.id
+  };
+  if (user.email) params.customer_email = user.email;
+
+  const session = await client.createCheckoutSession(params);
+  if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
+    throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
+  }
+  return {sessionId: session.id, url: session.url, credit: true};
+}
+
+function sessionProblems(session, {priceId, expectedUserId, kind = 'report'}) {
   const problems = [];
   const metadata = session?.metadata || {};
   if (metadata.product !== PRODUCT) problems.push('product');
   if (!UUID.test(String(metadata.user_id || ''))) problems.push('user');
   if (expectedUserId && metadata.user_id !== expectedUserId) problems.push('user-mismatch');
-  if (!UUID.test(String(metadata.scan_id || ''))) problems.push('scan');
+  // A credit has no scan yet, so it must carry the credit kind instead of a
+  // scan id. A report session must still carry a valid scan id.
+  if (kind === CREDIT_KIND) {
+    if (metadata.kind !== CREDIT_KIND) problems.push('kind');
+  } else if (!UUID.test(String(metadata.scan_id || ''))) {
+    problems.push('scan');
+  }
   if (session?.mode !== 'payment') problems.push('mode');
   if (session?.status !== 'complete') problems.push('status');
   if (session?.payment_status !== 'paid') problems.push('payment_status');
@@ -348,6 +438,81 @@ async function confirmSession({
   };
 }
 
+// Records the payment for a report credit. No scan, no entitlement yet: the
+// credit stays open until the buyer scans a site.
+async function confirmCredit({
+  sessionId,
+  expectedUserId,
+  client = stripeClient(),
+  database = db,
+  priceId = config.priceId()
+} = {}) {
+  if (!CHECKOUT_SESSION.test(String(sessionId || ''))) {
+    throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'A valid checkout session is required.');
+  }
+
+  const session = await client.retrieveSession(sessionId);
+  const problems = sessionProblems(session, {priceId, expectedUserId, kind: CREDIT_KIND});
+  if (problems.length) {
+    throw fail(409, 'CONTENT_DECAY_NOT_PAID',
+      'That checkout is not a completed Content Decay report payment.');
+  }
+
+  const mode = session.livemode ? 'live' : 'test';
+  const metadata = session.metadata;
+  const select = 'content_decay_report_credits?stripe_session_id=eq.'
+    + encodeURIComponent(sessionId) + '&select=id,status,user_id,environment';
+
+  let credit = null;
+  const existing = await database(select);
+  if (Array.isArray(existing) && existing[0]) {
+    credit = existing[0];
+    if (credit.user_id !== metadata.user_id) {
+      throw fail(409, 'CONTENT_DECAY_PURCHASE_MISMATCH',
+        'That checkout was already recorded against another account.');
+    }
+    // A refund already voided this credit. Never reopen it.
+    if (credit.status !== 'open' && credit.status !== 'claimed') {
+      return {
+        paid: false,
+        refunded: credit.status === 'refunded',
+        revoked: credit.status === 'revoked',
+        creditId: credit.id,
+        environment: mode
+      };
+    }
+  } else {
+    const body = {
+      user_id: metadata.user_id,
+      email: session.customer_details?.email || session.customer_email || null,
+      status: 'open',
+      stripe_session_id: sessionId,
+      stripe_payment_intent: session.payment_intent || null,
+      stripe_price_id: priceId,
+      amount_total: session.amount_total,
+      currency: session.currency,
+      livemode: session.livemode,
+      environment: mode,
+      test_run_id: null
+    };
+    try {
+      const inserted = await database('content_decay_report_credits', {
+        method: 'POST',
+        body,
+        headers: {Prefer: 'return=representation'}
+      });
+      credit = Array.isArray(inserted) ? inserted[0] : inserted;
+    } catch (error) {
+      // A concurrent confirmation may have inserted the same session first.
+      const retry = await database(select);
+      credit = Array.isArray(retry) ? retry[0] : null;
+      if (!credit) throw error;
+    }
+  }
+
+  return {paid: true, credit: true, creditId: credit.id, environment: mode};
+}
+
 function stripeId(value) {
   if (typeof value === 'string') return value;
   if (value && typeof value.id === 'string') return value.id;
@@ -361,6 +526,171 @@ async function loadPurchaseByIntent(database, paymentIntent, livemode) {
     + '&select=id,status,user_id,scan_id,environment,test_run_id'
   );
   return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+async function loadCreditByIntent(database, paymentIntent, livemode) {
+  const rows = await database(
+    'content_decay_report_credits?stripe_payment_intent=eq.' + encodeURIComponent(paymentIntent)
+    + '&livemode=eq.' + (livemode ? 'true' : 'false')
+    + '&select=id,status,user_id,environment'
+  );
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+// Spends the buyer's oldest open credit on one completed scan: records the
+// purchase, grants access through the same atomic function a normal purchase
+// uses, then closes the credit. Calling it again for a scan that already has
+// an entitlement returns that entitlement instead of spending a second credit.
+async function claimCredit({scanId, user, database = db, mode = config.environment()} = {}) {
+  if (!user || !user.id) {
+    throw fail(401, 'CONTENT_DECAY_SIGN_IN_REQUIRED', 'Please sign in to use your report credit.');
+  }
+  requireId(scanId, 'scan');
+  requireId(user.id, 'account');
+
+  const scan = await loadScan(database, scanId);
+  if (!scan) {
+    throw fail(404, 'CONTENT_DECAY_SCAN_NOT_FOUND', 'That scan was not found.');
+  }
+  if (scan.user_id && scan.user_id !== user.id) {
+    throw fail(403, 'CONTENT_DECAY_SCAN_NOT_OWNED',
+      'This scan is not linked to your account. Run a new scan while signed in.');
+  }
+  if (scan.status !== 'completed') {
+    throw fail(409, 'CONTENT_DECAY_SCAN_NOT_READY', 'This scan has not finished yet.');
+  }
+  if (scan.environment !== mode) {
+    throw fail(409, 'CONTENT_DECAY_MODE_MISMATCH', 'This scan belongs to a different payment environment.');
+  }
+
+  // An anonymous scan becomes this buyer's scan, exactly as it does at checkout.
+  if (!scan.user_id) {
+    const claimed = await database(
+      'content_decay_scans?id=eq.' + encodeURIComponent(scanId) + '&user_id=is.null',
+      {method: 'PATCH', body: {user_id: user.id}, headers: {Prefer: 'return=representation'}}
+    );
+    const row = Array.isArray(claimed) ? claimed[0] : claimed;
+    if (!row || row.user_id !== user.id) {
+      const latest = await loadScan(database, scanId);
+      if (!latest || latest.user_id !== user.id) {
+        throw fail(403, 'CONTENT_DECAY_SCAN_NOT_OWNED',
+          'This scan is already linked to another account. Run a new scan while signed in.');
+      }
+    }
+  }
+
+  const existing = await entitlementFor({userId: user.id, scanId, environment: mode, database});
+  if (existing) {
+    return {available: true, claimed: true, alreadyPurchased: true, entitlementId: existing.id, scanId};
+  }
+
+  const rows = await database(
+    'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
+    + '&status=eq.open&environment=eq.' + encodeURIComponent(mode)
+    + '&select=id,stripe_session_id,stripe_payment_intent,stripe_price_id,amount_total,currency,livemode,email'
+    + '&order=created_at.asc&limit=1'
+  );
+  const credit = Array.isArray(rows) ? rows[0] : null;
+  if (!credit) return {available: false};
+
+  const select = 'content_decay_purchases?stripe_session_id=eq.'
+    + encodeURIComponent(credit.stripe_session_id) + '&select=id,status,user_id,scan_id';
+  let purchase = null;
+  const prior = await database(select);
+  if (Array.isArray(prior) && prior[0]) {
+    purchase = prior[0];
+    if (purchase.user_id !== user.id || purchase.scan_id !== scanId) {
+      throw fail(409, 'CONTENT_DECAY_PURCHASE_MISMATCH',
+        'That payment was already recorded against another report.');
+    }
+  } else {
+    const body = {
+      user_id: user.id,
+      scan_id: scanId,
+      email: credit.email,
+      status: 'paid',
+      stripe_session_id: credit.stripe_session_id,
+      stripe_payment_intent: credit.stripe_payment_intent,
+      stripe_price_id: credit.stripe_price_id,
+      amount_total: credit.amount_total,
+      currency: credit.currency,
+      livemode: credit.livemode,
+      environment: mode,
+      test_run_id: mode === 'test' ? scan.test_run_id : null
+    };
+    try {
+      const inserted = await database('content_decay_purchases', {
+        method: 'POST',
+        body,
+        headers: {Prefer: 'return=representation'}
+      });
+      purchase = Array.isArray(inserted) ? inserted[0] : inserted;
+    } catch (error) {
+      const retry = await database(select);
+      purchase = Array.isArray(retry) ? retry[0] : null;
+      if (!purchase) throw error;
+    }
+  }
+
+  const entitlementId = await database('rpc/content_decay_grant_entitlement', {
+    method: 'POST',
+    body: {p_purchase: purchase.id}
+  });
+  if (!entitlementId) {
+    throw fail(409, 'CONTENT_DECAY_ENTITLEMENT_FAILED',
+      'The payment was recorded but the report access could not be granted.');
+  }
+
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.open',
+    {
+      method: 'PATCH',
+      body: {
+        status: 'claimed',
+        claimed_scan_id: scanId,
+        purchase_id: purchase.id,
+        claimed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    }
+  );
+
+  return {
+    available: true,
+    claimed: true,
+    paid: true,
+    scanId,
+    purchaseId: purchase.id,
+    entitlementId,
+    environment: mode
+  };
+}
+
+// A refund or dispute that arrives before the credit was ever spent has no
+// purchase row to find, so the open credit is voided instead. Without this a
+// refunded buyer could still claim a report with the credit.
+async function voidCredit(event, {database = db, paymentIntent, eventMode, status}) {
+  const credit = await loadCreditByIntent(database, paymentIntent, eventMode === 'live');
+  if (!credit) return false; // another product's charge
+  if (credit.environment !== eventMode) {
+    throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
+      'That credit belongs to a different payment environment.');
+  }
+  const claimed = await database('rpc/content_decay_claim_webhook', {
+    method: 'POST',
+    body: {
+      p_event_id: event.id,
+      p_type: event.type,
+      p_livemode: eventMode === 'live',
+      p_test_run: null
+    }
+  });
+  if (claimed !== true) return true; // already processed by another delivery
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.open',
+    {method: 'PATCH', body: {status, updated_at: new Date().toISOString()}}
+  );
+  return true;
 }
 
 // charge.refunded for a Content Decay charge. The charge's payment intent is
@@ -392,7 +722,10 @@ async function refundPurchase(event, {database = db, environment = config.enviro
   }
 
   const purchase = await loadPurchaseByIntent(database, paymentIntent, eventMode === 'live');
-  if (!purchase) return false; // another product's charge
+  if (!purchase) {
+    // A credit bought before any scan has no purchase row yet.
+    return await voidCredit(event, {database, paymentIntent, eventMode, status: 'refunded'});
+  }
   if (purchase.environment !== eventMode) {
     throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
       'That purchase belongs to a different payment environment.');
@@ -458,7 +791,10 @@ async function disputePurchase(event, {database = db, environment = config.envir
   }
 
   const purchase = await loadPurchaseByIntent(database, paymentIntent, eventMode === 'live');
-  if (!purchase) return false; // another product's dispute
+  if (!purchase) {
+    // A credit bought before any scan has no purchase row yet.
+    return await voidCredit(event, {database, paymentIntent, eventMode, status: 'revoked'});
+  }
   if (purchase.environment !== eventMode) {
     throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
       'That purchase belongs to a different payment environment.');
@@ -530,8 +866,11 @@ async function handleWebhook(event, {
     throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event has no valid checkout session.');
   }
 
-  const scan = await loadScan(database, session.metadata?.scan_id);
-  if (!scan) {
+  // A credit session carries the credit kind and no scan id, because there is
+  // no scan yet. Everything else is still verified server-side from Stripe.
+  const creditSession = session.metadata?.kind === CREDIT_KIND;
+  const scan = creditSession ? null : await loadScan(database, session.metadata?.scan_id);
+  if (!creditSession && !scan) {
     throw fail(404, 'CONTENT_DECAY_SCAN_NOT_FOUND', 'That scan was not found.');
   }
 
@@ -541,13 +880,17 @@ async function handleWebhook(event, {
       p_event_id: event.id,
       p_type: type,
       p_livemode: eventMode === 'live',
-      p_test_run: eventMode === 'test' ? scan.test_run_id : null
+      p_test_run: eventMode === 'test' && scan ? scan.test_run_id : null
     }
   });
   if (claimed !== true) return true; // already processed by another delivery
 
   try {
-    await confirmSession({sessionId: session.id, client, database, priceId});
+    if (creditSession) {
+      await confirmCredit({sessionId: session.id, client, database, priceId});
+    } else {
+      await confirmSession({sessionId: session.id, client, database, priceId});
+    }
   } catch (error) {
     // Release the claim so Stripe's retry can process this event. Successful
     // events stay claimed, which is what makes replays a no-op.
@@ -563,9 +906,14 @@ module.exports = {
   PRODUCT,
   REPORT_AMOUNT,
   REPORT_CURRENCY,
+  CREDIT_KIND,
   pricePreflight,
   createCheckout,
+  createCreditCheckout,
+  openCreditFor,
   confirmSession,
+  confirmCredit,
+  claimCredit,
   entitlementFor,
   handleWebhook,
   stripeClient

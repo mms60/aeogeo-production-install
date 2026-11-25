@@ -93,6 +93,7 @@ function defaultRoutes(overrides = {}) {
     claim: true,
     refund: PURCHASE,
     dispute: PURCHASE,
+    creditsByIntent: [],
     ...overrides
   };
   return (path, options) => {
@@ -107,6 +108,11 @@ function defaultRoutes(overrides = {}) {
     if (path.startsWith('content_decay_purchases?stripe_session_id=eq.')) return config.purchases;
     if (path === 'content_decay_purchases') {
       return [{id: PURCHASE, ...options.body}];
+    }
+    // A refund or dispute first looks for a purchase, then for an unspent
+    // report credit bought before any scan existed.
+    if (path.startsWith('content_decay_report_credits?stripe_payment_intent=eq.')) {
+      return config.creditsByIntent;
     }
     if (path === 'rpc/content_decay_grant_entitlement') return ENTITLEMENT;
     if (path === 'rpc/content_decay_refund_purchase') return config.refund;

@@ -32,6 +32,9 @@
   let currentScanId = null;
   let pendingConfirm = null;
   let checkoutBusy = false;
+  // Set once the buyer is known to hold an unspent $49 credit, so the page can
+  // show it instead of starting a second payment.
+  let creditReady = null;
   let lastDisagreements = 0;
   let factLinkSeen = false;
   let factLinkObserver = null;
@@ -62,6 +65,7 @@
     if (offerHost) offerHost.textContent = scan.hostname || 'this site';
     setBuyButton('Buy the report — $49');
     setBuyStatus('');
+    applyCreditToScan(scan.id);
   }
 
   function purchaseUrl(scanId) {
@@ -162,6 +166,163 @@
     }
   }
 
+  // A buyer who paid before scanning holds a $49 credit. The first scan they
+  // finish spends it, so the report opens without a second payment.
+  async function applyCreditToScan(scanId) {
+    if (!window.ContentDecaySession) return;
+    let active;
+    try { active = await ContentDecaySession.session(); } catch { return; }
+    if (!active) return;
+    let result;
+    try {
+      result = await ContentDecaySession.api('claim', {
+        method: 'POST',
+        token: active.access_token,
+        body: {scan: scanId}
+      });
+    } catch {
+      // No credit, or a claim that failed for a reason the free summary should
+      // not be blocked by. The offer below still works exactly as before.
+      return;
+    }
+    if (!result || !result.claimed) return;
+    setBuyButton('Opening your report…', {disabled: true});
+    setBuyStatus('Your credit is applied. Opening the report…');
+    location.assign('/content-decay/report/?scan=' + encodeURIComponent(scanId));
+  }
+
+  function creditMessage() {
+    return 'You already have a $49 report credit. Scan your site in step 1 and the report opens automatically.';
+  }
+
+  // Shows the credit that is already paid for, so the page never invites a
+  // second payment for the same report.
+  function showCredit(credit) {
+    creditReady = credit || {available: true};
+    setBuyButton('Credit ready — scan your site');
+    setBuyStatus(creditMessage(), 'busy');
+  }
+
+  // Asked on load, so a buyer who comes back to this page sees their credit
+  // before they click anything.
+  async function loadExistingCredit() {
+    if (!window.ContentDecaySession || !buy) return;
+    let active;
+    try { active = await ContentDecaySession.session(); } catch { return; }
+    if (!active) return;
+    try {
+      const result = await ContentDecaySession.api('credit', {
+        method: 'POST',
+        token: active.access_token,
+        body: {}
+      });
+      if (result && result.available) showCredit(result);
+    } catch {
+      // Signed out, or the lookup failed. The normal offer still stands.
+    }
+  }
+
+  // Buys the $49 report before any scan exists. The payment becomes a credit on
+  // the account and is spent on the first site the buyer scans.
+  async function beginCreditCheckout() {
+    if (!buy || checkoutBusy) return;
+    if (!window.ContentDecaySession) {
+      setBuyStatus('Sign-in could not load. Refresh the page and try again.', 'error');
+      return;
+    }
+    checkoutBusy = true;
+    setBuyButton('Preparing checkout…', {disabled: true});
+    setBuyStatus('');
+    try {
+      const active = await ContentDecaySession.session();
+      if (!active) {
+        checkoutBusy = false;
+        track('content_decay_checkout_signin', factParams());
+        setBuyButton('Sign in to buy — $49', {
+          href: ContentDecaySession.signInUrl('/content-decay/?buy=1')
+        });
+        setBuyStatus('Sign in and you will come straight back here to pay for the report.', 'error');
+        return;
+      }
+      const result = await ContentDecaySession.api('checkout', {
+        method: 'POST',
+        token: active.access_token,
+        body: {credit: true}
+      });
+      // The server refuses a second session when a credit is already open.
+      if (result.alreadyCredited) {
+        checkoutBusy = false;
+        showCredit(result);
+        if (typeof form.scrollIntoView === 'function') {
+          form.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+        return;
+      }
+      if (!result.url) throw new Error('Checkout did not return a payment link. No payment was taken.');
+      track('content_decay_checkout_open', factParams());
+      location.assign(result.url);
+    } catch (error) {
+      checkoutBusy = false;
+      if (error.status === 401) {
+        setBuyButton('Sign in to buy — $49', {
+          href: ContentDecaySession.signInUrl('/content-decay/?buy=1')
+        });
+        setBuyStatus('Your session has ended. Sign in again to continue.', 'error');
+        return;
+      }
+      setBuyButton('Try checkout again — $49');
+      setBuyStatus(error.message || 'Checkout could not open. No payment was taken.', 'error');
+    }
+  }
+
+  // Returning from a credit purchase. Confirming here means a delayed webhook
+  // cannot leave a paying buyer without their credit.
+  async function confirmCreditPurchase(sessionId) {
+    if (!buy) return;
+    if (!window.ContentDecaySession) {
+      setBuyStatus('Sign-in could not load. Refresh the page and try again.', 'error');
+      return;
+    }
+    const signIn = () => ContentDecaySession.signInUrl(
+      '/content-decay/?credit=1&session_id=' + encodeURIComponent(sessionId)
+    );
+    setBuyButton('Confirming…', {disabled: true});
+    setBuyStatus('Confirming your payment with Stripe…', 'busy');
+    try {
+      const active = await ContentDecaySession.session();
+      if (!active) {
+        setBuyButton('Sign in to finish', {href: signIn()});
+        setBuyStatus('Payment received. Sign in to finish setting up your credit.', 'error');
+        return;
+      }
+      const result = await ContentDecaySession.api('confirm', {
+        method: 'POST',
+        token: active.access_token,
+        body: {sessionId}
+      });
+      if (result.paid === false) {
+        setBuyButton('Buy the report — $49');
+        setBuyStatus(result.refunded
+          ? 'This purchase was refunded, so there is no credit to use.'
+          : 'This purchase is no longer active, so there is no credit to use.', 'error');
+        return;
+      }
+      checkoutBusy = false;
+      setBuyButton('Buy the report — $49');
+      setBuyStatus('Payment received. Scan your site in step 1 and the report will open automatically.');
+      setStatus('Payment received. Scan your site in step 1 and the report will open automatically.');
+    } catch (error) {
+      if (error.status === 401) {
+        setBuyButton('Sign in to finish', {href: signIn()});
+        setBuyStatus('Your session has ended. Sign in again to finish setting up your credit.', 'error');
+        return;
+      }
+      setBuyButton('Try confirmation again');
+      setBuyStatus((error.message || 'The payment could not be confirmed yet.')
+        + ' If you were charged, reload this page in a moment: Stripe may still be sending us the payment.', 'error');
+    }
+  }
+
   const factsLink = document.getElementById('cd-facts-link');
   if (factsLink) {
     factsLink.addEventListener('click', () => {
@@ -188,14 +349,21 @@
         beginCheckout(currentScanId);
         return;
       }
-      // The report is built from a scan, so there is nothing to sell until the
-      // free scan above has run. Say that instead of doing nothing.
-      track('content_decay_buy_without_scan');
-      setBuyStatus('Run the free scan in step 1 first — the $49 report is built from the pages that scan reads. Nothing has been charged.', 'error');
-      try { input.focus({preventScroll: true}); } catch { /* older browsers */ }
-      if (typeof form.scrollIntoView === 'function') {
-        form.scrollIntoView({behavior: 'smooth', block: 'center'});
+      // Already paid for a report they have not used: point at the scan
+      // instead of opening another payment.
+      if (creditReady) {
+        track('content_decay_offer_click', factParams());
+        showCredit(creditReady);
+        try { input.focus({preventScroll: true}); } catch { /* older browsers */ }
+        if (typeof form.scrollIntoView === 'function') {
+          form.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+        return;
       }
+      // No scan yet: sell the credit now. It is spent automatically on the
+      // first site this buyer scans.
+      track('content_decay_offer_click', factParams());
+      beginCreditCheckout();
     });
   }
 
@@ -441,12 +609,23 @@
   if (params.get('checkout') === 'cancelled') {
     setStatus('Checkout was cancelled. No payment was taken.', 'error');
   }
-  if (params.get('purchased') === '1' && linkedScan && params.get('session_id')) {
+  const returnedSession = params.get('session_id');
+  if (params.get('purchased') === '1' && linkedScan && returnedSession) {
     currentScanId = linkedScan;
-    finishPurchase(linkedScan, params.get('session_id'));
+    finishPurchase(linkedScan, returnedSession);
+  } else if (params.get('credit') === '1' && returnedSession) {
+    if (offer) offer.hidden = false;
+    confirmCreditPurchase(returnedSession);
   } else if (params.get('buy') === '1' && linkedScan) {
     currentScanId = linkedScan;
     if (offer) offer.hidden = false;
     beginCheckout(linkedScan);
+  } else if (params.get('buy') === '1') {
+    if (offer) offer.hidden = false;
+    beginCreditCheckout();
   }
+
+  // A returning buyer may already hold an unspent credit. Showing it here is
+  // what stops the page from selling the same report twice.
+  if (!returnedSession) loadExistingCredit();
 })();

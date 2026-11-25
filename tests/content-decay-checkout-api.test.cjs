@@ -38,8 +38,16 @@ function reset(overrides = {}) {
       environment: 'test'
     },
     confirmError: null,
+    creditCheckoutResult: {sessionId: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit', credit: true},
+    claimResult: {available: true, claimed: true, paid: true, scanId: SCAN, entitlementId: ENTITLEMENT},
+    claimError: null,
+    openCreditResult: {available: false},
+    openCreditError: null,
     checkoutCalls: [],
-    confirmCalls: []
+    confirmCalls: [],
+    creditCheckoutCalls: [],
+    claimCalls: [],
+    openCreditCalls: []
   }, overrides);
 }
 
@@ -105,6 +113,21 @@ require.cache[purchasesPath] = {
       state.confirmCalls.push(options);
       if (state.confirmError) throw state.confirmError;
       return state.confirmResult;
+    },
+    async createCreditCheckout(options) {
+      state.creditCheckoutCalls.push(options);
+      if (state.checkoutError) throw state.checkoutError;
+      return state.creditCheckoutResult;
+    },
+    async claimCredit(options) {
+      state.claimCalls.push(options);
+      if (state.claimError) throw state.claimError;
+      return state.claimResult;
+    },
+    async openCreditFor(options) {
+      state.openCreditCalls.push(options);
+      if (state.openCreditError) throw state.openCreditError;
+      return state.openCreditResult;
     }
   }
 };
@@ -246,6 +269,107 @@ test('POST action=checkout rejects malformed JSON and oversized bodies', async (
   assert.equal(payloadOf(oversized).code, 'CONTENT_DECAY_REQUEST_TOO_LARGE');
 
   assert.equal(state.checkoutCalls.length, 0);
+});
+
+// ---- credit checkout and claim -------------------------------------------
+
+test('POST action=checkout with credit buys the report before any scan exists', async () => {
+  reset();
+
+  const response = await api.handler(postEvent({action: 'checkout', credit: true}));
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(payloadOf(response), state.creditCheckoutResult);
+  assert.deepEqual(state.creditCheckoutCalls, [{user: state.session}]);
+  assert.equal(state.checkoutCalls.length, 0, 'the scan checkout is not used');
+});
+
+test('POST action=checkout with credit returns the open credit instead of a session', async () => {
+  reset({
+    creditCheckoutResult: {alreadyCredited: true, creditId: ENTITLEMENT, amountTotal: 4999}
+  });
+
+  const response = await api.handler(postEvent({action: 'checkout', credit: true}));
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(payloadOf(response), {
+    alreadyCredited: true,
+    creditId: ENTITLEMENT,
+    amountTotal: 4999
+  });
+  assert.equal(payloadOf(response).url, undefined, 'no payment link is returned');
+});
+
+test('POST action=credit reports the credit the signed-in buyer already holds', async () => {
+  reset({
+    openCreditResult: {available: true, creditId: ENTITLEMENT, amountTotal: 4999, currency: 'usd'}
+  });
+
+  const response = await api.handler(postEvent({action: 'credit', user_id: OTHER_USER}));
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(payloadOf(response), {
+    available: true,
+    creditId: ENTITLEMENT,
+    amountTotal: 4999,
+    currency: 'usd'
+  });
+  assert.deepEqual(state.openCreditCalls, [{user: state.session}],
+    'identity comes from the session, never the body');
+});
+
+test('POST action=credit still needs a signed-in caller', async () => {
+  reset({
+    authError: Object.assign(new Error('Please sign in.'), {status: 401, code: 'sign_in_required'})
+  });
+
+  const response = await api.handler(postEvent({action: 'credit'}));
+
+  assert.equal(response.statusCode, 401);
+  assert.equal(state.openCreditCalls.length, 0);
+});
+
+test('POST action=checkout with credit still needs a signed-in caller', async () => {
+  reset({
+    authError: Object.assign(new Error('Please sign in.'), {status: 401, code: 'sign_in_required'})
+  });
+
+  const response = await api.handler(postEvent({action: 'checkout', credit: true}));
+
+  assert.equal(response.statusCode, 401);
+  assert.equal(state.creditCheckoutCalls.length, 0);
+});
+
+test('POST action=claim spends the credit on the named scan', async () => {
+  reset();
+
+  const response = await api.handler(postEvent({
+    action: 'claim',
+    scan: SCAN,
+    // Client-supplied identity must never reach the purchase module.
+    user_id: OTHER_USER
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(payloadOf(response).claimed, true);
+  assert.deepEqual(state.claimCalls, [{scanId: SCAN, user: state.session}]);
+});
+
+test('POST action=claim rejects an invalid scan and a cross-origin request', async () => {
+  reset();
+
+  for (const scan of [undefined, '', 'not-a-uuid']) {
+    const response = await api.handler(postEvent({action: 'claim', scan}));
+    assert.equal(response.statusCode, 400, 'scan value: ' + String(scan));
+    assert.equal(payloadOf(response).code, 'CONTENT_DECAY_INVALID_REQUEST');
+  }
+  assert.equal(state.claimCalls.length, 0);
+
+  const crossOrigin = await api.handler(
+    postEvent({action: 'claim', scan: SCAN}, {origin: 'https://evil.example'}));
+  assert.equal(crossOrigin.statusCode, 403);
+  assert.equal(payloadOf(crossOrigin).code, 'CONTENT_DECAY_ORIGIN');
+  assert.equal(state.claimCalls.length, 0);
 });
 
 // ---- confirm -------------------------------------------------------------

@@ -240,14 +240,41 @@ function parseBody(event) {
 }
 
 // Checkout is created only for the signed-in account that owns a completed
-// scan. The browser never supplies a price, an amount or a user id.
+// scan. The browser never supplies a price, an amount or a user id. A buyer can
+// also pay before scanning: that path creates a $49 credit with no scan, which
+// claim turns into the report for the first site they scan.
 async function checkout(event, body) {
+  if (body.credit === true || String(body.kind || '').toLowerCase() === 'credit') {
+    const account = await user(event);
+    const result = await purchases.createCreditCheckout({user: account});
+    return reply(200, result);
+  }
   const scanId = String(body.scan || body.scanId || '').trim();
   if (!UUID.test(scanId)) {
     return reply(400, {error: 'A valid scan is required.', code: 'CONTENT_DECAY_INVALID_REQUEST'});
   }
   const account = await user(event);
   const result = await purchases.createCheckout({scanId, user: account});
+  return reply(200, result);
+}
+
+// Tells the page whether this buyer already holds an unspent $49 credit, so it
+// can show the credit instead of offering a second payment.
+async function credit(event) {
+  const account = await user(event);
+  const result = await purchases.openCreditFor({user: account});
+  return reply(200, result);
+}
+
+// Spends a paid report credit on a completed, owned scan. Identity comes from
+// the signed-in session; the body only names the scan.
+async function claim(event, body) {
+  const scanId = String(body.scan || body.scanId || '').trim();
+  if (!UUID.test(scanId)) {
+    return reply(400, {error: 'A valid scan is required.', code: 'CONTENT_DECAY_INVALID_REQUEST'});
+  }
+  const account = await user(event);
+  const result = await purchases.claimCredit({scanId, user: account});
   return reply(200, result);
 }
 
@@ -430,6 +457,8 @@ exports.handler = async event => {
       if (parsed.error) return parsed.error;
       const action = String(parsed.body.action || '').toLowerCase();
       if (action === 'checkout') return await checkout(event, parsed.body);
+      if (action === 'claim') return await claim(event, parsed.body);
+      if (action === 'credit') return await credit(event);
       if (action === 'confirm') return await confirm(event, parsed.body);
       return await scan(event, parsed.body);
     }
