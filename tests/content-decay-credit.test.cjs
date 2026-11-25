@@ -123,6 +123,8 @@ function routes(overrides = {}) {
     purchases: [],
     creditBySession: [],
     openCredits: [],
+    // The pending-or-open reservation the checkout reads before Stripe.
+    creditRows: [],
     intentPurchases: [],
     credit: null,
     claim: true,
@@ -134,13 +136,16 @@ function routes(overrides = {}) {
     if (path.startsWith('content_decay_purchases?stripe_session_id=eq.')) return config.purchases;
     if (path.startsWith('content_decay_purchases?stripe_payment_intent=eq.')) return config.intentPurchases;
     if (path === 'content_decay_purchases') return [{id: PURCHASE, scan_id: SCAN}];
+    if (path.includes('status=in.(pending,open)')) return config.creditRows;
     if (path.startsWith('content_decay_report_credits?stripe_session_id=eq.')) return config.creditBySession;
     if (path.startsWith('content_decay_report_credits?user_id=eq.')) return config.openCredits;
     if (path.startsWith('content_decay_report_credits?stripe_payment_intent=eq.')) {
       return config.credit ? [config.credit] : [];
     }
     if (path.startsWith('content_decay_report_credits?id=eq.')) return [{id: CREDIT, status: 'claimed'}];
-    if (path === 'content_decay_report_credits') return [{id: CREDIT, status: 'open'}];
+    if (path === 'content_decay_report_credits') {
+      return [{id: CREDIT, status: 'pending', checkout_url: null, created_at: new Date().toISOString()}];
+    }
     if (path === 'rpc/content_decay_grant_entitlement') return ENTITLEMENT;
     if (path === 'rpc/content_decay_claim_webhook') return config.claim;
     throw new Error('Unexpected database path: ' + path);
@@ -183,7 +188,7 @@ test('an existing open credit is returned instead of starting a second payment',
       return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
     }
   });
-  const database = fakeDatabase(routes({openCredits: [openCredit()]}));
+  const database = fakeDatabase(routes({creditRows: [openCredit()]}));
 
   const result = await createCreditCheckout({
     user: {id: USER, email: 'buyer@example.com'},
@@ -416,4 +421,247 @@ test('a refund before the credit is spent voids it', async () => {
     call => call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
   assert.ok(voided, 'the open credit is voided');
   assert.equal(voided.options.body.status, 'refunded');
+});
+
+// ---- one open credit per buyer --------------------------------------------
+
+// A database that enforces the partial unique index from
+// database/15-content-decay-credit-reservation.sql, so these tests exercise the
+// guarantee instead of a stub that always answers yes.
+function creditStore(seed = []) {
+  const rows = seed.map(row => ({...row}));
+  let serial = 0;
+
+  const database = async (path, options = {}) => {
+    const method = options.method || 'GET';
+
+    if (path === 'content_decay_report_credits' && method === 'POST') {
+      const body = options.body;
+      const clash = rows.find(row => row.user_id === body.user_id
+        && row.environment === body.environment
+        && (row.status === 'pending' || row.status === 'open'));
+      if (clash) {
+        throw Object.assign(
+          new Error('duplicate key value violates unique constraint "content_decay_report_credits_one_open_idx"'),
+          {code: '23505', status: 409}
+        );
+      }
+      serial += 1;
+      const row = {
+        id: '777777' + String(serial).padStart(2, '0') + '-7777-4777-8777-777777777777',
+        stripe_session_id: null,
+        checkout_url: null,
+        created_at: new Date().toISOString(),
+        ...body
+      };
+      rows.push(row);
+      return [row];
+    }
+
+    const idMatch = /content_decay_report_credits\?id=eq\.([^&#]+)/.exec(path);
+    if (idMatch) {
+      const row = rows.find(item => item.id === decodeURIComponent(idMatch[1]));
+      if (method === 'PATCH') {
+        const wanted = /status=eq\.([a-z]+)/.exec(path);
+        if (!row || (wanted && row.status !== wanted[1])) return [];
+        Object.assign(row, options.body);
+        return [row];
+      }
+      return row ? [row] : [];
+    }
+
+    if (path.startsWith('content_decay_report_credits?stripe_session_id=eq.')) {
+      const id = decodeURIComponent(
+        path.slice('content_decay_report_credits?stripe_session_id=eq.'.length).split('&')[0]
+      );
+      const row = rows.find(item => item.stripe_session_id === id);
+      return row ? [row] : [];
+    }
+
+    if (path.startsWith('content_decay_report_credits?user_id=eq.')) {
+      const wanted = /status=(?:eq|in)\.\(?([a-z,]+)\)?/.exec(path);
+      const states = wanted ? wanted[1].split(',') : [];
+      return rows.filter(row => !states.length || states.includes(row.status));
+    }
+
+    if (path.startsWith('content_decay_scans?id=eq.')) return [scan()];
+    if (path.startsWith('content_decay_entitlements?')) return [];
+    throw new Error('Unexpected database path: ' + path);
+  };
+
+  database.rows = rows;
+  return database;
+}
+
+test('an insert refused by the one-open-credit index reuses the winner instead of paying', async () => {
+  const winner = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/credit',
+    created_at: new Date().toISOString()
+  });
+  let sessions = 0;
+  let reads = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+  // Both attempts read "no credit"; the second insert is refused by the index.
+  const database = fakeDatabase(path => {
+    if (path === 'content_decay_report_credits') {
+      throw Object.assign(
+        new Error('duplicate key value violates unique constraint "content_decay_report_credits_one_open_idx"'),
+        {code: '23505'}
+      );
+    }
+    if (path.includes('status=in.(pending,open)')) {
+      reads += 1;
+      return reads === 1 ? [] : [winner];
+    }
+    throw new Error('Unexpected database path: ' + path);
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.alreadyCredited, true);
+  assert.equal(result.checkoutUrl, 'https://checkout.stripe.com/c/pay/credit');
+  assert.equal(sessions, 0, 'the attempt that lost the race must not create a payment');
+});
+
+test('a second attempt resumes the unpaid checkout instead of starting another payment', async () => {
+  const store = creditStore();
+  let sessions = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+  const open = () => createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  const first = await open();
+  const second = await open();
+
+  assert.equal(first.credit, true);
+  assert.equal(second.alreadyCredited, true);
+  assert.equal(second.checkoutUrl, first.url, 'the buyer is sent to the checkout they already have');
+  assert.equal(sessions, 1, 'only one payment was ever created');
+  assert.equal(store.rows.length, 1, 'the buyer holds one credit, not two');
+});
+
+test('two simultaneous checkouts create one payment and one credit', async () => {
+  const store = creditStore();
+  let sessions = 0;
+  const client = fakeClient({
+    createCheckoutSession: async () => {
+      sessions += 1;
+      // Hold the first call open so both attempts overlap in the way two tabs do.
+      await new Promise(resolve => setTimeout(resolve, 5));
+      return {id: SESSION_ID + sessions, url: 'https://checkout.stripe.com/c/pay/credit' + sessions};
+    }
+  });
+  const open = () => createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  const results = await Promise.all([open(), open()]);
+
+  assert.equal(sessions, 1, 'two tabs must not create two payments');
+  assert.equal(store.rows.length, 1, 'two tabs must not create two credits');
+  assert.equal(store.rows[0].status, 'pending');
+  assert.equal(results.filter(result => result.alreadyCredited).length, 1,
+    'the losing attempt is answered with the existing checkout');
+});
+
+test('an abandoned checkout is expired and replaced instead of blocking the buyer', async () => {
+  const abandoned = openCredit({
+    status: 'pending',
+    stripe_session_id: 'cs_test_abandoned1',
+    checkout_url: 'https://checkout.stripe.com/c/pay/old',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([abandoned]);
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    },
+    createCheckoutSession: async () => ({id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'})
+  });
+
+  const result = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(result.credit, true);
+  assert.deepEqual(expired, ['cs_test_abandoned1'], 'the old payment link cannot be paid');
+  assert.equal(store.rows.filter(row => row.status === 'expired').length, 1);
+  assert.equal(store.rows.filter(row => row.status === 'pending').length, 1,
+    'exactly one usable attempt remains');
+});
+
+test('an unpaid reservation is not a credit the buyer can use', async () => {
+  const store = creditStore([openCredit({status: 'pending'})]);
+
+  const available = await openCreditFor({user: {id: USER}, database: store, mode: 'test'});
+  assert.equal(available.available, false, 'a checkout that was not paid is never a credit');
+
+  const claimed = await claimCredit({scanId: SCAN, user: {id: USER}, database: store, mode: 'test'});
+  assert.deepEqual(claimed, {available: false});
+});
+
+test('a paid reservation becomes the open credit instead of a second row', async () => {
+  const reserved = openCredit({
+    id: CREDIT,
+    user_id: USER,
+    environment: 'test',
+    status: 'pending',
+    stripe_session_id: SESSION_ID,
+    stripe_payment_intent: null,
+    amount_total: null
+  });
+  const store = creditStore([reserved]);
+  const client = fakeClient({
+    retrieveSession: async () => creditSession({metadata: {...creditSession().metadata, credit_id: CREDIT}})
+  });
+
+  const result = await confirmCredit({
+    sessionId: SESSION_ID,
+    expectedUserId: USER,
+    client,
+    database: store,
+    priceId: PRICE_ID
+  });
+
+  assert.equal(result.paid, true);
+  assert.equal(store.rows.length, 1, 'the reservation is the credit, not a duplicate');
+  assert.equal(store.rows[0].status, 'open');
+  assert.equal(store.rows[0].stripe_payment_intent, 'pi_test_credit1');
+  assert.equal(store.rows[0].amount_total, REPORT_AMOUNT);
 });

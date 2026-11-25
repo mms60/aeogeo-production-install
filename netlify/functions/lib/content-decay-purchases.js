@@ -104,7 +104,11 @@ function stripeClient({request = stripeRequest} = {}) {
     retrieveSession: sessionId => request(
       'checkout/sessions/' + encodeURIComponent(sessionId) + '?expand[]=line_items'
     ),
-    createCheckoutSession: data => request('checkout/sessions', {method: 'POST', data})
+    createCheckoutSession: data => request('checkout/sessions', {method: 'POST', data}),
+    // Ends a checkout that was never paid, so its link can no longer charge.
+    expireSession: sessionId => request(
+      'checkout/sessions/' + encodeURIComponent(sessionId) + '/expire', {method: 'POST'}
+    )
   };
 }
 
@@ -260,8 +264,138 @@ async function openCreditFor({user, database = db, mode = config.environment()} 
   };
 }
 
+// The two states that own a buyer's one report: an unpaid reservation and a
+// paid credit that has not been spent yet. The database allows one of them per
+// buyer and environment, which is what makes the guarantee hold under a race.
+const CREDIT_LIVE_STATES = 'status=in.(pending,open)';
+// An abandoned checkout keeps its reservation for about as long as its Stripe
+// session lives, so a buyer who changes their mind can try again.
+const CREDIT_STALE_MS = 65 * 60 * 1000;
+const CREDIT_SESSION_MINUTES = 60;
+
+async function liveCreditFor({user, database, mode}) {
+  const rows = await database(
+    'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
+    + '&environment=eq.' + encodeURIComponent(mode)
+    + '&' + CREDIT_LIVE_STATES
+    + '&select=id,status,amount_total,currency,created_at,checkout_url,stripe_session_id'
+    + '&order=created_at.asc&limit=1'
+  );
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+// Answers with the credit this buyer already holds instead of opening a second
+// payment. Returns null only when a stale reservation was just released, which
+// lets the caller reserve again.
+async function reuseCredit({credit, client, database}) {
+  if (credit.status === 'open') {
+    return {
+      alreadyCredited: true,
+      creditId: credit.id,
+      amountTotal: credit.amount_total,
+      currency: credit.currency,
+      createdAt: credit.created_at || null
+    };
+  }
+
+  const age = Date.now() - Date.parse(credit.created_at || 0);
+  if (Number.isFinite(age) && age < CREDIT_STALE_MS) {
+    // Another tab is paying right now, or has just paid and the webhook has not
+    // landed yet. Either way this attempt must not reach Stripe.
+    return {
+      alreadyCredited: true,
+      pending: true,
+      creditId: credit.id,
+      checkoutUrl: credit.checkout_url || null
+    };
+  }
+
+  // Abandoned checkout: end the session so its link can never charge, then let
+  // the caller replace the reservation.
+  if (credit.stripe_session_id && typeof client.expireSession === 'function') {
+    try {
+      await client.expireSession(credit.stripe_session_id);
+    } catch {
+      // The session already completed, so the webhook owns this row now and the
+      // caller must re-read it rather than replace it.
+      return null;
+    }
+  }
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.pending',
+    {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
+  );
+  return null;
+}
+
+// A reservation that never became a checkout must not hold the buyer's one
+// report, or a Stripe hiccup would block them for an hour.
+async function releaseReservation({credit, database}) {
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.pending',
+    {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
+  ).catch(() => {});
+}
+
+async function startCreditCheckout({credit, user, client, database, mode, priceId, origin}) {
+  await pricePreflight({priceId, mode, client});
+
+  const params = {
+    mode: 'payment',
+    expires_at: Math.floor(Date.now() / 1000) + CREDIT_SESSION_MINUTES * 60,
+    success_url: origin + '/content-decay/?credit=1&session_id={CHECKOUT_SESSION_ID}',
+    cancel_url: origin + '/content-decay/?checkout=cancelled',
+    client_reference_id: user.id,
+    'line_items[0][price]': priceId,
+    'line_items[0][quantity]': 1,
+    'metadata[product]': PRODUCT,
+    'metadata[kind]': CREDIT_KIND,
+    'metadata[credit_id]': credit.id,
+    'metadata[user_id]': user.id,
+    'metadata[environment]': mode,
+    'payment_intent_data[metadata][product]': PRODUCT,
+    'payment_intent_data[metadata][kind]': CREDIT_KIND,
+    'payment_intent_data[metadata][user_id]': user.id
+  };
+  if (user.email) params.customer_email = user.email;
+
+  let session;
+  try {
+    session = await client.createCheckoutSession(params);
+  } catch (error) {
+    await releaseReservation({credit, database});
+    throw error;
+  }
+  if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
+    await releaseReservation({credit, database});
+    throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
+  }
+
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.pending',
+    {
+      method: 'PATCH',
+      body: {
+        stripe_session_id: session.id,
+        checkout_url: session.url,
+        amount_total: Number.isSafeInteger(session.amount_total) ? session.amount_total : REPORT_AMOUNT,
+        currency: typeof session.currency === 'string' ? session.currency : REPORT_CURRENCY,
+        livemode: typeof session.livemode === 'boolean' ? session.livemode : mode === 'live',
+        updated_at: new Date().toISOString()
+      }
+    }
+  );
+
+  return {sessionId: session.id, url: session.url, credit: true};
+}
+
 // Creates the checkout for a $49 report credit, with no scan required. The
 // session carries the buyer and the environment, never a scan id.
+//
+// The credit row is reserved before Stripe is called. Two tabs can both read
+// "no credit" at the same moment, but only one can insert that reservation: the
+// partial unique index refuses the other, which then answers with the winner's
+// credit. A buyer therefore cannot reach Stripe twice for one report.
 async function createCreditCheckout({
   user,
   client = stripeClient(),
@@ -275,43 +409,49 @@ async function createCreditCheckout({
   }
   requireId(user.id, 'account');
 
-  // Already paid for a report they have not used yet: return that credit. No
-  // Stripe session is created, so a double click, a reloaded tab or a second
-  // visit to the page cannot produce a second charge for one report.
-  const existing = await openCreditFor({user, database, mode});
-  if (existing.available) {
-    return {
-      alreadyCredited: true,
-      creditId: existing.creditId,
-      amountTotal: existing.amountTotal,
-      createdAt: existing.createdAt
-    };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const held = await liveCreditFor({user, database, mode});
+    if (held) {
+      const answer = await reuseCredit({credit: held, client, database});
+      if (answer) return answer;
+      continue;
+    }
+
+    let credit;
+    try {
+      const inserted = await database('content_decay_report_credits', {
+        method: 'POST',
+        headers: {Prefer: 'return=representation'},
+        body: {
+          user_id: user.id,
+          email: user.email || null,
+          status: 'pending',
+          currency: REPORT_CURRENCY,
+          livemode: mode === 'live',
+          environment: mode,
+          stripe_price_id: priceId,
+          test_run_id: null
+        }
+      });
+      credit = Array.isArray(inserted) ? inserted[0] : inserted;
+    } catch (error) {
+      // Lost the race to the unique index. Answer with the credit that won.
+      const winner = await liveCreditFor({user, database, mode});
+      if (!winner) throw error;
+      const answer = await reuseCredit({credit: winner, client, database});
+      if (answer) return answer;
+      continue;
+    }
+
+    if (!credit || !credit.id) {
+      throw fail(503, 'CONTENT_DECAY_CREDIT_RESERVE',
+        'The report credit could not be reserved. No payment was taken.');
+    }
+    return await startCreditCheckout({credit, user, client, database, mode, priceId, origin});
   }
 
-  await pricePreflight({priceId, mode, client});
-
-  const params = {
-    mode: 'payment',
-    success_url: origin + '/content-decay/?credit=1&session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: origin + '/content-decay/?checkout=cancelled',
-    client_reference_id: user.id,
-    'line_items[0][price]': priceId,
-    'line_items[0][quantity]': 1,
-    'metadata[product]': PRODUCT,
-    'metadata[kind]': CREDIT_KIND,
-    'metadata[user_id]': user.id,
-    'metadata[environment]': mode,
-    'payment_intent_data[metadata][product]': PRODUCT,
-    'payment_intent_data[metadata][kind]': CREDIT_KIND,
-    'payment_intent_data[metadata][user_id]': user.id
-  };
-  if (user.email) params.customer_email = user.email;
-
-  const session = await client.createCheckoutSession(params);
-  if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
-    throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
-  }
-  return {sessionId: session.id, url: session.url, credit: true};
+  throw fail(409, 'CONTENT_DECAY_CREDIT_PENDING',
+    'A payment for this report is already open on this account. Reload this page in a moment to continue it.');
 }
 
 function sessionProblems(session, {priceId, expectedUserId, kind = 'report'}) {
@@ -460,19 +600,38 @@ async function confirmCredit({
 
   const mode = session.livemode ? 'live' : 'test';
   const metadata = session.metadata;
-  const select = 'content_decay_report_credits?stripe_session_id=eq.'
-    + encodeURIComponent(sessionId) + '&select=id,status,user_id,environment';
 
+  // The checkout reserved its credit before Stripe was called, so the row is
+  // found by the id the session carries. Matching on the session id is the
+  // fallback for a session created before reservations existed.
   let credit = null;
-  const existing = await database(select);
-  if (Array.isArray(existing) && existing[0]) {
-    credit = existing[0];
+  const reservedId = String(metadata.credit_id || '');
+  if (UUID.test(reservedId)) {
+    const rows = await database(
+      'content_decay_report_credits?id=eq.' + encodeURIComponent(reservedId)
+      + '&select=id,status,user_id,environment,stripe_session_id'
+    );
+    credit = Array.isArray(rows) ? rows[0] || null : null;
+    if (credit && credit.stripe_session_id && credit.stripe_session_id !== sessionId) {
+      throw fail(409, 'CONTENT_DECAY_PURCHASE_MISMATCH',
+        'That checkout does not match this report credit.');
+    }
+  }
+  if (!credit) {
+    const rows = await database(
+      'content_decay_report_credits?stripe_session_id=eq.' + encodeURIComponent(sessionId)
+      + '&select=id,status,user_id,environment,stripe_session_id'
+    );
+    credit = Array.isArray(rows) ? rows[0] || null : null;
+  }
+
+  if (credit) {
     if (credit.user_id !== metadata.user_id) {
       throw fail(409, 'CONTENT_DECAY_PURCHASE_MISMATCH',
         'That checkout was already recorded against another account.');
     }
     // A refund already voided this credit. Never reopen it.
-    if (credit.status !== 'open' && credit.status !== 'claimed') {
+    if (credit.status === 'refunded' || credit.status === 'revoked' || credit.status === 'expired') {
       return {
         paid: false,
         refunded: credit.status === 'refunded',
@@ -481,36 +640,75 @@ async function confirmCredit({
         environment: mode
       };
     }
-  } else {
-    const body = {
-      user_id: metadata.user_id,
-      email: session.customer_details?.email || session.customer_email || null,
-      status: 'open',
-      stripe_session_id: sessionId,
-      stripe_payment_intent: session.payment_intent || null,
-      stripe_price_id: priceId,
-      amount_total: session.amount_total,
-      currency: session.currency,
-      livemode: session.livemode,
-      environment: mode,
-      test_run_id: null
-    };
-    try {
-      const inserted = await database('content_decay_report_credits', {
-        method: 'POST',
-        body,
-        headers: {Prefer: 'return=representation'}
-      });
-      credit = Array.isArray(inserted) ? inserted[0] : inserted;
-    } catch (error) {
-      // A concurrent confirmation may have inserted the same session first.
-      const retry = await database(select);
-      credit = Array.isArray(retry) ? retry[0] : null;
+    if (credit.status === 'pending') {
+      await openReservedCredit({creditId: credit.id, sessionId, session, priceId, database});
+    }
+    return {paid: true, credit: true, creditId: credit.id, environment: mode};
+  }
+
+  // No reservation: a session created before this table tracked them. Record it
+  // exactly as before, and adopt a pending row if the index is what blocked it.
+  const body = {
+    user_id: metadata.user_id,
+    email: session.customer_details?.email || session.customer_email || null,
+    status: 'open',
+    stripe_session_id: sessionId,
+    stripe_payment_intent: session.payment_intent || null,
+    stripe_price_id: priceId,
+    amount_total: session.amount_total,
+    currency: session.currency,
+    livemode: session.livemode,
+    environment: mode,
+    test_run_id: null
+  };
+  try {
+    const inserted = await database('content_decay_report_credits', {
+      method: 'POST',
+      body,
+      headers: {Prefer: 'return=representation'}
+    });
+    credit = Array.isArray(inserted) ? inserted[0] : inserted;
+  } catch (error) {
+    // A concurrent confirmation may have inserted the same session first.
+    const retry = await database(
+      'content_decay_report_credits?stripe_session_id=eq.' + encodeURIComponent(sessionId)
+      + '&select=id,status,user_id,environment,stripe_session_id'
+    );
+    credit = Array.isArray(retry) ? retry[0] : null;
+    if (!credit) {
+      const pending = await database(
+        'content_decay_report_credits?user_id=eq.' + encodeURIComponent(metadata.user_id)
+        + '&environment=eq.' + encodeURIComponent(mode) + '&status=eq.pending&select=id&limit=1'
+      );
+      credit = Array.isArray(pending) ? pending[0] || null : null;
       if (!credit) throw error;
+      await openReservedCredit({creditId: credit.id, sessionId, session, priceId, database});
     }
   }
 
   return {paid: true, credit: true, creditId: credit.id, environment: mode};
+}
+
+// Turns a reservation into the paid credit. The status filter means a refund
+// that landed first can never be overwritten by a late confirmation.
+async function openReservedCredit({creditId, sessionId, session, priceId, database}) {
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(creditId) + '&status=eq.pending',
+    {
+      method: 'PATCH',
+      body: {
+        status: 'open',
+        stripe_session_id: sessionId,
+        stripe_payment_intent: session.payment_intent || null,
+        stripe_price_id: priceId,
+        amount_total: session.amount_total,
+        currency: session.currency,
+        livemode: session.livemode,
+        email: session.customer_details?.email || session.customer_email || null,
+        updated_at: new Date().toISOString()
+      }
+    }
+  );
 }
 
 function stripeId(value) {
@@ -686,8 +884,10 @@ async function voidCredit(event, {database = db, paymentIntent, eventMode, statu
     }
   });
   if (claimed !== true) return true; // already processed by another delivery
+  // A reservation that was paid but not yet confirmed is voided too, so a
+  // refund can never leave a credit the buyer could still spend.
   await database(
-    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.open',
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=in.(open,pending)',
     {method: 'PATCH', body: {status, updated_at: new Date().toISOString()}}
   );
   return true;

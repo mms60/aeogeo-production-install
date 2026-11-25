@@ -43,11 +43,14 @@ function reset(overrides = {}) {
     claimError: null,
     openCreditResult: {available: false},
     openCreditError: null,
+    confirmCreditResult: {paid: true, credit: true, creditId: ENTITLEMENT, environment: 'test'},
+    confirmCreditError: null,
     checkoutCalls: [],
     confirmCalls: [],
     creditCheckoutCalls: [],
     claimCalls: [],
-    openCreditCalls: []
+    openCreditCalls: [],
+    confirmCreditCalls: []
   }, overrides);
 }
 
@@ -128,6 +131,11 @@ require.cache[purchasesPath] = {
       state.openCreditCalls.push(options);
       if (state.openCreditError) throw state.openCreditError;
       return state.openCreditResult;
+    },
+    async confirmCredit(options) {
+      state.confirmCreditCalls.push(options);
+      if (state.confirmCreditError) throw state.confirmCreditError;
+      return state.confirmCreditResult;
     }
   }
 };
@@ -316,6 +324,22 @@ test('POST action=credit reports the credit the signed-in buyer already holds', 
   });
   assert.deepEqual(state.openCreditCalls, [{user: state.session}],
     'identity comes from the session, never the body');
+});
+
+test('POST action=confirm with credit confirms the reserved credit, not a scan', async () => {
+  reset();
+
+  const response = await api.handler(postEvent({
+    action: 'confirm',
+    sessionId: SESSION_ID,
+    credit: true
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(state.confirmCreditCalls.length, 1, 'the credit confirmation runs');
+  assert.equal(state.confirmCalls.length, 0, 'a credit has no scan to confirm');
+  assert.deepEqual(state.confirmCreditCalls[0], {sessionId: SESSION_ID, expectedUserId: USER});
+  assert.equal(payloadOf(response).credit, true);
 });
 
 test('POST action=credit still needs a signed-in caller', async () => {

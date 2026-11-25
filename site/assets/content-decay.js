@@ -249,9 +249,22 @@
         token: active.access_token,
         body: {credit: true}
       });
-      // The server refuses a second session when a credit is already open.
+      // The server refuses a second session when a credit is already open, and
+      // the database allows only one unpaid-or-unspent credit per buyer.
       if (result.alreadyCredited) {
         checkoutBusy = false;
+        if (result.checkoutUrl) {
+          // An unpaid checkout already exists for this report. Finishing that
+          // one is what keeps it to a single payment.
+          track('content_decay_checkout_open', factParams());
+          location.assign(result.checkoutUrl);
+          return;
+        }
+        if (result.pending) {
+          setBuyButton('Buy the report — $49');
+          setBuyStatus('A payment for this report is already open. Reload this page in a moment to continue it.');
+          return;
+        }
         showCredit(result);
         if (typeof form.scrollIntoView === 'function') {
           form.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -298,7 +311,7 @@
       const result = await ContentDecaySession.api('confirm', {
         method: 'POST',
         token: active.access_token,
-        body: {sessionId}
+        body: {sessionId, credit: true}
       });
       if (result.paid === false) {
         setBuyButton('Buy the report — $49');

@@ -287,7 +287,13 @@ async function confirm(event, body) {
     return reply(400, {error: 'A valid checkout session is required.', code: 'CONTENT_DECAY_INVALID_REQUEST'});
   }
   const account = await user(event);
-  const result = await purchases.confirmSession({sessionId, expectedUserId: account.id});
+  // A credit session has no scan, so it is confirmed against the credit the
+  // checkout reserved. confirmCredit re-checks everything from Stripe itself, so
+  // a mislabelled request fails there rather than trusting the body.
+  const credit = body.credit === true || String(body.kind || '').toLowerCase() === 'credit';
+  const result = credit
+    ? await purchases.confirmCredit({sessionId, expectedUserId: account.id})
+    : await purchases.confirmSession({sessionId, expectedUserId: account.id});
   return reply(200, result);
 }
 
