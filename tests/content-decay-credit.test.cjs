@@ -130,7 +130,7 @@ function routes(overrides = {}) {
     claim: true,
     ...overrides
   };
-  return (path) => {
+  return (path, options = {}) => {
     if (path.startsWith('content_decay_scans?id=eq.')) return config.scan ? [config.scan] : [];
     if (path.startsWith('content_decay_entitlements?')) return config.entitlements;
     if (path.startsWith('content_decay_purchases?stripe_session_id=eq.')) return config.purchases;
@@ -142,7 +142,11 @@ function routes(overrides = {}) {
     if (path.startsWith('content_decay_report_credits?stripe_payment_intent=eq.')) {
       return config.credit ? [config.credit] : [];
     }
-    if (path.startsWith('content_decay_report_credits?id=eq.')) return [{id: CREDIT, status: 'claimed'}];
+    if (path.startsWith('content_decay_report_credits?id=eq.')) {
+      if (config.reservationUpdate !== undefined) return config.reservationUpdate;
+      // The filtered update answers with the row it changed, as Postgres does.
+      return [{id: CREDIT, status: 'pending', stripe_session_id: null, ...(options.body || {})}];
+    }
     if (path === 'content_decay_report_credits') {
       return [{id: CREDIT, status: 'pending', checkout_url: null, created_at: new Date().toISOString()}];
     }
@@ -624,6 +628,61 @@ test('an abandoned checkout is expired and replaced instead of blocking the buye
   assert.equal(store.rows.filter(row => row.status === 'expired').length, 1);
   assert.equal(store.rows.filter(row => row.status === 'pending').length, 1,
     'exactly one usable attempt remains');
+});
+
+test('a session whose reservation moved on is expired instead of handed back', async () => {
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    },
+    createCheckoutSession: async () => ({id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'})
+  });
+  // The filtered update matched nothing: the reservation was voided in between.
+  const database = fakeDatabase(routes({reservationUpdate: []}));
+
+  await assert.rejects(
+    () => createCreditCheckout({
+      user: {id: USER, email: 'buyer@example.com'},
+      client,
+      database,
+      mode: 'test',
+      priceId: PRICE_ID,
+      origin: 'https://aegeosearch.com'
+    }),
+    error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_RESERVATION_LOST'
+  );
+
+  assert.deepEqual(expired, [SESSION_ID], 'the payment link is ended, not returned');
+});
+
+test('a reservation that is no longer pending cannot receive a payment link', async () => {
+  const expired = [];
+  const client = fakeClient({
+    expireSession: async id => {
+      expired.push(id);
+      return {id, status: 'expired'};
+    },
+    createCheckoutSession: async () => ({id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'})
+  });
+  const database = fakeDatabase(routes({
+    reservationUpdate: [{id: CREDIT, status: 'refunded', stripe_session_id: SESSION_ID}]
+  }));
+
+  await assert.rejects(
+    () => createCreditCheckout({
+      user: {id: USER, email: 'buyer@example.com'},
+      client,
+      database,
+      mode: 'test',
+      priceId: PRICE_ID,
+      origin: 'https://aegeosearch.com'
+    }),
+    error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_RESERVATION_LOST'
+  );
+
+  assert.deepEqual(expired, [SESSION_ID], 'a refunded reservation never gets a payable link');
 });
 
 test('an unpaid reservation is not a credit the buyer can use', async () => {

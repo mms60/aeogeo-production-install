@@ -371,10 +371,15 @@ async function startCreditCheckout({credit, user, client, database, mode, priceI
     throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
   }
 
-  await database(
+  // The reservation is filtered on its status, so a row that a refund, an
+  // expiry or another attempt changed in the meantime is left untouched. The
+  // updated row is read back because a link is only safe to hand out if this
+  // session really is the one stored against a still-pending credit.
+  const updated = await database(
     'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.pending',
     {
       method: 'PATCH',
+      headers: {Prefer: 'return=representation'},
       body: {
         stripe_session_id: session.id,
         checkout_url: session.url,
@@ -385,8 +390,29 @@ async function startCreditCheckout({credit, user, client, database, mode, priceI
       }
     }
   );
+  const stored = Array.isArray(updated) ? updated[0] || null : updated || null;
+  if (!stored || stored.id !== credit.id || stored.status !== 'pending'
+      || stored.stripe_session_id !== session.id) {
+    // This link would take money for a credit that no longer exists, so it is
+    // ended here rather than being returned to the buyer.
+    await expireCheckout({session, client});
+    throw fail(409, 'CONTENT_DECAY_CREDIT_RESERVATION_LOST',
+      'That checkout could not be tied to your report credit, so it was cancelled. No payment was taken.');
+  }
 
   return {sessionId: session.id, url: session.url, credit: true};
+}
+
+// Ends a checkout that must never be paid. A failed expire is not retried here:
+// the session was created with its own expiry, so it lapses on its own.
+async function expireCheckout({session, client}) {
+  if (!session || !session.id || typeof client.expireSession !== 'function') return false;
+  try {
+    await client.expireSession(session.id);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Creates the checkout for a $49 report credit, with no scan required. The
