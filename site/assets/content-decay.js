@@ -38,6 +38,9 @@
   // Set once the buyer is known to hold an unspent $49 credit, so the page can
   // show it instead of starting a second payment.
   let creditReady = null;
+  // The credit-offered event describes a state the page shows, not a click, so
+  // it is recorded once per visit even when the buyer taps the offer again.
+  let creditOfferedTracked = false;
   let lastDisagreements = 0;
   let factLinkSeen = false;
   let factLinkObserver = null;
@@ -159,6 +162,7 @@
         setBuyStatus('Your session has ended. Sign in again to continue.', 'error');
         return;
       }
+      track('content_decay_checkout_failed', {...factParams(), mode: 'scan'});
       setBuyButton('Try checkout again — $49');
       setBuyStatus(error.message || 'Checkout could not open. No payment was taken.', 'error');
     }
@@ -232,6 +236,7 @@
       return false;
     }
     if (!result || !result.claimed) return false;
+    track('content_decay_credit_claimed', factParams());
     setBuyButton('Opening your report…', {disabled: true});
     setBuyStatus('Your credit is applied. Opening the report…');
     location.assign('/content-decay/report/?scan=' + encodeURIComponent(scanId));
@@ -248,6 +253,10 @@
   // second payment for the same report.
   function showCredit(credit) {
     creditReady = credit || {available: true};
+    if (!creditOfferedTracked) {
+      creditOfferedTracked = true;
+      track('content_decay_credit_offered', factParams());
+    }
     const remembered = lastScan();
     setBuyButton('Credit ready — scan your site');
     setBuyStatus(creditMessage(remembered), 'busy');
@@ -376,6 +385,7 @@
         setBuyStatus('Your session has ended. Sign in again to continue.', 'error');
         return;
       }
+      track('content_decay_checkout_failed', {...factParams(), mode: 'credit'});
       setBuyButton('Try checkout again — $49');
       setBuyStatus(error.message || 'Checkout could not open. No payment was taken.', 'error');
     }
@@ -414,6 +424,7 @@
         return;
       }
       checkoutBusy = false;
+      track('content_decay_credit_confirmed', factParams());
       // The payment is a credit now. If this browser already ran the scan the
       // buyer wants, spend it here instead of asking them to scan again.
       const paidFor = currentScanId || (lastScan() && lastScan().id) || null;
@@ -449,7 +460,9 @@
       if (buy.dataset.href) {
         // The Stripe session behind a continue link can lapse while this tab is
         // open. Starting a fresh checkout is better than a dead checkout page.
-        if (pendingUntil && Date.now() >= pendingUntil) {
+        const lapsed = Boolean(pendingUntil) && Date.now() >= pendingUntil;
+        track('content_decay_continue_click', {...factParams(), lapsed: lapsed ? 1 : 0});
+        if (lapsed) {
           delete buy.dataset.href;
           pendingUntil = 0;
           beginCreditCheckout();

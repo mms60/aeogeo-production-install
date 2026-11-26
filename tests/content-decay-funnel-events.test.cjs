@@ -9,6 +9,11 @@
 // reaches checkout at all). The offer and checkout steps carry the fact counts
 // they followed, so clicks can be compared with and without the fact block.
 //
+// The credit flow adds the buyer-side steps that had no event yet: a credit
+// already paid for being offered, the continue link for an unpaid checkout
+// being clicked, a checkout that could not open, the payment confirming a
+// credit, and the credit being spent on a scan.
+//
 // These tests pin the behaviour: the events fire once, at the right moment,
 // carry counts only, and stay silent when the visitor has not allowed
 // analytics.
@@ -55,11 +60,12 @@ const HTML = `<!doctype html><html><body>
 </section>
 </body></html>`;
 
-function mount({consent = true, session = null, scan = SCAN} = {}) {
+function mount({consent = true, session = null, scan = SCAN,
+  url = 'https://aeogeosearch.com/content-decay/', lastScan = null} = {}) {
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', () => {});
   const dom = new JSDOM(HTML, {
-    url: 'https://aeogeosearch.com/content-decay/',
+    url,
     runScripts: 'outside-only',
     virtualConsole
   });
@@ -101,6 +107,7 @@ function mount({consent = true, session = null, scan = SCAN} = {}) {
     };
   };
   if (session) w.ContentDecaySession = session;
+  if (lastScan) w.localStorage.setItem('contentDecayLastScan', JSON.stringify(lastScan));
   w.eval(CODE);
   return {dom, w, events, observers};
 }
@@ -235,6 +242,86 @@ test('checkout opening is recorded when the payment link is returned', async () 
     {fact_check: 1, facts_compared: 32, disagreements: 3}
   ]);
   assert.deepEqual(named(env.events, 'content_decay_checkout_signin'), []);
+});
+
+test('a buyer who already holds a credit is recorded at the credit offer, once', async () => {
+  const env = mount({
+    session: {
+      session: async () => ({access_token: 'token'}),
+      api: async path => (path === 'credit' ? {available: true} : {}),
+      signInUrl: () => '/login'
+    }
+  });
+  await waitFor(() => named(env.events, 'content_decay_credit_offered').length === 1, 'the credit offer');
+  assert.deepEqual(named(env.events, 'content_decay_credit_offered'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0}
+  ]);
+
+  env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(named(env.events, 'content_decay_credit_offered').length, 1,
+    'showing the same credit again is not a second offer');
+});
+
+test('clicking the continue link is recorded before it resumes the checkout', async () => {
+  const env = mount({
+    session: {
+      session: async () => ({access_token: 'token'}),
+      api: async path => (path === 'credit'
+        ? {pending: true, checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test', checkoutExpiresInSeconds: 900}
+        : {}),
+      signInUrl: () => '/login'
+    }
+  });
+  await waitFor(() => env.w.document.getElementById('cd-buy').dataset.href, 'the continue link');
+  env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
+  await waitFor(() => named(env.events, 'content_decay_continue_click').length === 1, 'the continue click');
+  assert.deepEqual(named(env.events, 'content_decay_continue_click'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0, lapsed: 0}
+  ]);
+});
+
+test('a checkout that cannot open is recorded as failed, with the flow it belonged to', async () => {
+  const env = mount({
+    session: {
+      session: async () => ({access_token: 'token'}),
+      api: async path => {
+        if (path === 'credit') return {};
+        throw Object.assign(new Error('Checkout did not start.'), {status: 500});
+      },
+      signInUrl: () => '/login'
+    }
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  env.w.document.getElementById('cd-buy').dispatchEvent(new env.w.MouseEvent('click', {bubbles: true}));
+  await waitFor(() => named(env.events, 'content_decay_checkout_failed').length === 1, 'the checkout failure');
+  assert.deepEqual(named(env.events, 'content_decay_checkout_failed'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0, mode: 'credit'}
+  ]);
+});
+
+test('a returned credit payment is recorded as confirmed, then claimed on the stored scan', async () => {
+  const env = mount({
+    url: 'https://aeogeosearch.com/content-decay/?credit=1&session_id=cs_test_123',
+    lastScan: {id: SCAN.id, hostname: 'example.com'},
+    session: {
+      session: async () => ({access_token: 'token'}),
+      api: async path => {
+        if (path === 'confirm') return {paid: true};
+        if (path === 'claim') return {claimed: true};
+        return {};
+      },
+      signInUrl: () => '/login'
+    }
+  });
+  await waitFor(() => named(env.events, 'content_decay_credit_confirmed').length === 1, 'the credit confirmation');
+  await waitFor(() => named(env.events, 'content_decay_credit_claimed').length === 1, 'the credit claim');
+  assert.deepEqual(named(env.events, 'content_decay_credit_confirmed'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0}
+  ]);
+  assert.deepEqual(named(env.events, 'content_decay_credit_claimed'), [
+    {fact_check: 0, facts_compared: 0, disagreements: 0}
+  ]);
 });
 
 test('the events never carry a scan id, hostname or url', async () => {
