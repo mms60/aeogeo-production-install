@@ -1348,10 +1348,25 @@ async function expireCreditCheckout(event, {database = db, environment = config.
   });
   if (claimed !== true) return true; // already processed by another delivery
 
-  await database(
+  // The reservation is found by the session it stored. The update is read back
+  // because storing that session id can be the write that was lost.
+  const body = {status: 'expired', updated_at: new Date().toISOString()};
+  const updated = await database(
     'content_decay_report_credits?stripe_session_id=eq.' + encodeURIComponent(session.id)
     + '&status=eq.pending',
-    {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
+    {method: 'PATCH', headers: {Prefer: 'return=representation'}, body}
+  );
+  const row = Array.isArray(updated) ? updated[0] : updated;
+  if (row && row.status === 'expired') return true;
+
+  // Every credit checkout carries its reservation id, so a row that never got
+  // the session id is released here too, instead of sitting in the live states
+  // and looking like a checkout that is still being prepared.
+  const creditId = String(session.metadata?.credit_id || '');
+  if (!UUID.test(creditId)) return true;
+  await database(
+    'content_decay_report_credits?id=eq.' + encodeURIComponent(creditId) + '&status=eq.pending',
+    {method: 'PATCH', body}
   );
   return true;
 }

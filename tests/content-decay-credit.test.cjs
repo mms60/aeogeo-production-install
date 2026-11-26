@@ -637,6 +637,12 @@ function creditStore(seed = []) {
         path.slice('content_decay_report_credits?stripe_session_id=eq.'.length).split('&')[0]
       );
       const row = rows.find(item => item.stripe_session_id === id);
+      if (method === 'PATCH') {
+        const wanted = /status=eq\.([a-z]+)/.exec(path);
+        if (!row || (wanted && row.status !== wanted[1])) return [];
+        Object.assign(row, options.body);
+        return [row];
+      }
       return row ? [row] : [];
     }
 
@@ -646,6 +652,7 @@ function creditStore(seed = []) {
       return rows.filter(row => !states.length || states.includes(row.status));
     }
 
+    if (path === 'rpc/content_decay_claim_webhook') return true;
     if (path.startsWith('content_decay_scans?id=eq.')) return [scan()];
     if (path.startsWith('content_decay_entitlements?')) return [];
     throw new Error('Unexpected database path: ' + path);
@@ -1301,6 +1308,75 @@ test('a session Stripe expires closes its reservation without waiting for a page
   assert.ok(expired, 'the reservation is ended at the source of truth');
   assert.equal(expired.options.body.status, 'expired');
   assert.match(expired.path, /status=eq\.pending$/, 'a paid or refunded row is never expired');
+});
+
+test('an abandoned checkout frees the slot at once and no longer looks pending', async () => {
+  const pending = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/abandoned',
+    created_at: new Date().toISOString()
+  });
+  const store = creditStore([pending]);
+
+  const handled = await handleWebhook({
+    id: EVENT_ID,
+    type: 'checkout.session.expired',
+    livemode: false,
+    data: {object: creditSession({status: 'expired', payment_status: 'unpaid'})}
+  }, {client: fakeClient(), database: store, priceId: PRICE_ID, environment: 'test'});
+
+  assert.equal(handled, true);
+  assert.equal(store.rows[0].status, 'expired', 'the one-report slot is released');
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test', client: fakeClient()});
+  assert.deepEqual(page, {available: false, pending: false},
+    'nothing is offered as a credit, a pending checkout or one being prepared');
+
+  const fresh = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client: fakeClient({
+      createCheckoutSession: async () => ({id: 'cs_test_afterExpiry1', url: 'https://checkout.stripe.com/c/pay/new'})
+    }),
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(fresh.credit, true, 'the buyer can start a new checkout straight away');
+  assert.equal(fresh.url, 'https://checkout.stripe.com/c/pay/new');
+});
+
+test('an expiry event still releases a reservation whose session id was never stored', async () => {
+  // The session-id write can be the one that was lost. The session itself names
+  // its reservation, so the slot is freed either way.
+  const database = fakeDatabase(path => {
+    if (path === 'rpc/content_decay_claim_webhook') return true;
+    if (path.startsWith('content_decay_report_credits?stripe_session_id=eq.')) return [];
+    if (path.startsWith('content_decay_report_credits?id=eq.' + CREDIT + '&status=eq.pending')) {
+      return [{id: CREDIT, status: 'expired'}];
+    }
+    throw new Error('Unexpected database path: ' + path);
+  });
+
+  const handled = await handleWebhook({
+    id: EVENT_ID,
+    type: 'checkout.session.expired',
+    livemode: false,
+    data: {
+      object: creditSession({
+        status: 'expired',
+        payment_status: 'unpaid',
+        metadata: {...creditSession().metadata, credit_id: CREDIT}
+      })
+    }
+  }, {client: fakeClient(), database, priceId: PRICE_ID, environment: 'test'});
+
+  assert.equal(handled, true);
+  const patched = database.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(patched, 'the reservation its session names is released');
+  assert.equal(patched.options.body.status, 'expired');
 });
 
 test('a lapsed report checkout has no reservation to expire', async () => {
