@@ -59,14 +59,15 @@ const creditSession = (overrides = {}) => ({
   ...overrides
 });
 
-const reportSession = () => creditSession({
+const reportSession = (overrides = {}) => creditSession({
   id: 'cs_test_report1',
   metadata: {
     product: 'content_decay',
     scan_id: SCAN,
     user_id: USER,
     environment: 'test'
-  }
+  },
+  ...overrides
 });
 
 const scan = (overrides = {}) => ({
@@ -130,6 +131,8 @@ function routes(overrides = {}) {
     intentPurchases: [],
     credit: null,
     claim: true,
+    // Answer for reopening a disputed purchase; undefined keeps the default.
+    purchaseRestore: undefined,
     ...overrides
   };
   return (path, options = {}) => {
@@ -137,6 +140,10 @@ function routes(overrides = {}) {
     if (path.startsWith('content_decay_entitlements?')) return config.entitlements;
     if (path.startsWith('content_decay_purchases?stripe_session_id=eq.')) return config.purchases;
     if (path.startsWith('content_decay_purchases?stripe_payment_intent=eq.')) return config.intentPurchases;
+    if (path.startsWith('content_decay_purchases?id=eq.')) {
+      if (config.purchaseRestore !== undefined) return config.purchaseRestore;
+      return [{id: PURCHASE, status: 'paid', ...(options.body || {})}];
+    }
     if (path === 'content_decay_purchases') return [{id: PURCHASE, scan_id: SCAN}];
     if (path.includes('status=in.(pending,open)')) return config.creditRows;
     if (path.startsWith('content_decay_report_credits?stripe_session_id=eq.')) return config.creditBySession;
@@ -153,6 +160,7 @@ function routes(overrides = {}) {
       return [{id: CREDIT, status: 'pending', checkout_url: null, created_at: new Date().toISOString()}];
     }
     if (path === 'rpc/content_decay_grant_entitlement') return ENTITLEMENT;
+    if (path === 'rpc/content_decay_dispute_purchase') return PURCHASE;
     if (path === 'rpc/content_decay_claim_webhook') return config.claim;
     throw new Error('Unexpected database path: ' + path);
   };
@@ -559,6 +567,7 @@ test('a refund before the credit is spent voids it', async () => {
         id: 'ch_test_credit1',
         livemode: false,
         payment_intent: 'pi_test_credit1',
+        amount: REPORT_AMOUNT,
         amount_refunded: REPORT_AMOUNT
       }
     }
@@ -1106,4 +1115,198 @@ test('a reservation with no session and no link is released instead of blocking'
   assert.deepEqual(page, {available: false, pending: false});
   assert.deepEqual(expired, [], 'there was no Stripe session to end');
   assert.equal(store.rows[0].status, 'expired');
+});
+
+// ---- a spent credit is never offered again --------------------------------
+
+test('a claim that cannot close the credit still grants the report, and the next load repairs it', async () => {
+  const database = fakeDatabase(routes({openCredits: [openCredit()]}));
+  let closes = 0;
+  const wrapped = async (path, options = {}) => {
+    if (path.startsWith('content_decay_report_credits?id=eq.') && options.method === 'PATCH') {
+      closes += 1;
+      return []; // the close is lost
+    }
+    return database(path, options);
+  };
+
+  const result = await claimCredit({scanId: SCAN, user: {id: USER}, database: wrapped, mode: 'test'});
+
+  assert.equal(result.claimed, true, 'the buyer keeps the report they paid for');
+  assert.equal(result.creditClosed, false);
+  assert.equal(closes, 2, 'the close is retried once');
+
+  // The purchase the claim wrote is proof the credit was spent, so the next
+  // page load must close it instead of advertising it as waiting.
+  const store = fakeDatabase(routes({
+    creditRows: [openCredit()],
+    purchases: [{id: PURCHASE, status: 'paid', user_id: USER, scan_id: SCAN}]
+  }));
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test'});
+
+  assert.deepEqual(page, {available: false, pending: false}, 'a spent credit is never offered again');
+  const repaired = store.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(repaired, 'the stale open credit is closed');
+  assert.equal(repaired.options.body.status, 'claimed');
+  assert.equal(repaired.options.body.purchase_id, PURCHASE);
+  assert.equal(repaired.options.body.claimed_scan_id, SCAN);
+});
+
+// ---- a lapsed Stripe session ----------------------------------------------
+
+test('a session Stripe expires closes its reservation without waiting for a page load', async () => {
+  const database = fakeDatabase(routes({creditBySession: [openCredit({status: 'pending'})]}));
+
+  const handled = await handleWebhook({
+    id: EVENT_ID,
+    type: 'checkout.session.expired',
+    livemode: false,
+    data: {object: creditSession({status: 'expired', payment_status: 'unpaid'})}
+  }, {client: fakeClient(), database, priceId: PRICE_ID, environment: 'test'});
+
+  assert.equal(handled, true);
+  const expired = database.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?stripe_session_id=eq.')
+    && call.options.method === 'PATCH');
+  assert.ok(expired, 'the reservation is ended at the source of truth');
+  assert.equal(expired.options.body.status, 'expired');
+  assert.match(expired.path, /status=eq\.pending$/, 'a paid or refunded row is never expired');
+});
+
+test('a lapsed report checkout has no reservation to expire', async () => {
+  const database = fakeDatabase(routes());
+
+  const handled = await handleWebhook({
+    id: EVENT_ID,
+    type: 'checkout.session.expired',
+    livemode: false,
+    data: {object: reportSession({status: 'expired', payment_status: 'unpaid'})}
+  }, {client: fakeClient(), database, priceId: PRICE_ID, environment: 'test'});
+
+  assert.equal(handled, false);
+  assert.equal(database.calls.length, 0);
+});
+
+// ---- a won dispute --------------------------------------------------------
+
+const disputedPurchase = (overrides = {}) => ({
+  id: PURCHASE,
+  status: 'revoked',
+  user_id: USER,
+  scan_id: SCAN,
+  environment: 'test',
+  test_run_id: TEST_RUN,
+  ...overrides
+});
+
+const disputeClosedEvent = (status, overrides = {}) => ({
+  id: 'evt_test_disputeclosed1',
+  type: 'charge.dispute.closed',
+  livemode: false,
+  data: {
+    object: {
+      id: 'dp_test_closed1',
+      object: 'dispute',
+      livemode: false,
+      status,
+      payment_intent: 'pi_test_credit1',
+      ...overrides
+    }
+  }
+});
+
+test('a dispute the seller wins restores the purchase and its entitlement', async () => {
+  const database = fakeDatabase(routes({intentPurchases: [disputedPurchase()]}));
+
+  const handled = await handleWebhook(disputeClosedEvent('won'), {
+    client: fakeClient(),
+    database,
+    priceId: PRICE_ID,
+    environment: 'test'
+  });
+
+  assert.equal(handled, true);
+  const restored = database.calls.find(call =>
+    call.path.startsWith('content_decay_purchases?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(restored, 'the revoked purchase is reopened');
+  assert.match(restored.path, /status=eq\.revoked$/, 'only a revoked purchase is reopened');
+  assert.equal(restored.options.body.status, 'paid');
+  const grant = database.calls.find(call => call.path === 'rpc/content_decay_grant_entitlement');
+  assert.deepEqual(grant.options.body, {p_purchase: PURCHASE});
+});
+
+test('a dispute that was lost stays revoked', async () => {
+  const database = fakeDatabase(routes({intentPurchases: [disputedPurchase()]}));
+
+  const handled = await handleWebhook(disputeClosedEvent('lost'), {
+    client: fakeClient(),
+    database,
+    priceId: PRICE_ID,
+    environment: 'test'
+  });
+
+  assert.equal(handled, true);
+  assert.ok(database.calls.some(call => call.path === 'rpc/content_decay_dispute_purchase'));
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_grant_entitlement'), false);
+});
+
+test('a refunded purchase is never reopened by a won dispute', async () => {
+  const database = fakeDatabase(routes({
+    intentPurchases: [disputedPurchase({status: 'refunded'})],
+    purchaseRestore: [] // the status=eq.revoked filter changes no row
+  }));
+
+  const handled = await handleWebhook(disputeClosedEvent('won'), {
+    client: fakeClient(),
+    database,
+    priceId: PRICE_ID,
+    environment: 'test'
+  });
+
+  assert.equal(handled, true);
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_grant_entitlement'), false);
+});
+
+// ---- duplicate sessions ---------------------------------------------------
+
+test('a credit checkout is tied to its reservation by an idempotency key', async () => {
+  let options;
+  const client = fakeClient({
+    createCheckoutSession: async (data, opts) => {
+      options = opts;
+      return {id: SESSION_ID, url: 'https://checkout.stripe.com/c/pay/credit'};
+    }
+  });
+
+  await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: fakeDatabase(routes()),
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(options.idempotency, 'content-decay-credit-' + CREDIT);
+});
+
+test('two report checkouts in the same minute share one idempotency key', async () => {
+  const keys = [];
+  const client = fakeClient({
+    createCheckoutSession: async (data, opts) => {
+      keys.push(opts.idempotency);
+      return {id: 'cs_test_report9', url: 'https://checkout.stripe.com/c/pay/report'};
+    }
+  });
+  const database = fakeDatabase(routes());
+  const options = {client, database, mode: 'test', priceId: PRICE_ID, origin: 'https://aegeosearch.com'};
+
+  await createCheckout({scanId: SCAN, user: {id: USER}, ...options});
+  await createCheckout({scanId: SCAN, user: {id: USER}, ...options});
+
+  assert.equal(keys.length, 2);
+  assert.equal(keys[0], keys[1], 'a repeated submit is the same payment intent');
+  assert.match(keys[0], new RegExp('^content-decay-report-' + SCAN + '-\\d+$'));
 });

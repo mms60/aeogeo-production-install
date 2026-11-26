@@ -104,7 +104,11 @@ function stripeClient({request = stripeRequest} = {}) {
     retrieveSession: sessionId => request(
       'checkout/sessions/' + encodeURIComponent(sessionId) + '?expand[]=line_items'
     ),
-    createCheckoutSession: data => request('checkout/sessions', {method: 'POST', data}),
+    // `idempotency` collapses a retried call onto the session Stripe already
+    // created, so a retry can never produce a second payable link.
+    createCheckoutSession: (data, {idempotency} = {}) => request(
+      'checkout/sessions', {method: 'POST', data, idempotency}
+    ),
     // Ends a checkout that was never paid, so its link can no longer charge.
     expireSession: sessionId => request(
       'checkout/sessions/' + encodeURIComponent(sessionId) + '/expire', {method: 'POST'}
@@ -302,7 +306,13 @@ async function createCheckout({
   };
   if (user.email) params.customer_email = user.email;
 
-  const session = await client.createCheckoutSession(params);
+  // Two submits for the same scan within one minute are the same intent, so
+  // they must resolve to one session. The key is bucketed by minute rather than
+  // fixed to the scan: Stripe keeps a key's response for 24 hours, and a buyer
+  // who abandoned one checkout must still be able to start a fresh one.
+  const session = await client.createCheckoutSession(params, {
+    idempotency: 'content-decay-report-' + scanId + '-' + Math.floor(Date.now() / 60000)
+  });
   if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
     throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
   }
@@ -328,7 +338,13 @@ async function openCreditFor({user, database = db, mode = config.environment(), 
   );
   const found = Array.isArray(rows) ? rows : [];
 
-  const credit = found.find(row => row.status === 'open') || null;
+  // A claim records the purchase and grants access first, then closes the
+  // credit. If that close was lost, the purchase proves the credit is spent: it
+  // must never be offered again, and it is closed here when the write succeeds.
+  const credit = (await Promise.all(found
+    .filter(row => row.status === 'open')
+    .map(async row => ((await alreadySpentCredit({credit: row, database})) ? null : row))))
+    .find(Boolean) || null;
   if (credit) {
     return {
       available: true,
@@ -402,6 +418,53 @@ function checkoutState(credit, now = Date.now()) {
   if (!Number.isFinite(created)) return 'dead';
   if (credit.stripe_session_id || now - created < CREDIT_SESSIONLESS_GRACE_MS) return 'preparing';
   return 'dead';
+}
+
+// Closes the credit against the purchase that spent it. The filtered update is
+// read back because a lost write would leave the credit open and keep telling
+// the buyer a report is waiting. Retried once, then reported to the caller; a
+// failure here can never sell the same payment twice, because the purchase
+// already exists for that Stripe session.
+async function closeCreditOnPurchase({credit, purchase, scanId, database}) {
+  const body = {
+    status: 'claimed',
+    claimed_scan_id: scanId,
+    purchase_id: purchase.id,
+    claimed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const updated = await database(
+        'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.open',
+        {method: 'PATCH', headers: {Prefer: 'return=representation'}, body}
+      );
+      const row = Array.isArray(updated) ? updated[0] : updated;
+      if (row && row.status === 'claimed') return true;
+    } catch { /* retried once; the credit simply stays open for repair */ }
+  }
+  return false;
+}
+
+// True when a purchase already exists for the credit's session, which means the
+// credit was spent even if closing it failed. A lookup failure counts as "not
+// spent", so a read error can never hide a report the buyer paid for.
+async function alreadySpentCredit({credit, database}) {
+  if (!credit.stripe_session_id) return false;
+  let purchase = null;
+  try {
+    const rows = await database(
+      'content_decay_purchases?stripe_session_id=eq.'
+      + encodeURIComponent(credit.stripe_session_id)
+      + '&select=id,status,user_id,scan_id'
+    );
+    purchase = Array.isArray(rows) ? rows[0] || null : null;
+  } catch {
+    return false;
+  }
+  if (!purchase || purchase.status !== 'paid') return false;
+  await closeCreditOnPurchase({credit, purchase, scanId: purchase.scan_id, database});
+  return true;
 }
 
 async function liveCreditFor({user, database, mode}) {
@@ -515,7 +578,12 @@ async function openCheckout({credit, user, client, database, mode, priceId, orig
   };
   if (user.email) params.customer_email = user.email;
 
-  const session = await client.createCheckoutSession(params);
+  // The reservation is the payment's natural idempotency key: one row can back
+  // only one session, so a retried call returns the session Stripe already
+  // created instead of opening a second payable link.
+  const session = await client.createCheckoutSession(params, {
+    idempotency: 'content-decay-credit-' + credit.id
+  });
   if (!session || !CHECKOUT_SESSION.test(String(session.id || '')) || !session.url) {
     throw fail(503, 'CONTENT_DECAY_STRIPE_RESPONSE', 'Stripe did not return a usable checkout session.');
   }
@@ -1016,19 +1084,7 @@ async function claimCredit({scanId, user, database = db, mode = config.environme
       'The payment was recorded but the report access could not be granted.');
   }
 
-  await database(
-    'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.open',
-    {
-      method: 'PATCH',
-      body: {
-        status: 'claimed',
-        claimed_scan_id: scanId,
-        purchase_id: purchase.id,
-        claimed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    }
-  );
+  const creditClosed = await closeCreditOnPurchase({credit, purchase, scanId, database});
 
   return {
     available: true,
@@ -1037,6 +1093,9 @@ async function claimCredit({scanId, user, database = db, mode = config.environme
     scanId,
     purchaseId: purchase.id,
     entitlementId,
+    // The report is granted either way; a credit that could not be closed is
+    // repaired on the next page load instead of being offered again.
+    creditClosed,
     environment: mode
   };
 }
@@ -1076,14 +1135,22 @@ async function refundPurchase(event, {database = db, environment = config.enviro
   const charge = event?.data?.object;
   const paymentIntent = stripeId(charge?.payment_intent);
   const refundedAmount = Number(charge?.amount_refunded);
+  const chargedAmount = Number(charge?.amount);
 
   // Not a successful refund of this product (or a zero-amount refund marker).
   if (!CHARGE.test(String(charge?.id || ''))
       || !PAYMENT_INTENT.test(paymentIntent)
       || !Number.isSafeInteger(refundedAmount)
-      || refundedAmount <= 0) {
+      || !Number.isSafeInteger(chargedAmount)
+      || refundedAmount <= 0
+      || chargedAmount <= 0) {
     return false;
   }
+  // Only a full refund ends the report. A partial refund is a deliberate
+  // goodwill amount, so revoking the $49 report over a $5 refund would take
+  // away more than was given back. An unreadable charge amount is never guessed
+  // at: the event is left for a human rather than closing the report.
+  if (refundedAmount < chargedAmount) return false;
   if (!EVENT.test(String(event.id || ''))) {
     throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event is not a valid Stripe event.');
   }
@@ -1210,6 +1277,120 @@ async function disputePurchase(event, {database = db, environment = config.envir
   return true;
 }
 
+// checkout.session.expired: an unpaid credit checkout lapsed. Marking the
+// reservation expired frees the buyer's one-report slot at the moment Stripe
+// says the session is dead, instead of at the next page load. The update is
+// filtered on 'pending', so a completed payment or a refund is never touched.
+async function expireCreditCheckout(event, {database = db, environment = config.environment()} = {}) {
+  const session = event?.data?.object;
+  if (!session || session.metadata?.product !== PRODUCT) return false;
+  // Report checkouts hold no reservation; there is nothing to expire for them.
+  if (session.metadata?.kind !== CREDIT_KIND) return false;
+  if (!EVENT.test(String(event.id || ''))) {
+    throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event is not a valid Stripe event.');
+  }
+
+  const eventMode = event.livemode === true ? 'live' : 'test';
+  if (eventMode !== environment) {
+    throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
+      'The webhook event belongs to a different payment environment.');
+  }
+  if (!CHECKOUT_SESSION.test(String(session.id || ''))) {
+    throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event has no valid checkout session.');
+  }
+
+  const claimed = await database('rpc/content_decay_claim_webhook', {
+    method: 'POST',
+    body: {
+      p_event_id: event.id,
+      p_type: event.type,
+      p_livemode: eventMode === 'live',
+      p_test_run: null
+    }
+  });
+  if (claimed !== true) return true; // already processed by another delivery
+
+  await database(
+    'content_decay_report_credits?stripe_session_id=eq.' + encodeURIComponent(session.id)
+    + '&status=eq.pending',
+    {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
+  );
+  return true;
+}
+
+// charge.dispute.closed with status "won": the money stands, so the report the
+// dispute revoked is restored. The purchase filter is what keeps a refunded
+// purchase closed, because that money really is gone even if a dispute is won.
+async function restoreDisputedPurchase(event, {database = db, environment = config.environment()} = {}) {
+  const dispute = event?.data?.object;
+  const paymentIntent = stripeId(dispute?.payment_intent);
+
+  if (!DISPUTE.test(String(dispute?.id || ''))
+      || !PAYMENT_INTENT.test(paymentIntent)
+      || String(dispute?.status || '').toLowerCase() !== 'won') {
+    return false;
+  }
+  if (!EVENT.test(String(event.id || ''))) {
+    throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event is not a valid Stripe event.');
+  }
+
+  const eventMode = event.livemode === true ? 'live' : 'test';
+  if (eventMode !== environment) {
+    throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
+      'The webhook event belongs to a different payment environment.');
+  }
+  if (typeof dispute.livemode === 'boolean' && dispute.livemode !== (eventMode === 'live')) {
+    throw fail(400, 'CONTENT_DECAY_MODE_MISMATCH',
+      'The dispute and the webhook event disagree about livemode.');
+  }
+
+  const purchase = await loadPurchaseByIntent(database, paymentIntent, eventMode === 'live');
+  const credit = purchase ? null : await loadCreditByIntent(database, paymentIntent, eventMode === 'live');
+  if (!purchase && !credit) return false;
+
+  const claimed = await database('rpc/content_decay_claim_webhook', {
+    method: 'POST',
+    body: {
+      p_event_id: event.id,
+      p_type: event.type,
+      p_livemode: eventMode === 'live',
+      p_test_run: eventMode === 'test' && purchase ? purchase.test_run_id : null
+    }
+  });
+  if (claimed !== true) return true; // already processed by another delivery
+
+  if (credit) {
+    // A credit voided by the dispute becomes usable again, unless the buyer has
+    // already bought another one, which the one-live-credit rule must keep.
+    if (credit.status !== 'revoked' || credit.environment !== eventMode) return true;
+    const live = await liveCreditFor({user: {id: credit.user_id}, database, mode: eventMode});
+    if (live) return true;
+    await database(
+      'content_decay_report_credits?id=eq.' + encodeURIComponent(credit.id) + '&status=eq.revoked',
+      {method: 'PATCH', body: {status: 'open', updated_at: new Date().toISOString()}}
+    );
+    return true;
+  }
+
+  const restored = await database(
+    'content_decay_purchases?id=eq.' + encodeURIComponent(purchase.id) + '&status=eq.revoked',
+    {
+      method: 'PATCH',
+      headers: {Prefer: 'return=representation'},
+      body: {status: 'paid', updated_at: new Date().toISOString()}
+    }
+  );
+  const row = Array.isArray(restored) ? restored[0] : restored;
+  // A refunded purchase is not reopened here.
+  if (!row || row.status !== 'paid') return true;
+  // grant_entitlement reactivates the entitlement the dispute revoked.
+  await database('rpc/content_decay_grant_entitlement', {
+    method: 'POST',
+    body: {p_purchase: purchase.id}
+  });
+  return true;
+}
+
 // Returns false only for events that are not this product's, so a shared
 // dispatcher can continue to the next handler.
 async function handleWebhook(event, {
@@ -1224,6 +1405,17 @@ async function handleWebhook(event, {
   }
   if (type === 'charge.dispute.created') {
     return await disputePurchase(event, {database, environment});
+  }
+  if (type === 'charge.dispute.closed') {
+    const status = String(event?.data?.object?.status || '').toLowerCase();
+    // "won" returns the money to the seller, so access comes back. "lost" keeps
+    // the revocation. An inquiry that closes without a chargeback is neither.
+    if (status === 'won') return await restoreDisputedPurchase(event, {database, environment});
+    if (status === 'lost') return await disputePurchase(event, {database, environment});
+    return false;
+  }
+  if (type === 'checkout.session.expired') {
+    return await expireCreditCheckout(event, {database, environment});
   }
   if (type !== 'checkout.session.completed' && type !== 'checkout.session.async_payment_succeeded') {
     return false;

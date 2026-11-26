@@ -369,6 +369,7 @@ test('a refunded purchase closes the PDF boundary through its revoked entitlemen
         id: 'ch_test_abc123',
         object: 'charge',
         livemode: false,
+        amount: REPORT_AMOUNT,
         amount_refunded: REPORT_AMOUNT,
         payment_intent: 'pi_test_abc123'
       }

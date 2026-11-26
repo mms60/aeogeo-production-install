@@ -462,6 +462,7 @@ const refundEvent = (charge = {}) => ({
       id: 'ch_test_abc123',
       object: 'charge',
       livemode: false,
+      amount: REPORT_AMOUNT,
       amount_refunded: REPORT_AMOUNT,
       payment_intent: 'pi_test_abc123',
       ...charge
@@ -503,21 +504,44 @@ test('charge.refunded marks the purchase refunded and revokes its entitlement', 
   assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_grant_entitlement'), false);
 });
 
-test('a partial refund also ends access', async () => {
+test('a partial refund leaves the report open and revokes nothing', async () => {
+  // A partial refund is a deliberate goodwill amount. Ending a $49 report over
+  // a $5 refund would take away more than was given back, so only a full
+  // refund closes the report.
   const database = fakeDatabase(defaultRoutes({
     intentPurchases: [REFUND_PURCHASE],
     refund: PURCHASE
   }));
 
-  const handled = await handleWebhook(refundEvent({amount_refunded: 500, refunded: false}), {
+  const handled = await handleWebhook(refundEvent({amount_refunded: 500}), {
     client: fakeClient(),
     database,
     priceId: PRICE_ID,
     environment: 'test'
   });
 
-  assert.equal(handled, true);
-  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), true);
+  assert.equal(handled, false);
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_claim_webhook'), false);
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), false);
+});
+
+test('a charge with no readable amount is never treated as a full refund', async () => {
+  const database = fakeDatabase(defaultRoutes({
+    intentPurchases: [REFUND_PURCHASE],
+    refund: PURCHASE
+  }));
+  const event = refundEvent();
+  delete event.data.object.amount;
+
+  const handled = await handleWebhook(event, {
+    client: fakeClient(),
+    database,
+    priceId: PRICE_ID,
+    environment: 'test'
+  });
+
+  assert.equal(handled, false);
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), false);
 });
 
 test('a refund for another product or a zero-amount marker is ignored', async () => {
