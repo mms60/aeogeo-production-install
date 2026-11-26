@@ -1141,16 +1141,20 @@ async function refundPurchase(event, {database = db, environment = config.enviro
   if (!CHARGE.test(String(charge?.id || ''))
       || !PAYMENT_INTENT.test(paymentIntent)
       || !Number.isSafeInteger(refundedAmount)
-      || !Number.isSafeInteger(chargedAmount)
-      || refundedAmount <= 0
-      || chargedAmount <= 0) {
+      || refundedAmount <= 0) {
     return false;
   }
+  // Every report this product records was verified at exactly REPORT_AMOUNT, so
+  // that is the charge total when the event does not carry one. Webhook payloads
+  // follow the endpoint's API version, and a missing `amount` must never make a
+  // full refund look partial and leave a refunded report open.
+  const total = Number.isSafeInteger(chargedAmount) && chargedAmount > 0
+    ? chargedAmount
+    : REPORT_AMOUNT;
   // Only a full refund ends the report. A partial refund is a deliberate
   // goodwill amount, so revoking the $49 report over a $5 refund would take
-  // away more than was given back. An unreadable charge amount is never guessed
-  // at: the event is left for a human rather than closing the report.
-  if (refundedAmount < chargedAmount) return false;
+  // away more than was given back.
+  if (refundedAmount < total) return false;
   if (!EVENT.test(String(event.id || ''))) {
     throw fail(400, 'CONTENT_DECAY_INVALID_REQUEST', 'The webhook event is not a valid Stripe event.');
   }

@@ -525,23 +525,36 @@ test('a partial refund leaves the report open and revokes nothing', async () => 
   assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), false);
 });
 
-test('a charge with no readable amount is never treated as a full refund', async () => {
-  const database = fakeDatabase(defaultRoutes({
-    intentPurchases: [REFUND_PURCHASE],
-    refund: PURCHASE
-  }));
-  const event = refundEvent();
-  delete event.data.object.amount;
+test('a charge with no readable amount falls back to the report price', async () => {
+  // Webhook payloads follow the endpoint's API version. If a charge ever arrives
+  // without `amount`, a full refund must still revoke instead of looking partial.
+  const full = refundEvent();
+  delete full.data.object.amount;
+  const fullDatabase = fakeDatabase(defaultRoutes({intentPurchases: [REFUND_PURCHASE], refund: PURCHASE}));
 
-  const handled = await handleWebhook(event, {
+  const handledFull = await handleWebhook(full, {
     client: fakeClient(),
-    database,
+    database: fullDatabase,
     priceId: PRICE_ID,
     environment: 'test'
   });
 
-  assert.equal(handled, false);
-  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), false);
+  assert.equal(handledFull, true);
+  assert.equal(fullDatabase.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), true);
+
+  const partial = refundEvent({amount_refunded: 500});
+  delete partial.data.object.amount;
+  const partialDatabase = fakeDatabase(defaultRoutes({intentPurchases: [REFUND_PURCHASE], refund: PURCHASE}));
+
+  const handledPartial = await handleWebhook(partial, {
+    client: fakeClient(),
+    database: partialDatabase,
+    priceId: PRICE_ID,
+    environment: 'test'
+  });
+
+  assert.equal(handledPartial, false);
+  assert.equal(partialDatabase.calls.some(call => call.path === 'rpc/content_decay_refund_purchase'), false);
 });
 
 test('a refund for another product or a zero-amount marker is ignored', async () => {
