@@ -527,8 +527,12 @@ async function endAbandonedCredit({credit, client, database}) {
     try {
       await client.expireSession(credit.stripe_session_id);
     } catch {
-      // The session is already complete; the webhook owns this row now.
-      return false;
+      // Stripe refuses to expire a session it already expired by itself, so a
+      // failed call is not the same as a live link. Read the session back: only
+      // one Stripe reports as expired can no longer take money, and is closed
+      // below. A completed session belongs to the webhook, and an unreadable
+      // state is left for the next load rather than guessed at.
+      if (!(await sessionExpiredAtStripe({credit, client}))) return false;
     }
   }
   await database(
@@ -536,6 +540,18 @@ async function endAbandonedCredit({credit, client, database}) {
     {method: 'PATCH', body: {status: 'expired', updated_at: new Date().toISOString()}}
   );
   return true;
+}
+
+// True only when Stripe itself says the session can no longer be paid. A session
+// that completed is not expired, and one that cannot be read is not either.
+async function sessionExpiredAtStripe({credit, client}) {
+  if (typeof client.retrieveSession !== 'function') return false;
+  try {
+    const session = await client.retrieveSession(credit.stripe_session_id);
+    return String(session?.status || '') === 'expired';
+  } catch {
+    return false;
+  }
 }
 
 // A reservation that never became a checkout must not hold the buyer's one

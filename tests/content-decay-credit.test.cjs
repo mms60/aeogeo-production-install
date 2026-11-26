@@ -1196,6 +1196,76 @@ test('a credit already spent on another report is closed and refused, not left o
     'the new scan is never granted the old purchase');
 });
 
+test('a session Stripe already expired still releases its reservation', async () => {
+  // Stripe expires sessions on its own. Calling expire on one of those fails,
+  // and that failure used to leave the reservation pending for ever, blocking
+  // every later checkout the buyer attempted.
+  const lapsed = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/lapsed',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([lapsed]);
+  const client = fakeClient({
+    expireSession: async () => { throw new Error('This Checkout Session has expired.'); },
+    retrieveSession: async () => creditSession({status: 'expired', payment_status: 'unpaid'}),
+    createCheckoutSession: async () => ({id: 'cs_test_fresh2', url: 'https://checkout.stripe.com/c/pay/fresh2'})
+  });
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test', client});
+
+  assert.deepEqual(page, {available: false, pending: false});
+  assert.equal(store.rows[0].status, 'expired', 'a dead session no longer blocks the buyer');
+
+  const fresh = await createCreditCheckout({
+    user: {id: USER, email: 'buyer@example.com'},
+    client,
+    database: store,
+    mode: 'test',
+    priceId: PRICE_ID,
+    origin: 'https://aegeosearch.com'
+  });
+
+  assert.equal(fresh.credit, true);
+  assert.equal(fresh.url, 'https://checkout.stripe.com/c/pay/fresh2');
+});
+
+test('a completed session stays with the webhook and never starts a second payment', async () => {
+  const lapsed = openCredit({
+    status: 'pending',
+    checkout_url: 'https://checkout.stripe.com/c/pay/lapsed',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+  });
+  const store = creditStore([lapsed]);
+  let sessions = 0;
+  const client = fakeClient({
+    expireSession: async () => { throw new Error('This Checkout Session is complete.'); },
+    retrieveSession: async () => creditSession({status: 'complete', payment_status: 'paid'}),
+    createCheckoutSession: async () => {
+      sessions += 1;
+      return {id: 'cs_test_second', url: 'https://checkout.stripe.com/c/pay/second'};
+    }
+  });
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test', client});
+
+  assert.deepEqual(page, {available: false, pending: false});
+  assert.equal(store.rows[0].status, 'pending', 'the webhook still owns this payment');
+
+  await assert.rejects(
+    () => createCreditCheckout({
+      user: {id: USER, email: 'buyer@example.com'},
+      client,
+      database: store,
+      mode: 'test',
+      priceId: PRICE_ID,
+      origin: 'https://aegeosearch.com'
+    }),
+    error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_PENDING'
+  );
+  assert.equal(sessions, 0, 'a paid session is never replaced by a second charge');
+});
+
 test('a credit whose report was refunded is not offered as unused', async () => {
   // A purchase row for the credit's session means the money was spent, even if
   // that report has since been refunded. The credit must not become reusable.
