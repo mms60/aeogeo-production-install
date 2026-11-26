@@ -28,15 +28,15 @@ const LIST_PAGE_LIMIT = 100;
 const LIST_PAGE_MAX = 50;
 const PENDING_RETRIEVE_MAX = 100;
 
-function usage() {
-  console.log('Usage: node scripts/reconcile-content-decay-credits.cjs [--days N] [--json] [--env-file PATH]');
-  console.log('');
-  console.log('  --days N        Stripe checkout sessions to read, newest first (default 30, max 365)');
-  console.log('  --json          Print the findings as JSON');
-  console.log('  --env-file PATH Load STRIPE_SECRET_KEY, SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from PATH');
-  console.log('');
-  console.log('Exit codes: 0 no critical findings, 1 critical findings, 2 the check could not run.');
-  console.log('Reads only. Nothing is changed in Stripe or the database.');
+function usage(log = console.log) {
+  log('Usage: node scripts/reconcile-content-decay-credits.cjs [--days N] [--json] [--env-file PATH]');
+  log('');
+  log('  --days N        Stripe checkout sessions to read, newest first (default 30, max 365)');
+  log('  --json          Print the findings as JSON');
+  log('  --env-file PATH Load STRIPE_SECRET_KEY, SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from PATH');
+  log('');
+  log('Exit codes: 0 no critical findings, 1 critical findings, 2 the check could not run.');
+  log('Reads only. Nothing is changed in Stripe or the database.');
 }
 
 function parseArgs(argv) {
@@ -76,7 +76,7 @@ async function stripeGet(key, path) {
   return body;
 }
 
-async function listSessions(key, sinceMs) {
+async function listSessions(key, sinceMs, request = stripeGet) {
   const sessions = [];
   let after = null;
   for (let page = 0; page < LIST_PAGE_MAX; page += 1) {
@@ -85,7 +85,7 @@ async function listSessions(key, sinceMs) {
       'created[gte]': String(Math.floor(sinceMs / 1000))
     });
     if (after) query.set('starting_after', after);
-    const body = await stripeGet(key, 'checkout/sessions?' + query.toString());
+    const body = await request(key, 'checkout/sessions?' + query.toString());
     const rows = Array.isArray(body?.data) ? body.data : [];
     sessions.push(...rows);
     if (!body?.has_more || rows.length === 0) return sessions;
@@ -95,11 +95,11 @@ async function listSessions(key, sinceMs) {
     + ' sessions in this window; narrow it with --days.');
 }
 
-async function creditRows(environment, sinceIso) {
+async function creditRows(environment, sinceIso, database = db) {
   const rows = [];
   const pageSize = 1000;
   for (let offset = 0; offset < 50000; offset += pageSize) {
-    const page = await db(
+    const page = await database(
       'content_decay_report_credits?environment=eq.' + encodeURIComponent(environment)
       + '&created_at=gte.' + encodeURIComponent(sinceIso)
       + '&select=' + ROW_FIELDS
@@ -112,8 +112,8 @@ async function creditRows(environment, sinceIso) {
   return rows;
 }
 
-async function pendingRows(environment) {
-  const rows = await db(
+async function pendingRows(environment, database = db) {
+  const rows = await database(
     'content_decay_report_credits?environment=eq.' + encodeURIComponent(environment)
     + '&status=eq.pending&select=' + ROW_FIELDS + '&limit=1000'
   );
@@ -122,7 +122,7 @@ async function pendingRows(environment) {
 
 // A reservation older than the window still needs its session read, because a
 // payment that was never opened stays pending for as long as nobody looks.
-async function sessionsForPending(key, pending, known) {
+async function sessionsForPending(key, pending, known, request = stripeGet) {
   const sessions = [];
   const warnings = [];
   let retrieved = 0;
@@ -135,7 +135,7 @@ async function sessionsForPending(key, pending, known) {
     }
     retrieved += 1;
     try {
-      sessions.push(await stripeGet(key, 'checkout/sessions/' + encodeURIComponent(sessionId)));
+      sessions.push(await request(key, 'checkout/sessions/' + encodeURIComponent(sessionId)));
     } catch (error) {
       warnings.push('Could not read pending credit session ' + sessionId + ': ' + error.message);
     }
@@ -163,37 +163,44 @@ function describe(finding) {
     + '  paid ' + (finding.createdAt || 'unknown');
 }
 
-function printReport(result, {days, sinceIso, warnings}) {
+function printReport(result, {days, sinceIso, warnings}, log = console.log) {
   const critical = result.findings.filter(item => item.severity === 'critical');
   const review = result.findings.filter(item => item.severity === 'review');
-  console.log('Content Decay credit reconciliation - ' + result.environment);
-  console.log('Window: last ' + days + ' day' + (days === 1 ? '' : 's') + ' (since ' + sinceIso + ')');
-  console.log('Stripe sessions read: ' + result.counts.sessions
+  log('Content Decay credit reconciliation - ' + result.environment);
+  log('Window: last ' + days + ' day' + (days === 1 ? '' : 's') + ' (since ' + sinceIso + ')');
+  log('Stripe sessions read: ' + result.counts.sessions
     + ' - paid credit payments: ' + result.counts.paidCreditSessions);
-  console.log('Credit rows read: ' + result.counts.credits + ' - pending: ' + result.counts.pending);
-  console.log('');
+  log('Credit rows read: ' + result.counts.credits + ' - pending: ' + result.counts.pending);
+  log('');
 
   if (result.findings.length === 0) {
-    console.log('No missing or unopened credits found. Nothing to reconcile.');
+    log('No missing or unopened credits found. Nothing to reconcile.');
   } else {
-    console.log('Critical: ' + critical.length + (critical.length ? ' (money taken without a usable credit)' : ''));
-    for (const finding of critical) console.log('- ' + describe(finding));
+    log('Critical: ' + critical.length + (critical.length ? ' (money taken without a usable credit)' : ''));
+    for (const finding of critical) log('- ' + describe(finding));
     if (review.length) {
-      console.log('');
-      console.log('Review: ' + review.length + ' (refunded or disputed, so expected; confirm the charge matches)');
-      for (const finding of review) console.log('- ' + describe(finding));
+      log('');
+      log('Review: ' + review.length + ' (refunded or disputed, so expected; confirm the charge matches)');
+      for (const finding of review) log('- ' + describe(finding));
     }
-    console.log('');
-    console.log('A critical finding means Stripe has the payment and the credit row is missing, pending or expired.');
-    console.log('Re-run the buyer\'s confirm for that session, or open the credit row, before telling them it is lost.');
+    log('');
+    log('A critical finding means Stripe has the payment and the credit row is missing, pending or expired.');
+    log('Re-run the buyer\'s confirm for that session, or open the credit row, before telling them it is lost.');
   }
-  for (const warning of warnings) console.log('Warning: ' + warning);
+  for (const warning of warnings) log('Warning: ' + warning);
 }
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
+async function main({
+  argv = process.argv.slice(2),
+  credential = config.credential,
+  database = db,
+  request = stripeGet,
+  now = Date.now,
+  log = console.log
+} = {}) {
+  const args = parseArgs(argv);
   if (args.help) {
-    usage();
+    usage(log);
     return 0;
   }
   if (args.envFile) {
@@ -207,19 +214,19 @@ async function main() {
     }
   }
 
-  const {key, mode} = config.credential();
-  const sinceMs = Date.now() - args.days * DAY_MS;
+  const {key, mode} = credential();
+  const sinceMs = now() - args.days * DAY_MS;
   const sinceIso = new Date(sinceMs).toISOString();
 
   const [sessions, windowRows, pending] = await Promise.all([
-    listSessions(key, sinceMs),
+    listSessions(key, sinceMs, request),
     // A reservation is written before its session, so read rows from slightly
     // before the window or a session at the boundary could look unmatched.
-    creditRows(mode, new Date(sinceMs - 2 * DAY_MS).toISOString()),
-    pendingRows(mode)
+    creditRows(mode, new Date(sinceMs - 2 * DAY_MS).toISOString(), database),
+    pendingRows(mode, database)
   ]);
   const credits = uniqueById([...(Array.isArray(windowRows) ? windowRows : []), ...pending]);
-  const extra = await sessionsForPending(key, pending, new Set(sessions.map(session => session.id)));
+  const extra = await sessionsForPending(key, pending, new Set(sessions.map(session => session.id)), request);
   const result = reconcileCredits({
     sessions: [...sessions, ...extra.sessions],
     credits,
@@ -227,28 +234,46 @@ async function main() {
   });
 
   if (args.json) {
-    console.log(JSON.stringify({
+    log(JSON.stringify({
       version: 1,
-      generatedAt: new Date().toISOString(),
+      generatedAt: new Date(now()).toISOString(),
       days: args.days,
       since: sinceIso,
       ...result,
       warnings: extra.warnings
     }, null, 2));
   } else {
-    printReport(result, {days: args.days, sinceIso, warnings: extra.warnings});
+    printReport(result, {days: args.days, sinceIso, warnings: extra.warnings}, log);
   }
 
   return result.counts.critical > 0 ? 1 : 0;
 }
 
+// The exit code the process uses: 0 clean, 1 critical findings, 2 could not run.
+async function run(options = {}) {
+  const errorLog = options.errorLog || console.error;
+  try {
+    return await main(options);
+  } catch (error) {
+    errorLog('Reconciliation could not run: ' + error.message);
+    return 2;
+  }
+}
+
 if (require.main === module) {
-  main().then(code => {
+  run().then(code => {
     process.exitCode = code;
-  }).catch(error => {
-    console.error('Reconciliation could not run: ' + error.message);
-    process.exitCode = 2;
   });
 }
 
-module.exports = {parseArgs, main, printReport, listSessions, creditRows, pendingRows};
+module.exports = {
+  parseArgs,
+  main,
+  run,
+  printReport,
+  listSessions,
+  creditRows,
+  pendingRows,
+  sessionsForPending,
+  PENDING_RETRIEVE_MAX
+};
