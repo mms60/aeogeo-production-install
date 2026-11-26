@@ -1154,6 +1154,64 @@ test('a claim that cannot close the credit still grants the report, and the next
   assert.equal(repaired.options.body.claimed_scan_id, SCAN);
 });
 
+test('a retry that finds the report already granted still closes its open credit', async () => {
+  // The same lost close, reached from the other direction: the retry stops at
+  // "already purchased" and used to return before ever touching the credit.
+  const database = fakeDatabase(routes({
+    entitlements: [{id: ENTITLEMENT, purchase_id: PURCHASE, environment: 'test', expires_at: null}],
+    openCredits: [openCredit()],
+    purchases: [{id: PURCHASE, status: 'paid', user_id: USER, scan_id: SCAN}]
+  }));
+
+  const result = await claimCredit({scanId: SCAN, user: {id: USER}, database, mode: 'test'});
+
+  assert.equal(result.alreadyPurchased, true);
+  assert.equal(database.calls.some(call => call.path === 'content_decay_purchases'), false,
+    'no second purchase is recorded');
+  const closed = database.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(closed, 'the stuck credit is closed by the retry');
+  assert.equal(closed.options.body.status, 'claimed');
+  assert.equal(closed.options.body.purchase_id, PURCHASE);
+});
+
+test('a credit already spent on another report is closed and refused, not left open', async () => {
+  const OTHER_SCAN = '88888888-8888-4888-8888-888888888888';
+  const database = fakeDatabase(routes({
+    openCredits: [openCredit()],
+    purchases: [{id: PURCHASE, status: 'paid', user_id: USER, scan_id: OTHER_SCAN}]
+  }));
+
+  await assert.rejects(
+    () => claimCredit({scanId: SCAN, user: {id: USER}, database, mode: 'test'}),
+    error => error.status === 409 && error.code === 'CONTENT_DECAY_CREDIT_ALREADY_USED'
+  );
+
+  const closed = database.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(closed, 'the credit is closed before the claim is refused');
+  assert.equal(closed.options.body.status, 'claimed');
+  assert.equal(closed.options.body.claimed_scan_id, OTHER_SCAN);
+  assert.equal(database.calls.some(call => call.path === 'rpc/content_decay_grant_entitlement'), false,
+    'the new scan is never granted the old purchase');
+});
+
+test('a credit whose report was refunded is not offered as unused', async () => {
+  // A purchase row for the credit's session means the money was spent, even if
+  // that report has since been refunded. The credit must not become reusable.
+  const store = fakeDatabase(routes({
+    creditRows: [openCredit()],
+    purchases: [{id: PURCHASE, status: 'refunded', user_id: USER, scan_id: SCAN}]
+  }));
+
+  const page = await openCreditFor({user: {id: USER}, database: store, mode: 'test'});
+
+  assert.deepEqual(page, {available: false, pending: false});
+  const closed = store.calls.find(call =>
+    call.path.startsWith('content_decay_report_credits?id=eq.') && call.options.method === 'PATCH');
+  assert.ok(closed, 'a spent-and-refunded credit cannot be replayed');
+});
+
 // ---- a lapsed Stripe session ----------------------------------------------
 
 test('a session Stripe expires closes its reservation without waiting for a page load', async () => {

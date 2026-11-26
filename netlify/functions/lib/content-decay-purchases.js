@@ -462,7 +462,10 @@ async function alreadySpentCredit({credit, database}) {
   } catch {
     return false;
   }
-  if (!purchase || purchase.status !== 'paid') return false;
+  if (!purchase) return false;
+  // Any purchase for this session means the money was spent on a report. A
+  // later refund or dispute revokes that report; it must not make the credit
+  // reusable, so the purchase status is deliberately not filtered here.
   await closeCreditOnPurchase({credit, purchase, scanId: purchase.scan_id, database});
   return true;
 }
@@ -1022,11 +1025,9 @@ async function claimCredit({scanId, user, database = db, mode = config.environme
     }
   }
 
-  const existing = await entitlementFor({userId: user.id, scanId, environment: mode, database});
-  if (existing) {
-    return {available: true, claimed: true, alreadyPurchased: true, entitlementId: existing.id, scanId};
-  }
-
+  // The buyer's one open credit is read before the entitlement check. A claim
+  // that granted the report but lost the write that closes the credit has to be
+  // repaired on any retry, including one that answers "already purchased".
   const rows = await database(
     'content_decay_report_credits?user_id=eq.' + encodeURIComponent(user.id)
     + '&status=eq.open&environment=eq.' + encodeURIComponent(mode)
@@ -1034,6 +1035,15 @@ async function claimCredit({scanId, user, database = db, mode = config.environme
     + '&order=created_at.asc&limit=1'
   );
   const credit = Array.isArray(rows) ? rows[0] : null;
+
+  const existing = await entitlementFor({userId: user.id, scanId, environment: mode, database});
+  if (existing) {
+    // The entitlement proves a report was granted for this scan. If the credit
+    // behind it is still open, this retry closes it instead of leaving it stuck.
+    if (credit) await alreadySpentCredit({credit, database});
+    return {available: true, claimed: true, alreadyPurchased: true, entitlementId: existing.id, scanId};
+  }
+
   if (!credit) return {available: false};
 
   const select = 'content_decay_purchases?stripe_session_id=eq.'
@@ -1042,9 +1052,17 @@ async function claimCredit({scanId, user, database = db, mode = config.environme
   const prior = await database(select);
   if (Array.isArray(prior) && prior[0]) {
     purchase = prior[0];
-    if (purchase.user_id !== user.id || purchase.scan_id !== scanId) {
+    if (purchase.user_id !== user.id) {
       throw fail(409, 'CONTENT_DECAY_PURCHASE_MISMATCH',
-        'That payment was already recorded against another report.');
+        'That payment was already recorded against another account.');
+    }
+    if (purchase.scan_id !== scanId) {
+      // The credit was already spent on another report. Close it against the
+      // purchase that spent it before refusing, so a lost close can never leave
+      // a paid credit looking unused and blocking every later claim.
+      await closeCreditOnPurchase({credit, purchase, scanId: purchase.scan_id, database});
+      throw fail(409, 'CONTENT_DECAY_CREDIT_ALREADY_USED',
+        'This $49 credit was already used for another report. That report is still available under the scan it was used for.');
     }
   } else {
     const body = {
