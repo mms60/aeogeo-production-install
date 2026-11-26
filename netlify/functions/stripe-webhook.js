@@ -28,11 +28,17 @@ exports.handler = async event => {
   // refund and dispute events. handleWebhook returns false for another
   // product's records, so the remaining handlers still run.
   if (e.livemode === true && process.env.STRIPE_SECRET_KEY) {
+    // checkout.session.expired is routed only for this product's metadata,
+    // because every product's checkout sessions expire. Refunds and disputes
+    // carry no product metadata, so they are offered to this handler and fall
+    // through when it does not recognise the payment.
     const isContentDecay = ((e.type === 'checkout.session.completed'
-      || e.type === 'checkout.session.async_payment_succeeded')
+      || e.type === 'checkout.session.async_payment_succeeded'
+      || e.type === 'checkout.session.expired')
       && e.data?.object?.metadata?.product === 'content_decay')
       || e.type === 'charge.refunded'
-      || e.type === 'charge.dispute.created';
+      || e.type === 'charge.dispute.created'
+      || e.type === 'charge.dispute.closed';
     if (isContentDecay) {
       const contentDecayResult = await require("./lib/content-decay-purchases").handleWebhook(e);
       if (contentDecayResult) return reply(200, {received: true, contentDecay: true});

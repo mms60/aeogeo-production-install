@@ -78,6 +78,20 @@ const refund = () => ({
   data: {object: {payment_intent: 'pi_test_123'}}
 });
 
+const expired = (product = 'content_decay') => ({
+  id: 'evt_expired_12345',
+  type: 'checkout.session.expired',
+  livemode: true,
+  data: {object: {id: 'cs_live_expired1', metadata: {product}}}
+});
+
+const disputeClosed = (status = 'won') => ({
+  id: 'evt_dispute_closed1',
+  type: 'charge.dispute.closed',
+  livemode: true,
+  data: {object: {id: 'dp_live_closed1', status, payment_intent: 'pi_test_123'}}
+});
+
 function call(event) {
   return handler({
     httpMethod: 'POST',
@@ -117,6 +131,39 @@ test('another product\'s refund falls through after the Content Decay lookup', a
   const response = await call(refund());
   assert.deepEqual(JSON.parse(response.body), {received: true, ignored: true});
   assert.equal(state.contentDecayCalls.length, 1);
+  assert.equal(state.billingCalls.length, 1);
+});
+
+test('a closed dispute is routed to Content Decay before billing', async () => {
+  reset(true);
+  const response = await call(disputeClosed('won'));
+  assert.deepEqual(JSON.parse(response.body), {received: true, contentDecay: true});
+  assert.equal(state.contentDecayCalls.length, 1);
+  assert.equal(state.contentDecayCalls[0].type, 'charge.dispute.closed');
+  assert.equal(state.billingCalls.length, 0);
+});
+
+test('a closed dispute for another product falls through after the Content Decay lookup', async () => {
+  reset(false);
+  const response = await call(disputeClosed('lost'));
+  assert.deepEqual(JSON.parse(response.body), {received: true, ignored: true});
+  assert.equal(state.contentDecayCalls.length, 1);
+  assert.equal(state.billingCalls.length, 1);
+});
+
+test('a Content Decay checkout expiry is handled', async () => {
+  reset(true);
+  const response = await call(expired());
+  assert.deepEqual(JSON.parse(response.body), {received: true, contentDecay: true});
+  assert.equal(state.contentDecayCalls.length, 1);
+  assert.equal(state.contentDecayCalls[0].type, 'checkout.session.expired');
+});
+
+test('another product\'s checkout expiry never reaches the Content Decay handler', async () => {
+  reset(true);
+  const response = await call(expired('audit'));
+  assert.deepEqual(JSON.parse(response.body), {received: true, ignored: true});
+  assert.equal(state.contentDecayCalls.length, 0);
   assert.equal(state.billingCalls.length, 1);
 });
 
