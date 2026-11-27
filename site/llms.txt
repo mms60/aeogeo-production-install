@@ -40,11 +40,11 @@ Our pricing page is the source of truth: 12 service options in six categories, p
 
 ## Individual guides
 - [What is AI search optimization?](https://aeogeosearch.com/resources/what-is-ai-search-optimization/): A complete guide to how AI search works, plus the SEO, AEO, GEO, content, technical, local and measurement practices behind it.
-- [What is Generative Engine Optimization (GEO)?](https://aeogeosearch.com/resources/what-is-geo/)
-- [What is Answer Engine Optimization (AEO)?](https://aeogeosearch.com/resources/what-is-aeo/)
-- [What is the difference between SEO, AEO, GEO, and AIO?](https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/)
-- [How are Google AI Overviews changing search in 2026?](https://aeogeosearch.com/resources/ai-overviews-changing-search/)
-- [Why are zero-click searches rising  -  and what can businesses do about it?](https://aeogeosearch.com/resources/zero-click-search/)
-- [How do you get cited in AI answers from Google Gemini, Claude, Perplexity, and ChatGPT?](https://aeogeosearch.com/resources/get-cited-ai-answers/)
-- [Which AI search platforms should your business optimize for in 2026?](https://aeogeosearch.com/resources/which-ai-platforms/)
+- [What is Generative Engine Optimization (GEO)?](https://aeogeosearch.com/resources/what-is-geo/): A definition of Generative Engine Optimization, the research behind it, and the content practices that earn citations in generative AI answers.
+- [What is Answer Engine Optimization (AEO)?](https://aeogeosearch.com/resources/what-is-aeo/): A complete guide to Answer Engine Optimization, covering how answer engines work, how to structure content for direct answers, and how to measure results.
+- [What is the difference between SEO, AEO, GEO, and AIO?](https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/): How the four disciplines differ, what each one is responsible for, and how to combine them in one search strategy.
+- [How are Google AI Overviews changing search in 2026?](https://aeogeosearch.com/resources/ai-overviews-changing-search/): How Google AI Overviews are changing search, including their reach, the queries they answer, and what the shift means for organic clicks.
+- [Why are zero-click searches rising  -  and what can businesses do about it?](https://aeogeosearch.com/resources/zero-click-search/): Why most U.S. Google searches now end without a click, and how businesses can stay visible inside AI answers instead of relying on clicks.
+- [How do you get cited in AI answers from Google Gemini, Claude, Perplexity, and ChatGPT?](https://aeogeosearch.com/resources/get-cited-ai-answers/): Twelve GEO and AEO strategies for earning citations in ChatGPT, Google AI Overviews, Gemini and Perplexity, covering content, authority and measurement.
+- [Which AI search platforms should your business optimize for in 2026?](https://aeogeosearch.com/resources/which-ai-platforms/): Which AI platforms to prioritize, how much traffic each one sends, and where to start when your audience is spread across ChatGPT, AI Overviews and Perplexity.
 - [How do you measure AI search visibility and GEO performance?](https://aeogeosearch.com/resources/measure-ai-visibility/): How to test and track AI mentions, citations and share of voice across ChatGPT, Google AI Overviews, Perplexity and Copilot, including local AI visibility, tools and reporting.
