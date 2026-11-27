@@ -39,7 +39,7 @@ Our pricing page is the source of truth: 12 service options in six categories, p
 - [GEO Content Checker](https://aeogeosearch.com/tools/geo-content-checker/): Needs-only editorial checklist, not an outline or implementation guide. Optional content services remain separate.
 
 ## Individual guides
-- [What is AI search optimization?](https://aeogeosearch.com/resources/what-is-ai-search-optimization/)
+- [What is AI search optimization?](https://aeogeosearch.com/resources/what-is-ai-search-optimization/): A complete guide to how AI search works, plus the SEO, AEO, GEO, content, technical, local and measurement practices behind it.
 - [What is Generative Engine Optimization (GEO)?](https://aeogeosearch.com/resources/what-is-geo/)
 - [What is Answer Engine Optimization (AEO)?](https://aeogeosearch.com/resources/what-is-aeo/)
 - [What is the difference between SEO, AEO, GEO, and AIO?](https://aeogeosearch.com/resources/seo-aeo-geo-aio-difference/)
@@ -47,4 +47,4 @@ Our pricing page is the source of truth: 12 service options in six categories, p
 - [Why are zero-click searches rising  -  and what can businesses do about it?](https://aeogeosearch.com/resources/zero-click-search/)
 - [How do you get cited in AI answers from Google Gemini, Claude, Perplexity, and ChatGPT?](https://aeogeosearch.com/resources/get-cited-ai-answers/)
 - [Which AI search platforms should your business optimize for in 2026?](https://aeogeosearch.com/resources/which-ai-platforms/)
-- [How do you measure AI search visibility and GEO performance?](https://aeogeosearch.com/resources/measure-ai-visibility/)
+- [How do you measure AI search visibility and GEO performance?](https://aeogeosearch.com/resources/measure-ai-visibility/): How to test and track AI mentions, citations and share of voice across ChatGPT, Google AI Overviews, Perplexity and Copilot, including local AI visibility, tools and reporting.
