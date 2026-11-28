@@ -3,7 +3,6 @@
 // Reuse existing transport/credential handling. Never return or log credentials.
 const {PLANS}=require('./plans');
 const REVISION='audit-runtime-ready-v3';
-const PRICES={starter:{month:4900,year:47040},professional:{month:14900,year:143040},agency:{month:49900,year:479040}};
 // Derive the database expectations from the single plan definition, so an
 // allowance change cannot leave readiness checking the previous numbers.
 const CATALOG=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{domains:p.domains,per_audit:p.pagesPerAudit,monthly_pages:p.monthlyPages,scans_per_month:p.scansPerMonth}]));
@@ -14,7 +13,7 @@ function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,
  async function verify(){
   const priceChecks=[];
   try{
-   const descriptors=[];for(const [plan,periods]of Object.entries(PRICES))for(const [period,amount]of Object.entries(periods)){
+   const descriptors=[];for(const [plan,p]of Object.entries(PLANS))for(const [period,amount]of Object.entries({month:p.monthly,year:p.annual})){
     const name='STRIPE_PRICE_'+plan.toUpperCase()+'_'+period.toUpperCase(),id=env[name];
     if(!/^price_[A-Za-z0-9]+$/.test(id||''))throw problem('AUDIT_PRICE_MISSING_'+plan.toUpperCase()+'_'+period.toUpperCase());
     descriptors.push({plan,period,amount,id});

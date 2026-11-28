@@ -1,14 +1,15 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {PLANS}=require('../netlify/functions/lib/plans'),{createReadiness}=require('../netlify/functions/lib/audit-checkout-readiness');
-const AMOUNTS={starter:{month:4900,year:47040},professional:{month:14900,year:143040},agency:{month:49900,year:479040}};
+const planAmounts=()=>Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{month:p.monthly,year:p.annual}]));
 
-function fixture(rows){
+function fixture(rows,{stripeAmounts=planAmounts()}={}){
+ const amounts=planAmounts();
  const env={STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_PORTAL_CONFIGURATION_ID:'bpc_fixture'};
- for(const plan of Object.keys(AMOUNTS))for(const period of ['month','year'])env['STRIPE_PRICE_'+plan.toUpperCase()+'_'+period.toUpperCase()]='price_'+plan+period;
+ for(const plan of Object.keys(amounts))for(const period of ['month','year'])env['STRIPE_PRICE_'+plan.toUpperCase()+'_'+period.toUpperCase()]='price_'+plan+period;
  const stripe=async path=>{
   if(path.startsWith('prices/')){
-   const id=path.slice('prices/'.length),match=Object.entries(AMOUNTS).flatMap(([plan,periods])=>Object.entries(periods).map(([period,amount])=>({plan,period,amount,id:'price_'+plan+period}))).find(p=>p.id===id);
+   const id=path.slice('prices/'.length),match=Object.entries(stripeAmounts).flatMap(([plan,periods])=>Object.entries(periods).map(([period,amount])=>({plan,period,amount,id:'price_'+plan+period}))).find(p=>p.id===id);
    if(!match)throw Error('unexpected price '+id);
    return {id,active:true,livemode:true,currency:'usd',unit_amount:match.amount,type:'recurring',billing_scheme:'per_unit',recurring:{interval:match.period,interval_count:1,usage_type:'licensed'}};
   }
@@ -27,6 +28,29 @@ test('readiness accepts a catalog that matches plans.js',async()=>{
  assert.equal(result.ready,true);
  assert.equal(result.code,'AUDIT_CONFIGURATION_VERIFIED');
  assert.equal(result.catalogVerified,true);
+});
+
+test('readiness follows the six price amounts in plans.js',async()=>{
+ const original=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{monthly:p.monthly,annual:p.annual}]));
+ try{
+  const changed={starter:{monthly:5100,annual:48960},professional:{monthly:15100,annual:144960},agency:{monthly:50100,annual:480960}};
+  for(const [id,amounts] of Object.entries(changed)){PLANS[id].monthly=amounts.monthly;PLANS[id].annual=amounts.annual;}
+  const result=await fixture(catalog()).check({fresh:true});
+  assert.equal(result.ready,true);
+  assert.equal(result.pricesVerified,6);
+
+  const staleAmounts=planAmounts();
+  staleAmounts.professional.month=original.professional.monthly;
+  const stale=await fixture(catalog(),{stripeAmounts:staleAmounts}).check({fresh:true});
+  assert.equal(stale.ready,false);
+  assert.equal(stale.code,'AUDIT_PRICE_MISMATCH_PROFESSIONAL_MONTH');
+  const stalePrice=stale.checks.prices.find(price=>price.plan==='professional'&&price.period==='month');
+  assert.ok(stalePrice.issues.includes('AMOUNT'));
+  assert.equal(stalePrice.expected.amountCents,changed.professional.monthly);
+  assert.equal(stalePrice.observed.amountCents,original.professional.monthly);
+ }finally{
+  for(const [id,amounts] of Object.entries(original)){PLANS[id].monthly=amounts.monthly;PLANS[id].annual=amounts.annual;}
+ }
 });
 
 test('readiness rejects the old 4,500 or 15,000 monthly budgets',async()=>{
