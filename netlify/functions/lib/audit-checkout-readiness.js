@@ -6,7 +6,7 @@ const REVISION='audit-runtime-ready-v3';
 const PRICES={starter:{month:4900,year:47040},professional:{month:14900,year:143040},agency:{month:49900,year:479040}};
 // Derive the database expectations from the single plan definition, so an
 // allowance change cannot leave readiness checking the previous numbers.
-const CATALOG=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{domains:p.domains,per_audit:p.pagesPerAudit,monthly_pages:p.monthlyPages}]));
+const CATALOG=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{domains:p.domains,per_audit:p.pagesPerAudit,monthly_pages:p.monthlyPages,scans_per_month:p.scansPerMonth}]));
 const EVENTS=['checkout.session.completed','checkout.session.expired','invoice.paid','invoice.payment_failed','customer.subscription.updated','customer.subscription.deleted','charge.refunded','charge.dispute.created','charge.dispute.closed'];
 function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,now=()=>Date.now()}={}){
  let cached=null,until=0,pending=null;
@@ -49,7 +49,7 @@ function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,
     const list=await stripe('webhook_endpoints?limit=100'),urls=['https://aeogeosearch.com/.netlify/functions/stripe-webhook','https://geoaeosearch.netlify.app/.netlify/functions/stripe-webhook'];
     if(!list.data?.some(h=>h.status==='enabled'&&h.livemode===true&&urls.includes(h.url)&&(h.enabled_events?.includes('*')||EVENTS.every(e=>h.enabled_events?.includes(e)))))throw Error();
    }catch{throw problem('AUDIT_WEBHOOK_REVIEW');}})();
-   const catalogTask=(async()=>{try{const rows=await db('geo_plan_catalog?select=id,domains,per_audit,monthly_pages,approved');for(const [id,expected]of Object.entries(CATALOG)){const row=rows.find(r=>r.id===id);if(row?.approved!==true||Object.entries(expected).some(([k,v])=>row[k]!==v))throw Error();}}catch{throw problem('AUDIT_CATALOG_REVIEW');}})();
+   const catalogTask=(async()=>{try{const rows=await db('geo_plan_catalog?select=id,domains,per_audit,monthly_pages,scans_per_month,approved');for(const [id,expected]of Object.entries(CATALOG)){const row=rows.find(r=>r.id===id);if(row?.approved!==true||Object.entries(expected).some(([k,v])=>row[k]!==v))throw Error();}}catch{throw problem('AUDIT_CATALOG_REVIEW');}})();
    const providerResults=await Promise.allSettled([priceTask,portalTask,webhookTask,catalogTask]);
    const priceResults=providerResults[0].status==='fulfilled'?providerResults[0].value:[];
    const failures=[...priceResults,...providerResults.slice(1)].filter(r=>r.status==='rejected');
