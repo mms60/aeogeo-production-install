@@ -1,6 +1,6 @@
 'use strict';
 const {stripeKeyMode}=require('./stripe-credential');
-const PLANS={starter:{name:'Starter',monthly:4900,annual:47040,domains:1,pagesPerAudit:25,monthlyPages:300},professional:{name:'Professional',monthly:14900,annual:143040,domains:3,pagesPerAudit:25,monthlyPages:75},agency:{name:'Agency',monthly:49900,annual:479040,domains:10,pagesPerAudit:25,monthlyPages:250}};
+const PLANS={starter:{name:'Starter',monthly:4900,annual:47040,domains:1,pagesPerAudit:25,monthlyPages:300,scansPerMonth:2},professional:{name:'Professional',monthly:14900,annual:143040,domains:3,pagesPerAudit:25,monthlyPages:1500,scansPerMonth:6},agency:{name:'Agency',monthly:49900,annual:479040,domains:10,pagesPerAudit:25,monthlyPages:5000,scansPerMonth:20}};
 const PRICE_KEYS={starter:{month:'aeogeo-starter-month',year:'aeogeo-starter-year'},professional:{month:'aeogeo-professional-month',year:'aeogeo-professional-year'},agency:{month:'aeogeo-agency-month',year:'aeogeo-agency-year'}};
 function priceID(plan,interval){return process.env['STRIPE_PRICE_'+plan.toUpperCase()+'_'+(interval==='year'?'YEAR':'MONTH')];}
 // The lookup key names the price that belongs to the current product, so a

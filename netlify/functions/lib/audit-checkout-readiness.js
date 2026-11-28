@@ -1,9 +1,12 @@
 'use strict';
 // Read-only Stripe/database verification inside the deployed Netlify runtime.
 // Reuse existing transport/credential handling. Never return or log credentials.
+const {PLANS}=require('./plans');
 const REVISION='audit-runtime-ready-v3';
 const PRICES={starter:{month:4900,year:47040},professional:{month:14900,year:143040},agency:{month:49900,year:479040}};
-const CATALOG={starter:{domains:1,per_audit:25,monthly_pages:300},professional:{domains:3,per_audit:25,monthly_pages:75},agency:{domains:10,per_audit:25,monthly_pages:250}};
+// Derive the database expectations from the single plan definition, so an
+// allowance change cannot leave readiness checking the previous numbers.
+const CATALOG=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{domains:p.domains,per_audit:p.pagesPerAudit,monthly_pages:p.monthlyPages}]));
 const EVENTS=['checkout.session.completed','checkout.session.expired','invoice.paid','invoice.payment_failed','customer.subscription.updated','customer.subscription.deleted','charge.refunded','charge.dispute.created','charge.dispute.closed'];
 function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,now=()=>Date.now()}={}){
  let cached=null,until=0,pending=null;
