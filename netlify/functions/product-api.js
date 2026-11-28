@@ -23,10 +23,14 @@ exports.handler = async event => {try {
   const sub = subs[0] || null;
   const blocked = holds.find(h => (!h.expires_at || Date.parse(h.expires_at)>Date.now()) && (h.kind==='dispute' || h.subscription_id===sub?.subscription_id));
   const active = !!sub && sub.billing_mode===billingMode() && ['active','past_due','canceled'].includes(sub.status) && Date.parse(sub.paid_through)>Date.now() && !blocked;
-  const periods = await db('geo_usage_periods?user_id=eq.'+u.id+'&period_start=lte.'+encodeURIComponent(new Date().toISOString())+'&period_end=gt.'+encodeURIComponent(new Date().toISOString())+'&select=period_start,period_end,used_pages,reserved_pages&order=period_start.desc&limit=1');
+  // Select every column and whitelist here, rather than naming scans_used/scans_reserved in
+  // the query: those columns may not exist yet, and naming a missing one fails the whole
+  // account response. Missing counters read as zero until migration 16 is applied.
+  const periods = await db('geo_usage_periods?user_id=eq.'+u.id+'&period_start=lte.'+encodeURIComponent(new Date().toISOString())+'&period_end=gt.'+encodeURIComponent(new Date().toISOString())+'&select=*&order=period_start.desc&limit=1');
+  const rawPeriod=periods[0]||null,period=rawPeriod?{period_start:rawPeriod.period_start,period_end:rawPeriod.period_end,used_pages:rawPeriod.used_pages,reserved_pages:rawPeriod.reserved_pages,scans_used:rawPeriod.scans_used??0,scans_reserved:rawPeriod.scans_reserved??0}:null;
   return reply(200, {email:u.email,verified:!!u.email_confirmed_at,freeUsed:!!accounts[0]?.free_audit_consumed_at,subscription:sub,paidActive:active,
    billingHold:blocked?.reason||null,billingMode:billingMode(),sandboxCheckout:sandboxCheckout('starter',u.email),billingAdmin:billingAdmin(u.email),
-   period:periods[0]||null,jobs,legacy,domains,plans:publicPlans(),checkoutPlans:checkoutConfiguration.ready?Object.keys(publicPlans()).filter(id=>!billingReady(id,u.email)):[],billingNotice:checkoutConfiguration.ready?billingReady('starter',u.email):checkoutConfiguration.message,billingReady:checkoutConfiguration.ready&&!billingReady('starter',u.email)});
+   period,jobs,legacy,domains,plans:publicPlans(),checkoutPlans:checkoutConfiguration.ready?Object.keys(publicPlans()).filter(id=>!billingReady(id,u.email)):[],billingNotice:checkoutConfiguration.ready?billingReady('starter',u.email):checkoutConfiguration.message,billingReady:checkoutConfiguration.ready&&!billingReady('starter',u.email)});
  }
  if (action === 'report') {
   const id=event.queryStringParameters.id;if(!UUID.test(id||''))return reply(400,{error:'Invalid report ID.'});

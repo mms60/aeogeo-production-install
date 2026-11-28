@@ -1,17 +1,20 @@
 'use strict';
 // Read-only Stripe/database verification inside the deployed Netlify runtime.
 // Reuse existing transport/credential handling. Never return or log credentials.
-const REVISION='audit-runtime-ready-v3';
-const PRICES={starter:{month:4900,year:47040},professional:{month:14900,year:143040},agency:{month:49900,year:479040}};
-const CATALOG={starter:{domains:1,per_audit:25,monthly_pages:300},professional:{domains:3,per_audit:25,monthly_pages:75},agency:{domains:10,per_audit:25,monthly_pages:250}};
+const {PLANS}=require('./plans');
+const REVISION='audit-runtime-ready-v4';
+// Derive the database expectations from the single plan definition, so an
+// allowance change cannot leave readiness checking the previous numbers.
+const CATALOG=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{domains:p.domains,per_audit:p.pagesPerAudit,monthly_pages:p.monthlyPages,scans_per_month:p.scansPerMonth}]));
 const EVENTS=['checkout.session.completed','checkout.session.expired','invoice.paid','invoice.payment_failed','customer.subscription.updated','customer.subscription.deleted','charge.refunded','charge.dispute.created','charge.dispute.closed'];
 function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,now=()=>Date.now()}={}){
  let cached=null,until=0,pending=null;
  const problem=code=>Object.assign(new Error('Audit checkout configuration requires attention.'),{auditCode:code});
  async function verify(){
   const priceChecks=[];
+  const catalogChecks=[];
   try{
-   const descriptors=[];for(const [plan,periods]of Object.entries(PRICES))for(const [period,amount]of Object.entries(periods)){
+   const descriptors=[];for(const [plan,p]of Object.entries(PLANS))for(const [period,amount]of Object.entries({month:p.monthly,year:p.annual})){
     const name='STRIPE_PRICE_'+plan.toUpperCase()+'_'+period.toUpperCase(),id=env[name];
     if(!/^price_[A-Za-z0-9]+$/.test(id||''))throw problem('AUDIT_PRICE_MISSING_'+plan.toUpperCase()+'_'+period.toUpperCase());
     descriptors.push({plan,period,amount,id});
@@ -46,11 +49,32 @@ function createReadiness({stripe,db,validatePortalConfiguration,env=process.env,
     const list=await stripe('webhook_endpoints?limit=100'),urls=['https://aeogeosearch.com/.netlify/functions/stripe-webhook','https://geoaeosearch.netlify.app/.netlify/functions/stripe-webhook'];
     if(!list.data?.some(h=>h.status==='enabled'&&h.livemode===true&&urls.includes(h.url)&&(h.enabled_events?.includes('*')||EVENTS.every(e=>h.enabled_events?.includes(e)))))throw Error();
    }catch{throw problem('AUDIT_WEBHOOK_REVIEW');}})();
-   const catalogTask=(async()=>{try{const rows=await db('geo_plan_catalog?select=id,domains,per_audit,monthly_pages,approved');for(const [id,expected]of Object.entries(CATALOG)){const row=rows.find(r=>r.id===id);if(row?.approved!==true||Object.entries(expected).some(([k,v])=>row[k]!==v))throw Error();}}catch{throw problem('AUDIT_CATALOG_REVIEW');}})();
+   const catalogTask=(async()=>{
+    let rows;
+    try{rows=await db('geo_plan_catalog?select=id,domains,per_audit,monthly_pages,scans_per_month,approved');}
+    catch{throw Object.assign(problem('AUDIT_CATALOG_REVIEW'),{safeCatalogDiagnostics:{checks:[],unavailable:true}});}
+    if(!Array.isArray(rows))throw Object.assign(problem('AUDIT_CATALOG_REVIEW'),{safeCatalogDiagnostics:{checks:[],unavailable:true}});
+    const finite=value=>typeof value==='number'&&Number.isSafeInteger(value)?value:null;
+    for(const [plan,expected]of Object.entries(CATALOG)){
+     const expectedView={approved:true,domains:expected.domains,perAudit:expected.per_audit,monthlyPages:expected.monthly_pages,scansPerMonth:expected.scans_per_month};
+     const row=rows.find(r=>r?.id===plan);
+     if(!row){catalogChecks.push({plan,verified:false,issues:['MISSING'],expected:expectedView,observed:null});continue;}
+     const issues=[];
+     if(row.approved!==true)issues.push('APPROVAL');
+     if(row.domains!==expected.domains)issues.push('DOMAINS');
+     if(row.per_audit!==expected.per_audit)issues.push('PER_AUDIT');
+     if(row.monthly_pages!==expected.monthly_pages)issues.push('MONTHLY_PAGES');
+     if(row.scans_per_month!==expected.scans_per_month)issues.push('SCANS_PER_MONTH');
+     catalogChecks.push({plan,verified:!issues.length,issues,expected:expectedView,observed:{approved:row.approved===true,domains:finite(row.domains),perAudit:finite(row.per_audit),monthlyPages:finite(row.monthly_pages),scansPerMonth:finite(row.scans_per_month)}});
+    }
+    if(catalogChecks.some(check=>!check.verified))throw Object.assign(problem('AUDIT_CATALOG_REVIEW'),{safeCatalogDiagnostics:{checks:catalogChecks,unavailable:false}});
+    return {checks:catalogChecks,unavailable:false};
+   })();
    const providerResults=await Promise.allSettled([priceTask,portalTask,webhookTask,catalogTask]);
    const priceResults=providerResults[0].status==='fulfilled'?providerResults[0].value:[];
+   const catalogDiagnostics=providerResults[3].status==='fulfilled'?providerResults[3].value:providerResults[3].reason?.safeCatalogDiagnostics||{checks:[],unavailable:true};
    const failures=[...priceResults,...providerResults.slice(1)].filter(r=>r.status==='rejected');
-   const allChecks={prices:priceChecks.sort((a,b)=>(a.plan+a.period).localeCompare(b.plan+b.period)),portalVerified:providerResults[1].status==='fulfilled',webhookVerified:providerResults[2].status==='fulfilled',catalogVerified:providerResults[3].status==='fulfilled'};
+   const allChecks={prices:priceChecks.sort((a,b)=>(a.plan+a.period).localeCompare(b.plan+b.period)),catalog:[...catalogDiagnostics.checks].sort((a,b)=>a.plan.localeCompare(b.plan)),catalogUnavailable:catalogDiagnostics.unavailable===true,portalVerified:providerResults[1].status==='fulfilled',webhookVerified:providerResults[2].status==='fulfilled',catalogVerified:providerResults[3].status==='fulfilled'};
    if(failures.length){const error=failures[0].reason;const codes=[...new Set(failures.map(f=>/^AUDIT_[A-Z_]+$/.test(f.reason?.auditCode||'')?f.reason.auditCode:'AUDIT_CONFIGURATION_UNAVAILABLE'))];throw Object.assign(error,{safePriceDiagnostics:allChecks,safeCodes:codes});}
    return{revision:REVISION,ready:true,code:'AUDIT_CONFIGURATION_VERIFIED',pricesVerified:6,portalVerified:true,webhookVerified:true,catalogVerified:true,message:'Audit checkout configuration verified.'};
   }catch(e){const code=/^AUDIT_[A-Z_]+$/.test(e.auditCode||'')?e.auditCode:'AUDIT_CONFIGURATION_UNAVAILABLE';return{revision:REVISION,ready:false,code,...(e.safePriceDiagnostics?{checks:e.safePriceDiagnostics,codes:e.safeCodes}:{}),message:'Audit checkout cannot open yet. Please contact us. Reference: '+code+'.'};}
