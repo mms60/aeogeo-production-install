@@ -30,6 +30,37 @@ test('readiness accepts a catalog that matches plans.js',async()=>{
  assert.equal(result.catalogVerified,true);
 });
 
+test('readiness reports approval as the failing catalog expectation',async()=>{
+ const rows=catalog().map(row=>row.id==='professional'?{...row,approved:false}:row);
+ const result=await fixture(rows).check({fresh:true});
+ assert.equal(result.ready,false);
+ assert.equal(result.code,'AUDIT_CATALOG_REVIEW');
+ assert.equal(result.checks.catalogVerified,false);
+ const check=result.checks.catalog.find(row=>row.plan==='professional');
+ assert.deepEqual(check.issues,['APPROVAL']);
+ assert.equal(check.expected.approved,true);
+ assert.equal(check.observed.approved,false);
+ assert.equal(check.expected.monthlyPages,PLANS.professional.monthlyPages);
+ assert.equal(check.observed.monthlyPages,PLANS.professional.monthlyPages);
+ assert.ok(result.checks.catalog.filter(row=>row.plan!=='professional').every(row=>row.verified));
+ assert.equal(JSON.stringify(result).includes('whsec_fixture'),false);
+});
+
+test('readiness reports the exact allowance field that differs',async()=>{
+ const rows=catalog().map(row=>row.id==='agency'?{...row,monthly_pages:250}:row);
+ const result=await fixture(rows).check({fresh:true});
+ assert.equal(result.ready,false);
+ assert.equal(result.code,'AUDIT_CATALOG_REVIEW');
+ assert.equal(result.checks.catalogVerified,false);
+ const check=result.checks.catalog.find(row=>row.plan==='agency');
+ assert.deepEqual(check.issues,['MONTHLY_PAGES']);
+ assert.equal(check.expected.approved,true);
+ assert.equal(check.observed.approved,true);
+ assert.equal(check.expected.monthlyPages,PLANS.agency.monthlyPages);
+ assert.equal(check.observed.monthlyPages,250);
+ assert.equal(JSON.stringify(result).includes('whsec_fixture'),false);
+});
+
 test('readiness follows the six price amounts in plans.js',async()=>{
  const original=Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{monthly:p.monthly,annual:p.annual}]));
  try{
@@ -69,6 +100,7 @@ test('readiness rejects a wrong scan allowance even when all rows are approved',
   assert.equal(result.ready,false,plan);
   assert.equal(result.code,'AUDIT_CATALOG_REVIEW',plan);
   assert.deepEqual(result.codes,['AUDIT_CATALOG_REVIEW'],plan);
+  assert.deepEqual(result.checks.catalog.find(row=>row.plan===plan).issues,['SCANS_PER_MONTH'],plan);
   assert.equal(result.checks.catalogVerified,false,plan);
   assert.equal(result.checks.portalVerified,true,plan);
   assert.equal(result.checks.webhookVerified,true,plan);
