@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {PLANS}=require('../netlify/functions/lib/plans'),{createReadiness}=require('../netlify/functions/lib/audit-checkout-readiness');
 const planAmounts=()=>Object.fromEntries(Object.entries(PLANS).map(([id,p])=>[id,{month:p.monthly,year:p.annual}]));
 
-function fixture(rows,{stripeAmounts=planAmounts()}={}){
+function fixture(rows,{stripeAmounts=planAmounts(),dbError=false}={}){
  const amounts=planAmounts();
  const env={STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_PORTAL_CONFIGURATION_ID:'bpc_fixture'};
  for(const plan of Object.keys(amounts))for(const period of ['month','year'])env['STRIPE_PRICE_'+plan.toUpperCase()+'_'+period.toUpperCase()]='price_'+plan+period;
@@ -17,7 +17,7 @@ function fixture(rows,{stripeAmounts=planAmounts()}={}){
   if(path.startsWith('billing_portal/configurations/'))return {active:true,is_default:true,default_return_url:'https://aeogeosearch.com/account/'};
   throw Error('unexpected Stripe path '+path);
  };
- const db=async path=>{assert.match(path,/^geo_plan_catalog\?/);assert.match(path,/select=.*scans_per_month/);return rows;};
+ const db=async path=>{assert.match(path,/^geo_plan_catalog\?/);assert.match(path,/select=.*scans_per_month/);if(dbError)throw Error('catalog read failed');return rows;};
  return createReadiness({stripe,db,validatePortalConfiguration:()=>true,env});
 }
 
@@ -59,6 +59,30 @@ test('readiness reports the exact allowance field that differs',async()=>{
  assert.equal(check.expected.monthlyPages,PLANS.agency.monthlyPages);
  assert.equal(check.observed.monthlyPages,250);
  assert.equal(JSON.stringify(result).includes('whsec_fixture'),false);
+});
+
+test('readiness reports a missing catalog row',async()=>{
+ const rows=catalog().filter(row=>row.id!=='agency');
+ const result=await fixture(rows).check({fresh:true});
+ assert.equal(result.ready,false);
+ assert.equal(result.code,'AUDIT_CATALOG_REVIEW');
+ assert.equal(result.checks.catalogVerified,false);
+ assert.equal(result.checks.catalogUnavailable,false);
+ const check=result.checks.catalog.find(row=>row.plan==='agency');
+ assert.deepEqual(check.issues,['MISSING']);
+ assert.equal(check.expected.monthlyPages,PLANS.agency.monthlyPages);
+ assert.equal(check.observed,null);
+ assert.ok(result.checks.catalog.filter(row=>row.plan!=='agency').every(row=>row.verified));
+});
+
+test('readiness marks a catalog read as unavailable',async()=>{
+ const result=await fixture([],{dbError:true}).check({fresh:true});
+ assert.equal(result.ready,false);
+ assert.equal(result.code,'AUDIT_CATALOG_REVIEW');
+ assert.equal(result.checks.catalogVerified,false);
+ assert.equal(result.checks.catalogUnavailable,true);
+ assert.deepEqual(result.checks.catalog,[]);
+ assert.equal(JSON.stringify(result).includes('catalog read failed'),false);
 });
 
 test('readiness follows the six price amounts in plans.js',async()=>{
