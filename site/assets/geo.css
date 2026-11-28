@@ -6,3 +6,6 @@
 .final-cta>.btn{margin-top:8px;margin-bottom:24px}
 .final-cta>p.small{max-width:760px;margin-bottom:0;color:var(--muted);line-height:1.65}
 @media (max-width:639px){.final-cta>h3{margin-top:30px}.final-cta>p{margin-bottom:18px}.final-cta>.btn{margin-bottom:20px}}
+
+/* Narrow phones: widen plan-card copy and keep the final CTA button on one line. */
+@media (max-width:359px){#plans .price-card{padding-left:22px;padding-right:22px}.final-cta{padding-left:18px;padding-right:18px}.final-cta>.btn{font-size:13px;line-height:1.35;padding-left:14px;padding-right:14px}}
