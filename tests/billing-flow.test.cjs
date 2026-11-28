@@ -130,7 +130,7 @@ let PGlite;try{({PGlite}=require('@electric-sql/pglite'));}catch{}
 test('new billing migrations preserve reports/free credits and enforce test/live separation, holds, manual review, fencing and private access',{skip:!PGlite&&'Install PostgreSQL test dependency'},async()=>{
  const db=new PGlite();try{
   await db.exec('create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$ select null::uuid $$;');
-  for(const name of ['01-accounts.sql','02-audit-limit.sql','03-product-and-billing.sql','04-checkout-locks.sql','05-billing-review-and-holds.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../database',name),'utf8'));
+  for(const name of ['01-accounts.sql','02-audit-limit.sql','03-product-and-billing.sql','04-checkout-locks.sql','05-billing-review-and-holds.sql','16-scan-allowances.sql','17-recover-audit-jobs.sql','18-approved-plan-allowances.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../database',name),'utf8'));
   const uid=crypto.randomUUID(),admin=crypto.randomUUID();await db.query('insert into auth.users(id) values($1),($2)',[uid,admin]);
   await db.query('update public.aeogeo_audit_accounts set free_audit_consumed_at=now() where user_id=$1',[uid]);
   const end=new Date(Date.now()+86400000*20).toISOString(),anchor=new Date(Date.now()-86400000).toISOString();
@@ -140,7 +140,7 @@ test('new billing migrations preserve reports/free credits and enforce test/live
   const reserve=async mode=>(await db.query("select public.geo_reserve_job($1,$2,'https://example.com/','example.com',75,$3) as r",[uid,crypto.randomUUID(),mode])).rows[0].r;
   let token=await lease();await apply('evt_paid',token);await unlock(token);
   assert.equal((await reserve('live')).reason,'subscription_required');
-  const first=await reserve('test');assert.equal(first.allowed,true);assert.equal(first.page_limit,75);
+  const first=await reserve('test');assert.equal(first.allowed,true);assert.equal(first.page_limit,25);
   await db.query("select public.geo_finish_job($1,'{\"pageCount\":3}'::jsonb,null)",[first.id]);
   const hold={id:'dispute:dp_1',kind:'dispute',source_id:'dp_1',subscription_id:'sub_owned',active:true,expires_at:null,reason:'Bank dispute'};
   token=await lease();await apply('evt_hold',token,[hold]);await unlock(token);assert.equal((await reserve('test')).reason,'billing_hold');
@@ -168,7 +168,7 @@ test('new migrations can be reapplied and preserve preexisting report data and l
   const j=(await db.query("select public.geo_reserve_job($1,$2,'https://example.com/','example.com',25) as r",[uid,crypto.randomUUID()])).rows[0].r;
   await db.query("select public.geo_finish_job($1,'{\"pageCount\":2,\"sentinel\":\"preserve-this-report\"}',null)",[j.id]);
   const before=(await db.query('select free_audit_consumed_at from public.aeogeo_audit_accounts where user_id=$1',[uid])).rows[0];
-  for(let pass=0;pass<2;pass++)for(const n of ['04-checkout-locks.sql','05-billing-review-and-holds.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../database',n),'utf8'));
+  for(let pass=0;pass<2;pass++)for(const n of ['04-checkout-locks.sql','05-billing-review-and-holds.sql','16-scan-allowances.sql','17-recover-audit-jobs.sql','18-approved-plan-allowances.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../database',n),'utf8'));
   assert.deepEqual((await db.query('select free_audit_consumed_at from public.aeogeo_audit_accounts where user_id=$1',[uid])).rows[0],before);
   assert.equal((await db.query('select report from public.geo_jobs where id=$1',[j.id])).rows[0].report.sentinel,'preserve-this-report');
   const oldClient=(await db.query("select public.geo_reserve_job($1,$2,'https://example.com/','example.com',75) as r",[free,crypto.randomUUID()])).rows[0].r;
